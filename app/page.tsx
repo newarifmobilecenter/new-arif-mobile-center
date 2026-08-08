@@ -1,6 +1,6 @@
 const products = [
-  ["📱", "iPhone X Display", "Premium Quality", "Rs. 4,500"],
-  ["🔋", "Samsung Battery", "Original", "Rs. 1,250"],
+  ["📱", "iPhone X Display", "Premium Quality", "Rs. 8,500"],
+  ["🔋", "Samsung Battery A12", "Original", "Rs. 2,500"],
   ["🔌", "Type-C Charging Port", "Universal", "Rs. 350"],
   ["📷", "Back Camera", "HD Quality", "Rs. 850"],
   ["📱", "Oppo A54 Display", "Original", "Rs. 2,800"],
