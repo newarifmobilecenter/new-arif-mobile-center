@@ -3,7 +3,7 @@ const products = [
   ["🔋", "Samsung Battery A12", "Original", "Rs. 2,500"],
   ["🔌", "Type-C Charging Port", "Universal", "Rs. 350"],
   ["📷", "Back Camera", "HD Quality", "Rs. 850"],
-  ["📱", "Oppo A54 Display", "Original", "Rs. 2,800"],
+  ["https://roadieshub.com/wp-content/uploads/2024/10/Oppo-A54-4G-LCD-Panel-Price-In-Pakistan.jpg", "Oppo A54 Display", "Original", "Rs. 2,800"],
   ["🔋", "iPhone Battery", "Original", "Rs. 1,450"],
 ];
 
@@ -69,7 +69,7 @@ export default function Home() {
           <h2>📦 MOBILE PARTS & PRODUCTS</h2>
           <div className="grid-products">
             {products.map(([icon,name,desc,price])=><article className="product" key={name}>
-              <div className="pic">{icon}</div>
+              <div className="pic">{img}</div>
               <div className="info"><b>{name}</b><div style={{color:"#aeb5cc",fontSize:12,margin:"5px 0"}}>{desc}</div><strong style={{color:"#ffd21f"}}>{price}</strong></div>
             </article>)}
           </div>
