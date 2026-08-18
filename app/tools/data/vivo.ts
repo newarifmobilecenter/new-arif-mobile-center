@@ -175,4 +175,8 @@ export const vivoTools = [
     id: 44,
     code: "Vivo V40e Vivo T3 Pro iQOO Z9s iQOO Z9s Pro",
   },
+  {
+    id: 45,
+    code: "Vivo Y04 Y19E",
+  },
 ];

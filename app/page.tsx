@@ -1,3 +1,149 @@
-import Link from "next/link";
-const cards=[["🛒","New Sale","/pos","Cash sale, saved customer & pickup-by"],["📦","Products & Stock","/admin","Products, stock in/out & adjustments"],["👥","Customers & Ledger","/customers","Customer balances and pickup history"],["💳","Accounts","/accounts","Cash, JazzCash, Easypaisa, Raast, NayaPay, Banks"],["🧾","Purchases","/purchases","Supplier purchases, TCS/Bilty and stock"],["📊","Reports","/reports","Sales, profit/loss, expenses and stock"],["🔧","Universal Finder","/tools","Panel, charging board and parts finder"],["💾","Backup","/backup","Download and restore-ready MongoDB backup"]];
-export default function Home(){return <main className="shell"><header className="hero"><div><p className="eyebrow">NEW ARIF MOBILE CENTER</p><h1>Business Management System</h1><p className="muted">POS • Inventory • Accounts • Ledger • Warranty • Finder</p></div><Link className="btn" href="/pos">+ New Sale</Link></header><section className="grid">{cards.map(([icon,title,href,desc])=><Link className="card" href={href} key={href}><span className="icon">{icon}</span><h2>{title}</h2><p className="muted">{desc}</p><span className="go">Open →</span></Link>)}</section></main>}
+export default function Home() {
+  return (
+    <main className="shell">
+      <div className="nav">
+        <a href="/">NEW ARIF MOBILE CENTER</a>
+      </div>
+
+      <h1>📱 Welcome</h1>
+
+      <section
+        className="glass"
+        style={{
+          marginTop: 14,
+          padding: 18,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ fontSize: 28 }}>💰</div>
+
+          <div style={{ flex: 1 }}>
+            <h2 style={{ margin: 0, fontSize: 20 }}>
+              Point of Sale
+            </h2>
+
+            <div
+              style={{
+                color: "#aeb5cc",
+                fontSize: 12,
+                marginTop: 3,
+              }}
+            >
+              Create sales and invoices
+            </div>
+          </div>
+
+          <a
+            href="/pos"
+            className="btn"
+            style={{
+              background: "linear-gradient(135deg,#059669,#10b981)",
+              textDecoration: "none",
+            }}
+          >
+            Start Sale →
+          </a>
+        </div>
+      </section>
+
+      <section
+        className="glass"
+        style={{
+          marginTop: 14,
+          padding: 18,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ fontSize: 28 }}>🔧</div>
+
+          <div style={{ flex: 1 }}>
+            <h2 style={{ margin: 0, fontSize: 20 }}>
+              Universal Tool Finder
+            </h2>
+
+            <div
+              style={{
+                color: "#aeb5cc",
+                fontSize: 12,
+                marginTop: 3,
+              }}
+            >
+              Search mobile model / code
+            </div>
+          </div>
+
+          <a
+            href="/tools"
+            className="btn"
+            style={{
+              background: "linear-gradient(135deg,#6d28d9,#2563eb)",
+              textDecoration: "none",
+            }}
+          >
+            Open Finder →
+          </a>
+        </div>
+      </section>
+
+      <section
+        className="glass"
+        style={{
+          marginTop: 14,
+          padding: 18,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ fontSize: 28 }}>🛠️</div>
+
+          <div style={{ flex: 1 }}>
+            <h2 style={{ margin: 0, fontSize: 20 }}>
+              Admin Panel
+            </h2>
+
+            <div
+              style={{
+                color: "#aeb5cc",
+                fontSize: 12,
+                marginTop: 3,
+              }}
+            >
+              Manage products and inventory
+            </div>
+          </div>
+
+          <a
+            href="/admin"
+            className="btn"
+            style={{
+              background: "linear-gradient(135deg,#dc2626,#ef4444)",
+              textDecoration: "none",
+            }}
+          >
+            Admin →
+          </a>
+        </div>
+      </section>
+    </main>
+  );
+}

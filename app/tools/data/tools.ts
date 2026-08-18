@@ -1,6 +1,6 @@
-import { infinixTools } from "./Infinix";
-import { vivoTools } from "./Vivo";
-import { oppoTools } from "./Oppo";
+import { infinixTools } from "./infinix";
+import { vivoTools } from "./vivo";
+import { oppoTools } from "./oppo";
 import { samsungTools } from "./Samsung";
 
 export const tools = [
