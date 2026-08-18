@@ -1,0 +1,4 @@
+import { NextRequest, NextResponse } from "next/server"; import { db } from "@/lib/mongodb";
+const allowed=["products","customers","sales","purchases","transactions","expenses","salaries","stockMovements"];
+export async function GET(req:NextRequest){const c=req.nextUrl.searchParams.get("collection")||"products"; if(!allowed.includes(c)) return NextResponse.json({error:"Invalid collection"},{status:400}); const d=await db(); const rows=await d.collection(c).find({}).sort({createdAt:-1}).limit(500).toArray(); return NextResponse.json(rows.map(x=>({...x,_id:x._id.toString()})));}
+export async function POST(req:NextRequest){const body=await req.json(); const {collection,...doc}=body; if(!allowed.includes(collection)) return NextResponse.json({error:"Invalid collection"},{status:400}); doc.createdAt=new Date(); const d=await db(); const r=await d.collection(collection).insertOne(doc); return NextResponse.json({_id:r.insertedId.toString(),...doc},{status:201});}
