@@ -102,11 +102,8 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    await loadProducts();
-  };
-  fetchData();
-}, []);
+    void loadProducts();
+  }, []);
 
   async function addProduct() {
     if (!name || !model || !price) {

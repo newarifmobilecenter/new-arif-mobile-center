@@ -1,3 +1,16 @@
 {
-  "/page": "app/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/data/route": "app/api/data/route.js",
+  "/api/health/route": "app/api/health/route.js",
+  "/api/backup/route": "app/api/backup/route.js",
+  "/accounts/page": "app/accounts/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/backup/page": "app/backup/page.js",
+  "/customers/page": "app/customers/page.js",
+  "/invoice/[id]/page": "app/invoice/[id]/page.js",
+  "/page": "app/page.js",
+  "/pos/page": "app/pos/page.js",
+  "/purchases/page": "app/purchases/page.js",
+  "/reports/page": "app/reports/page.js",
+  "/tools/page": "app/tools/page.js"
 }
