@@ -1,23 +1,3 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/mongodb";
-
-export const dynamic = 'force-dynamic';
-
-const collections = ["products", "customers", "sales", "purchases", "transactions", "expenses", "salaries", "stockMovements"];
-
-export async function GET() {
-  const d = await db();
-  const out: any = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    collections: {},
-  };
-  for (const c of collections)
-    out.collections[c] = await d.collection(c).find({}).toArray();
-  return new NextResponse(JSON.stringify(out, null, 2), {
-    headers: {
-      "Content-Type": "application/json",
-      "Content-Disposition": `attachment; filename="new-arif-backup-${new Date().toISOString().slice(0, 10)}.json"`,
-    },
-  });
-}
+import {NextResponse} from "next/server";import{db}from"@/lib/mongodb";export const dynamic="force-dynamic"; export const runtime="nodejs";
+const collections=["products","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns"];
+export async function GET(){try{const d=await db();const out:any={version:2,exportedAt:new Date().toISOString(),collections:{}};for(const c of collections)out.collections[c]=await d.collection(c).find({}).toArray();await d.collection("backupLogs").insertOne({type:"EXPORT",createdAt:new Date()});return new NextResponse(JSON.stringify(out,null,2),{headers:{"Content-Type":"application/json","Content-Disposition":`attachment; filename="new-arif-backup-${new Date().toISOString().slice(0,10)}.json"`}})}catch(e:any){return NextResponse.json({error:e?.message||"Backup failed"},{status:500})}}

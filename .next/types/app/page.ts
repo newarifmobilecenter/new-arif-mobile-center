@@ -1,4 +1,4 @@
-// File: /workspaces/new-arif-mobile-center/app/page.tsx
+// File: C:\Users\NEW ARIF MOBILE\.copilot\repos\copilot-worktrees\new-arif-mobile-center\newarifmobilecenter-vigilant-train\app\page.tsx
 import * as entry from '../../../app/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

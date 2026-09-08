@@ -1,419 +1,136 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import styles from "./admin.module.css";
 
-const categories = [
-  "Displays / LCD",
-  "Batteries",
-  "Charging Ports",
-  "Speakers / Mic",
-  "Cameras",
-  "Buttons / Flex",
-  "Body / Housing",
-  "Repairing Parts",
-  "Tools",
-  "Other Parts",
-];
+const cats = ["Displays / LCD", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
+const brands = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone", "Universal", "Other"];
+const tabs = ["New Product", "Opening", "Multi Supplier", "Product List", "Price Level"] as const;
+type Tab = (typeof tabs)[number];
 
-const brands = [
-  "Infinix",
-  "Tecno",
-  "Itel",
-  "Vivo",
-  "Oppo",
-  "Realme",
-  "OnePlus",
-  "Samsung",
-  "iPhone",
-  "Universal",
-];
-
-type Product = {
-  id: number;
-  name: string;
-  category: string;
-  brand: string;
-  model: string;
-  description: string;
-  price: string | number;
-  stock: number;
-  _id?: string;
+type Form = {
+  code: string; barcode: string; detail: string; name: string; brand: string; model: string;
+  bin: string; category: string; itemType: string; productGroup: string; uom: string;
+  taxCode: string; saleTax: string; packQty: string; costPrice: string; price: string;
+  wholesale: string; discount: string; margin: string; minLevel: string; maxLevel: string;
+  branch: string; openingQty: string; description: string; sku: string; warrantyDays: string;
 };
 
-const defaultProducts: Product[] = [
-  {
-    id: 1,
-    name: "iPhone X Display",
-    category: "Displays / LCD",
-    brand: "iPhone",
-    model: "iPhone X",
-    description: "Premium Quality",
-    price: "8500",
-    stock: 1,
-  },
-  {
-    id: 2,
-    name: "Samsung A12 Battery",
-    category: "Batteries",
-    brand: "Samsung",
-    model: "A12",
-    description: "Original",
-    price: "2500",
-    stock: 4,
-  },
-];
+const blank: Form = {
+  code: "", barcode: "", detail: "", name: "", brand: brands[0], model: "", bin: "", category: cats[0],
+  itemType: "Part", productGroup: "", uom: "PCS", taxCode: "", saleTax: "0", packQty: "1", costPrice: "0",
+  price: "0", wholesale: "0", discount: "0", margin: "0", minLevel: "0", maxLevel: "0", branch: "Main Branch",
+  openingQty: "0", description: "", sku: "", warrantyDays: "0",
+};
 
-export default function AdminPage() {
-  const [products, setProducts] = useState<Product[]>(defaultProducts);
+function num(v: string) { return Number(v || 0); }
 
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("Displays / LCD");
-  const [brand, setBrand] = useState("Infinix");
-  const [model, setModel] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("1");
+export default function Admin() {
+  const [tab, setTab] = useState<Tab>("New Product");
+  const [products, setProducts] = useState<any[]>([]);
+  const [form, setForm] = useState<Form>(blank);
+  const [selectedId, setSelectedId] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const loadProducts = async () => {
-    try {
-      const response = await fetch("/api/data?collection=products");
-      if (!response.ok) {
-        throw new Error("Failed to load products");
-      }
+  const load = () => fetch("/api/data?collection=products").then(r => r.json()).then(x => setProducts(Array.isArray(x) ? x : []));
+  useEffect(() => { void load(); }, []);
 
-      const data = await response.json();
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p => [p.name, p.model, p.brand, p.category, p.sku, p.code, p.barcode].some(v => String(v ?? "").toLowerCase().includes(q)));
+  }, [products, search]);
 
-      if (!Array.isArray(data)) {
-        setProducts(defaultProducts);
-        return;
-      }
+  const set = (k: keyof Form, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-      setProducts(
-        data.map((product: any) => ({
-          ...product,
-          id: Number(product.id ?? product._id ?? Date.now()),
-          price: String(product.price ?? "0"),
-          stock: Number(product.stock ?? 0),
-        }))
-      );
-    } catch (error) {
-      console.error("Error loading products:", error);
-    }
-  };
-
-  useEffect(() => {
-    void loadProducts();
-  }, []);
-
-  async function addProduct() {
-    if (!name || !model || !price) {
-      alert("Product name, model aur price zaroor likhein.");
-      return;
-    }
-
-    const newProduct: Product = {
-      id: Date.now(),
-      name,
-      category,
-      brand,
-      model,
-      description,
-      price,
-      stock: Number(stock),
-    };
-
-    try {
-      const response = await fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          collection: "products",
-          ...newProduct,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save product");
-      }
-
-      const savedProduct = await response.json();
-      setProducts((current) => [
-        {
-          ...newProduct,
-          id: Number(savedProduct.id ?? savedProduct._id ?? newProduct.id),
-        },
-        ...current,
-      ]);
-    } catch (error) {
-      console.error("Error saving product:", error);
-      alert("Product save nahi hua. Dubara try karo.");
-      return;
-    }
-
-    setName("");
-    setModel("");
-    setDescription("");
-    setPrice("");
-    setStock("1");
+  function newProduct() {
+    setSelectedId("");
+    setForm({ ...blank, code: String(Math.max(0, ...products.map(p => Number(p.code) || 0)) + 1), barcode: String(Math.max(0, ...products.map(p => Number(p.barcode) || 0)) + 1) });
+    setTab("New Product");
   }
 
-  function deleteProduct(id: number) {
-    setProducts((current) => current.filter((product) => product.id !== id));
+  function loadProduct(p: any) {
+    setSelectedId(String(p._id || ""));
+    setForm({ ...blank, ...p, code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), detail: String(p.detail ?? ""), name: String(p.name ?? ""), brand: String(p.brand ?? brands[0]), model: String(p.model ?? ""), bin: String(p.bin ?? ""), category: String(p.category ?? cats[0]), itemType: String(p.itemType ?? "Part"), productGroup: String(p.productGroup ?? ""), uom: String(p.uom ?? "PCS"), taxCode: String(p.taxCode ?? ""), saleTax: String(p.saleTax ?? p.tax ?? "0"), packQty: String(p.packQty ?? "1"), costPrice: String(p.costPrice ?? "0"), price: String(p.price ?? "0"), wholesale: String(p.wholesale ?? p.wholesalePrice ?? "0"), discount: String(p.discount ?? "0"), margin: String(p.margin ?? "0"), minLevel: String(p.minLevel ?? "0"), maxLevel: String(p.maxLevel ?? "0"), branch: String(p.branch ?? "Main Branch"), openingQty: String(p.openingQty ?? p.stock ?? "0"), description: String(p.description ?? ""), sku: String(p.sku ?? ""), warrantyDays: String(p.warrantyDays ?? "0") });
+    setTab("New Product");
   }
 
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#05070f",
-        color: "#fff",
-        padding: "30px 20px",
-      }}
-    >
-      <div style={{ maxWidth: 1150, margin: "auto" }}>
-        <h1 style={{ fontSize: 36, fontWeight: 900 }}>
-          🔐 NEW ARIF MOBILE CENTER
-        </h1>
+  async function save() {
+    if (!form.name.trim() || !form.model.trim() || !form.price.trim()) return alert("Product Name, Design/Model aur Retail Price zaroor likhein.");
+    setBusy(true);
+    try {
+      const payload = {
+        collection: "products", ...(selectedId ? { id: selectedId } : {}),
+        code: form.code, barcode: form.barcode, detail: form.detail, name: form.name, brand: form.brand, model: form.model,
+        bin: form.bin, category: form.category, itemType: form.itemType, productGroup: form.productGroup, uom: form.uom,
+        taxCode: form.taxCode, saleTax: num(form.saleTax), packQty: num(form.packQty), costPrice: num(form.costPrice), price: num(form.price),
+        wholesale: num(form.wholesale), discount: num(form.discount), margin: num(form.margin), minLevel: num(form.minLevel), maxLevel: num(form.maxLevel),
+        branch: form.branch, openingQty: num(form.openingQty), stock: num(form.openingQty), description: form.description, sku: form.sku || form.code, warrantyDays: num(form.warrantyDays)
+      };
+      const r = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error();
+      await load();
+      alert(selectedId ? "Product updated successfully" : "Product saved successfully");
+      newProduct();
+    } catch { alert("Product save nahi hua."); } finally { setBusy(false); }
+  }
 
-        <p style={{ color: "#aeb5cc" }}>
-          Admin Panel — Product Management
-        </p>
+  async function del(id: string) {
+    if (!confirm("Product delete karein? Historical sales remain rahengi.")) return;
+    await fetch(`/api/data?collection=products&id=${id}`, { method: "DELETE" });
+    await load();
+  }
 
-        {/* ADD PRODUCT */}
-        <section style={cardStyle}>
-          <h2>➕ Add New Product</h2>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: 14,
-              marginTop: 18,
-            }}
-          >
-            {/* Product Name */}
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Product Name"
-              style={inputStyle}
-            />
-
-            {/* Category */}
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={inputStyle}
-            >
-              {categories.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-
-            {/* Brand */}
-            <select
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              style={inputStyle}
-            >
-              {brands.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-
-            {/* Model */}
-            <input
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder="Model e.g. A12 / X650"
-              style={inputStyle}
-            />
-
-            {/* Price */}
-            <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Price e.g. 2800"
-              type="number"
-              style={inputStyle}
-            />
-
-            {/* Stock */}
-            <input
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              placeholder="Stock Quantity"
-              type="number"
-              min="0"
-              style={inputStyle}
-            />
-
-            {/* Description */}
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description e.g. Original / Premium Quality"
-              style={{
-                ...inputStyle,
-                minHeight: 90,
-                gridColumn: "1 / -1",
-              }}
-            />
-
-            <button onClick={addProduct} style={buttonStyle}>
-              ➕ Save Product
-            </button>
-          </div>
-        </section>
-
-        {/* PRODUCTS */}
-        <section style={cardStyle}>
-          <h2>📦 All Products</h2>
-
-          <div style={{ display: "grid", gap: 14, marginTop: 18 }}>
-            {products.map((product) => (
-              <article
-                key={product.id}
-                style={{
-                  padding: 18,
-                  borderRadius: 14,
-                  background: "#11182d",
-                  border: "1px solid #26304a",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 15,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <div>
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: 20,
-                      }}
-                    >
-                      📱 {product.name}
-                    </h3>
-
-                    <div
-                      style={{
-                        color: "#aeb5cc",
-                        marginTop: 7,
-                      }}
-                    >
-                      Category: <b>{product.category}</b>
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#aeb5cc",
-                        marginTop: 4,
-                      }}
-                    >
-                      Brand: <b>{product.brand}</b> — Model:{" "}
-                      <b>{product.model}</b>
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#aeb5cc",
-                        marginTop: 4,
-                      }}
-                    >
-                      {product.description}
-                    </div>
-
-                    <div
-                      style={{
-                        color: "#ffd21f",
-                        fontWeight: 900,
-                        fontSize: 18,
-                        marginTop: 9,
-                      }}
-                    >
-                      Rs. {product.price}
-                    </div>
-
-                    <div style={{ marginTop: 7 }}>
-                      {product.stock > 0 ? (
-                        <span style={{ color: "#22c55e" }}>
-                          🟢 In Stock — {product.stock} item
-                          {product.stock === 1 ? "" : "s"}
-                        </span>
-                      ) : (
-                        <span style={{ color: "#ef4444" }}>
-                          🔴 Out of Stock
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => deleteProduct(product.id)}
-                    style={deleteButtonStyle}
-                  >
-                    🗑 Delete
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <a href="/" style={backLinkStyle}>
-          ← Back to Website
-        </a>
-      </div>
-    </main>
+  const Field = ({ label, k, type = "text", className = "" }: { label: string; k: keyof Form; type?: string; className?: string }) => (
+    <label className={`${styles.field} ${className}`}><span>{label}</span><input value={form[k]} type={type} onChange={e => set(k, e.target.value)} /></label>
   );
+  const Select = ({ label, k, options }: { label: string; k: keyof Form; options: string[] }) => (
+    <label className={styles.field}><span>{label}</span><select value={form[k]} onChange={e => set(k, e.target.value)}>{options.map(x => <option key={x}>{x}</option>)}</select></label>
+  );
+
+  return <main className={styles.page}>
+    <header className={styles.titlebar}><div>▣ <b>New Item - New Arif Mobile Center</b></div><div className={styles.user}>Product Management</div></header>
+    <nav className={styles.tabs}>{tabs.map(t => <button key={t} className={tab === t ? styles.activeTab : ""} onClick={() => setTab(t)}>{t}</button>)}</nav>
+
+    {tab === "New Product" && <>
+      <section className={styles.heading}><h1>▣ Product Definition</h1><input type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></section>
+      <section className={styles.formPanel}>
+        <div className={styles.left}>
+          <Field label="Code" k="code" />
+          <Field label="Barcode" k="barcode" />
+          <div className={styles.detailRow}><Field label="Urdu Detail" k="detail"/><button type="button" className={styles.smallBtn}>اردو تفصیل</button></div>
+          <Field label="Product Name" k="name" />
+          <Field label="Make / Brand" k="brand" />
+          <Field label="Design / Model" k="model" />
+          <div className={styles.selectRow}><Select label="Bin Location" k="bin" options={["", "Main Bin", "Rack A", "Rack B", "Store"]}/><button className={styles.nBtn}>N</button></div>
+          <div className={styles.selectRow}><Select label="Category" k="category" options={cats}/><button className={styles.nBtn}>N</button></div>
+          <div className={styles.selectRow}><Select label="Item Type" k="itemType" options={["Part", "Accessory", "Phone", "Service", "Tool", "Other"]}/><button className={styles.nBtn}>N</button></div>
+          <div className={styles.selectRow}><Select label="Product Group" k="productGroup" options={["", "Mobile Parts", "Accessories", "Phones", "Tools", "Services"]}/><button className={styles.nBtn}>N</button></div>
+          <div className={styles.selectRow}><Select label="UOM" k="uom" options={["PCS", "SET", "BOX", "PAIR", "KG", "OTHER"]}/><button className={styles.nBtn}>N</button></div>
+        </div>
+        <div className={styles.right}>
+          <div className={styles.imageBox}>Product Image / Notes</div>
+          <div className={styles.two}><Select label="Tax Code" k="taxCode" options={["", "GST", "EXEMPT", "ZERO"]}/><Field label="Sale Tax %" k="saleTax" type="number"/></div>
+          <div className={styles.two}><Field label="Pack Qty" k="packQty" type="number"/><Field label="Disc (%)" k="discount" type="number"/></div>
+          <div className={styles.two}><Field label="Cost" k="costPrice" type="number"/><Field label="Retail" k="price" type="number"/></div>
+          <div className={styles.two}><Field label="W.Rate" k="wholesale" type="number"/><Field label="Margin %" k="margin" type="number"/></div>
+          <div className={styles.two}><Field label="Min R Level" k="minLevel" type="number"/><Field label="Max R Level" k="maxLevel" type="number"/></div>
+          <div className={styles.branchBox}><Field label="Branch Code" k="branch"/><Field label="Open Qty" k="openingQty" type="number"/></div>
+          <Field label="SKU / Part No" k="sku" />
+          <Field label="Warranty Days" k="warrantyDays" type="number" />
+        </div>
+      </section>
+      <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"}</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={newProduct}>＋ New</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
+    </>}
+
+    {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / model..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={newProduct}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Model</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.model ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{p.stock ?? 0}</td><td><button onClick={() => loadProduct(p)}>Edit</button><button onClick={() => del(String(p._id))}>Delete</button></td></tr>)}</tbody></table></div></section>}
+
+    {tab === "Opening" && <section className={styles.simplePanel}><h2>Opening Stock</h2><p className={styles.muted}>Product select karein aur opening quantity set karein.</p><div className={styles.openGrid}>{products.slice(0, 30).map(p => <div className={styles.openCard} key={p._id}><b>{p.name}</b><span>{p.brand} • {p.model}</span><label>Opening Qty<input type="number" defaultValue={p.stock ?? 0} onBlur={async e => { const q = Number(e.target.value || 0); await fetch("/api/data", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({collection:"products",id:String(p._id),openingQty:q,stock:q})}); }}/></label></div>)}</div></section>}
+
+    {tab === "Multi Supplier" && <section className={styles.simplePanel}><h2>Multi Supplier</h2><p className={styles.muted}>Supplier details product ke saath maintain karne ke liye.</p><div className={styles.supplierGrid}><input placeholder="Supplier Name"/><input placeholder="Supplier Code"/><input placeholder="Purchase Rate" type="number"/><input placeholder="Supplier Item Code"/><button className={styles.save}>＋ Add Supplier</button></div></section>}
+
+    {tab === "Price Level" && <section className={styles.simplePanel}><h2>Price Level</h2><p className={styles.muted}>Retail aur wholesale ke saath additional sale levels set karein.</p><div className={styles.levelGrid}>{["Level 0", "Level 1", "Level 2", "Level 3"].map((x,i) => <div className={styles.levelCard} key={x}><b>{x}</b><input placeholder="Price" type="number"/><input placeholder="Discount %" type="number" defaultValue={i === 0 ? 0 : ""}/></div>)}</div></section>}
+  </main>;
 }
-
-const cardStyle = {
-  marginTop: 25,
-  padding: 25,
-  borderRadius: 16,
-  background: "#0b1020",
-  border: "1px solid #26304a",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "13px 15px",
-  borderRadius: 10,
-  border: "1px solid #334155",
-  background: "#070b18",
-  color: "#fff",
-  outline: "none",
-  boxSizing: "border-box" as const,
-};
-
-const buttonStyle = {
-  padding: "14px 18px",
-  borderRadius: 10,
-  border: 0,
-  background: "#16a34a",
-  color: "#fff",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const deleteButtonStyle = {
-  background: "#dc2626",
-  color: "#fff",
-  border: 0,
-  padding: "10px 15px",
-  borderRadius: 8,
-  cursor: "pointer",
-  height: "fit-content",
-};
-
-const backLinkStyle = {
-  display: "inline-block",
-  marginTop: 25,
-  color: "#22d3ee",
-};
