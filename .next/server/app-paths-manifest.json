@@ -1,9 +1,0 @@
-{
-  "/api/data/route": "app/api/data/route.js",
-  "/page": "app/page.js",
-  "/pos/page": "app/pos/page.js",
-  "/invoice/[id]/page": "app/invoice/[id]/page.js",
-  "/quotations/page": "app/quotations/page.js",
-  "/backup/page": "app/backup/page.js",
-  "/suppliers/page": "app/suppliers/page.js"
-}
