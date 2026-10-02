@@ -1,0 +1,324 @@
+.page {
+  --ink: #f4f6fb;
+  --muted: #aeb5cc;
+  --line: #2b3550;
+  --surface: #0b1020;
+  --accent: #22d3ee;
+  color: var(--ink);
+}
+
+.panel { margin-top: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.muted { color: var(--muted); }
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.header h1 { margin-top: 0; }
+.header p { color: var(--muted); margin: 0; }
+.nav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+.nav a { color: var(--accent); text-decoration: none; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.tab, .activeTab { padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: #111a2c; color: var(--ink); font: inherit; cursor: pointer; }
+.activeTab { border-color: var(--accent); background: #10313b; }
+.dueTag { display: block; width: fit-content; margin-top: 5px; padding: 3px 6px; border-radius: 4px; background: #7f1d1d; color: #fee2e2; font-size: 10px; font-weight: 800; }
+.filters { display: grid; grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(150px, 1fr)); gap: 10px; }
+.field { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #35415d;
+  border-radius: 7px;
+  background: #070b18;
+  color: var(--ink);
+  font: inherit;
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.wide { grid-column: 1 / -1; }
+.readonly { display: flex; align-items: center; min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: #080d1a; color: var(--ink); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.button, .buttonSecondary, .buttonDanger {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.button { background: #087f8c; }
+.buttonSecondary { border-color: #3a465f; background: #111a2c; }
+.buttonDanger { background: #a62e38; }
+.button:disabled { opacity: .55; cursor: wait; }
+.tableWrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; min-width: 920px; }
+.table th, .table td { padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.table th { color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.table a { color: var(--accent); text-decoration: none; }
+.status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; background: #253047; }
+.status[data-status="PAID"] { background: #14532d; color: #dcfce7; }
+.status[data-status="PARTIAL"] { background: #854d0e; color: #fef3c7; }
+.status[data-status="UNPAID"] { background: #7f1d1d; color: #fee2e2; }
+.notice { margin-top: 12px; color: #fca5a5; }
+.empty { padding: 26px 10px; color: var(--muted); text-align: center; }
+.repairForm { display: grid; gap: 14px; }
+.formSection { padding: 16px 0; border: 0; border-bottom: 1px solid var(--line); }
+.formSection h2 { margin: 0 0 14px; font-size: 17px; }
+.formSection summary { cursor: pointer; font-weight: 800; }
+.formSection[open] summary { margin-bottom: 14px; }
+.accessoryFieldset { display: flex; flex-wrap: wrap; gap: 12px 18px; margin: 14px 0 0; padding: 12px; border: 1px solid var(--line); border-radius: 7px; }
+.accessoryFieldset legend { padding: 0 6px; color: var(--muted); }
+.accessoryFieldset label { display: inline-flex; align-items: center; gap: 6px; }
+.receivingSlip { display: block; }
+.reminderModal { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 18px; background: rgb(0 0 0 / 72%); }
+.reminderDialog { width: min(560px, 100%); padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: #0b1020; }
+.reminderDialog h2 { margin-top: 0; }
+.historyList { display: grid; gap: 8px; margin-top: 12px; }
+.historyItem { padding: 10px; border-left: 3px solid var(--accent); background: #080d1a; }
+.balanceSummary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.balanceValue { font-size: 20px; font-weight: 800; }
+.rowActions { white-space: nowrap; }
+.rowActions a, .textButton { margin-right: 9px; }
+.textButton { padding: 0; border: 0; background: transparent; color: #fca5a5; font: inherit; cursor: pointer; }
+
+@media (max-width: 720px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+  .filters .search { grid-column: 1 / -1; }
+  .formGrid { grid-template-columns: 1fr; }
+  .wide { grid-column: auto; }
+  .balanceSummary { grid-template-columns: 1fr; }
+}
+
+.receivingSlip {
+  width: min(100%, 760px);
+  margin: 20px auto;
+  padding: 28px;
+  border: 1px solid #aeb4ba;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+  font: 13px/1.4 Arial, Helvetica, sans-serif;
+}
+.receivingHeader { text-align: center; }
+.receivingBrand { padding-bottom: 12px; }
+.receivingBrandName { font-size: 29px; font-weight: 900; line-height: 1.05; }
+.receivingBrandSubtitle { margin-top: 4px; font-size: 15px; font-weight: 800; }
+.receivingServices { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 7px; margin-top: 8px; font-size: 10px; font-weight: 800; }
+.receivingServices i { width: 4px; height: 4px; border-radius: 50%; background: #111; }
+.receivingTagline { margin-top: 5px; font-size: 12px; font-style: italic; font-weight: 700; }
+.brandLogos { display: flex; justify-content: space-around; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 4px; border-top: 1px solid #222; border-bottom: 1px solid #222; font-size: 12px; font-weight: 900; }
+.brandLogos span:nth-child(2), .brandLogos span:nth-child(5) { font-style: italic; }
+.brandLogos span:nth-child(3) { font-weight: 700; letter-spacing: 1px; }
+.receivingTitle { margin-top: 12px; padding: 9px 12px; border: 2px solid #111; font-size: 18px; font-weight: 900; }
+.receivingTokenRow { display: grid; grid-template-columns: 1fr 112px; align-items: center; gap: 14px; margin-top: 12px; padding: 12px 14px; border: 2px solid #111; }
+.receivingToken { display: grid; gap: 2px; }
+.receivingToken span { font-size: 13px; font-weight: 800; text-transform: uppercase; }
+.receivingToken strong { font-size: 36px; font-weight: 900; line-height: 1.05; overflow-wrap: anywhere; }
+.receivingQr { display: grid; justify-items: center; gap: 3px; }
+.receivingQr svg { width: 88px; height: 88px; }
+.receivingQr span { font-size: 8px; font-weight: 800; }
+.receivingDates { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 9px; }
+.receivingDates > div, .receivingCustomer, .receivingFieldBox, .receivingTextBox, .receivingAccessories { border: 1px solid #6c7278; }
+.receivingDates > div { display: flex; justify-content: space-between; gap: 8px; padding: 8px 10px; }
+.receivingDates b, .receivingCustomerGrid b, .receivingFieldBox > b, .receivingTextBox > b, .receivingShop b { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+.receivingSectionTitle { padding: 6px 8px; border-bottom: 1px solid #777; background: #ededed; font-size: 10px; font-weight: 900; }
+.receivingCustomer { margin-top: 10px; }
+.receivingCustomerGrid { display: grid; grid-template-columns: 1.15fr 1fr; }
+.receivingCustomerGrid > div { display: grid; gap: 4px; min-width: 0; padding: 9px 10px; }
+.receivingCustomerGrid > div + div { border-left: 1px solid #aaa; }
+.receivingCustomerGrid span, .receivingFieldBox > span, .receivingTextBox > span, .receivingShop span { overflow-wrap: anywhere; }
+.receivingDeviceSection { display: grid; grid-template-columns: 1fr; margin-top: 10px; }
+.receivingDeviceDetails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.receivingDeviceDetails .receivingSectionTitle { grid-column: 1 / -1; }
+.receivingDeviceDetails .receivingSectionTitle { border: 1px solid #777; }
+.receivingFieldBox { display: grid; gap: 6px; min-height: 54px; padding: 8px 10px; }
+.mobileTypeOptions { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 11px; }
+.mobileTypeSelected { font-weight: 900; }
+.receivingProblemGrid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 9px; margin-top: 10px; }
+.receivingTextBox { display: grid; grid-template-rows: auto 1fr; min-height: 86px; }
+.receivingTextBox > b { padding: 6px 8px; border-bottom: 1px solid #aaa; background: #ededed; }
+.receivingTextBox > span { padding: 8px; white-space: pre-wrap; }
+.receivingAccessories { margin-top: 10px; }
+.accessoryOptions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; padding: 9px 10px; }
+.accessoryOptions > span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.accessoryOptions i { display: inline-grid; place-items: center; width: 14px; height: 14px; border: 1px solid #333; font-size: 10px; font-style: normal; font-weight: 900; }
+.receivingReady { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 2px solid #111; }
+.receivingReady b { font-size: 12px; font-weight: 900; }
+.receivingReady strong { font-size: 15px; text-align: right; }
+.receivingConfirmation { position: relative; margin-top: 12px; padding: 20px 12px 10px; border: 1px dashed #333; text-align: center; }
+.receivingConfirmation p { margin: 3px 0 8px; font-size: 11px; }
+.customerCopy { position: absolute; top: -1px; left: 50%; width: max-content; padding: 4px 18px; border: 1px solid #111; background: #111; color: #fff; font-size: 11px; font-weight: 900; transform: translate(-50%, -1px); }
+.receivingSignature { display: flex; justify-content: flex-end; align-items: flex-end; gap: 8px; margin-top: 14px; font-size: 10px; font-weight: 700; }
+.receivingSignature span { width: 150px; height: 14px; border-bottom: 1px solid #444; }
+.receivingFooter { margin-top: 10px; border: 1px solid #777; }
+.receivingShop { display: grid; grid-template-columns: 1.5fr 1fr 1fr; }
+.receivingShop > div { display: grid; align-content: start; gap: 4px; min-width: 0; padding: 8px; }
+.receivingShop > div + div { border-left: 1px solid #aaa; }
+.receivingFooterNote { padding: 7px 8px; border-top: 1px solid #777; text-align: center; font-size: 10px; font-weight: 700; }
+.receivingFooterNote span { padding: 0 3px; }
+
+.notebookVoucher {
+  width: min(100%, 760px);
+  margin: 20px auto;
+  padding: 30px;
+  border: 1px solid #aeb4ba;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 12px 32px rgb(0 0 0 / 18%);
+  font: 14px/1.45 Arial, Helvetica, sans-serif;
+}
+.voucherHeader { padding-bottom: 16px; border-bottom: 2px solid #111; text-align: center; }
+.voucherBrand { font-size: 27px; font-weight: 900; }
+.voucherSubtitle { margin-top: 4px; font-size: 16px; font-weight: 800; }
+.voucherMeta, .voucherIdentity { display: grid; grid-template-columns: 1fr 1fr; margin-top: 16px; border: 1px solid #777; }
+.voucherMeta > div, .voucherIdentity > div { display: grid; gap: 5px; min-width: 0; padding: 11px 12px; }
+.voucherMeta > div + div, .voucherIdentity > div + div { border-left: 1px solid #aaa; }
+.voucherMeta b, .voucherIdentity b, .voucherTextField b, .voucherAmounts b { font-size: 11px; font-weight: 900; text-transform: uppercase; }
+.voucherMeta strong { overflow-wrap: anywhere; }
+.voucherIdentity span { overflow-wrap: anywhere; }
+.voucherTextField { display: grid; gap: 7px; margin-top: 12px; padding: 12px; border: 1px solid #777; }
+.voucherTextField > span { overflow-wrap: anywhere; white-space: pre-wrap; }
+.voucherDescription { min-height: 100px; align-content: start; }
+.voucherRemarks { min-height: 64px; align-content: start; }
+.voucherAmounts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; border: 2px solid #111; }
+.voucherAmounts > div { display: grid; gap: 6px; min-width: 0; padding: 12px; }
+.voucherAmounts > div + div { border-left: 1px solid #777; }
+.voucherAmounts strong { overflow-wrap: anywhere; font-size: 16px; }
+.voucherFooter { display: flex; justify-content: space-between; gap: 12px; margin-top: 22px; padding-top: 10px; border-top: 1px solid #777; font-size: 11px; }
+.voucherFooter span:first-child { font-weight: 900; }
+
+@media (max-width: 560px) {
+  .notebookVoucher { margin: 12px auto; padding: 18px 14px; }
+  .voucherBrand { font-size: 22px; }
+  .voucherSubtitle { font-size: 14px; }
+  .voucherMeta, .voucherIdentity { grid-template-columns: 1fr 1fr; }
+  .voucherAmounts > div { padding: 8px 6px; }
+  .voucherAmounts strong { font-size: 13px; }
+  .voucherFooter { flex-direction: column; gap: 4px; }
+  .receivingSlip { margin: 12px auto; padding: 18px 14px; }
+  .receivingBrandName { font-size: 25px; }
+  .receivingServices { gap: 5px; font-size: 9px; }
+  .receivingTitle { font-size: 15px; }
+  .receivingTokenRow { grid-template-columns: minmax(0, 1fr) 88px; gap: 8px; padding: 9px; }
+  .receivingToken strong { font-size: 28px; }
+  .receivingQr svg { width: 76px; height: 76px; }
+  .receivingDeviceSection { grid-template-columns: minmax(0, 1.2fr) minmax(110px, .8fr); gap: 7px; }
+    .receivingDeviceDetails { gap: 6px; }
+  .deviceImageArea { min-height: 155px; }
+  .receivingProblemGrid { grid-template-columns: 1fr; }
+  .receivingReady { grid-template-columns: 1fr; }
+  .receivingReady strong { text-align: left; }
+  .receivingShop { grid-template-columns: 1fr 1fr; }
+  .receivingShop > div:first-child { grid-column: 1 / -1; }
+  .receivingShop > div:last-child { border-left: 1px solid #aaa; }
+}
+
+@media print {
+  @page { size: A4 portrait; margin: 5mm; }
+  @page receivingSlipPage { size: auto; margin: 0; }
+    padding: 1.5mm !important;
+  .noPrint { display: none !important; }
+  .page { max-width: none !important; margin: 0 !important; padding: 0 !important; color: #111; }
+  .repairDetailPage > :not(.receivingSlip), .notebookDetailPage > :not(.notebookVoucher) { display: none !important; }
+  .receivingSlip {
+    page: receivingSlipPage;
+    display: block !important;
+    width: 76mm !important;
+    max-width: 76mm !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    box-sizing: border-box !important;
+    zoom: .9 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    font: 10pt/1.3 Arial, Helvetica, sans-serif !important;
+  }
+  .receivingSlip * { color: #000 !important; box-shadow: none !important; }
+  .receivingBrand { padding-bottom: 1mm; }
+  .receivingBrandName { font-size: 21pt; line-height: 1.05; }
+  .receivingBrandSubtitle { margin-top: 1mm; font-size: 11pt; }
+  .receivingServices { gap: 1.5mm; margin-top: 1.5mm; font-size: 8pt; }
+  .receivingServices i { width: 1mm; height: 1mm; background: #000 !important; }
+  .receivingTagline { margin-top: .5mm; font-size: 8.5pt; }
+  .brandLogos { gap: 2mm; padding: 1.5mm 1mm; border-color: #000; font-size: 9pt; }
+  .receivingTitle { margin-top: 2mm; padding: 2mm; border: 1.5pt solid #000; font-size: 13pt; }
+  .receivingTokenRow { grid-template-columns: minmax(0, 1fr) 28mm; gap: 3mm; margin-top: 2mm; padding: 2mm 3mm; border: 1.5pt solid #000; }
+  .receivingToken { gap: .5mm; }
+  .receivingToken span { font-size: 10pt; }
+  .receivingToken strong { font-size: 30pt; line-height: 1; }
+  .receivingQr { gap: .5mm; }
+  .receivingQr svg { width: 24mm; height: 24mm; }
+  .receivingQr span { font-size: 7.5pt; }
+  .receivingDates { gap: 2mm; margin-top: 2mm; }
+  .receivingDates > div { gap: 2mm; padding: 2mm; }
+  .receivingDates > div, .receivingCustomer, .receivingFieldBox, .receivingTextBox, .receivingAccessories, .deviceImageArea { border: 1.2pt solid #000 !important; }
+  .receivingDates b, .receivingCustomerGrid b, .receivingFieldBox > b, .receivingTextBox > b, .receivingShop b { font-size: 9pt; }
+  .receivingSectionTitle { padding: 1.5mm 2mm; border-color: #000; background: #e5e5e5 !important; font-size: 9pt; }
+  .receivingCustomer { margin-top: 2mm; }
+  .receivingCustomerGrid > div { gap: 1mm; padding: 2mm; }
+  .receivingCustomerGrid > div + div { border-color: #000; }
+  .receivingDeviceSection { grid-template-columns: minmax(0, 1.5fr) minmax(32mm, .8fr); gap: 2mm; margin-top: 2mm; }
+  .receivingDeviceDetails { gap: 1.5mm; }
+  .receivingDeviceDetails .receivingSectionTitle { border: 1.2pt solid #000; }
+  .receivingFieldBox { gap: 1mm; min-height: 0; padding: 2mm; }
+  .mobileTypeOptions { gap: 1mm 2mm; font-size: 9pt; }
+  .deviceImageArea { min-height: 0; }
+  .deviceSketch { width: 18mm; height: 27mm; border: 1.5pt solid #000; }
+  .deviceSketch span, .deviceSketch i { background: #000; }
+  .deviceSketch b { border-color: #000; }
+  .receivingProblemGrid { gap: 2mm; margin-top: 2mm; }
+  .receivingTextBox { min-height: 0; }
+  .receivingTextBox > b { padding: 1.5mm 2mm; border-color: #000; background: #e5e5e5 !important; }
+  .receivingTextBox > span { padding: 2mm; font-size: 10pt; }
+  .receivingAccessories { margin-top: 2mm; }
+  .accessoryOptions { gap: 2mm 4mm; padding: 2mm; }
+  .accessoryOptions > span { gap: 1mm; font-size: 9pt; }
+  .accessoryOptions i { width: 4mm; height: 4mm; border-color: #000; font-size: 9pt; }
+  .receivingReady { grid-template-columns: 1fr auto; gap: 2mm; margin-top: 2mm; padding: 2.5mm 3mm; border: 1.5pt solid #000; }
+  .receivingReady b { font-size: 10pt; }
+  .receivingReady strong { font-size: 12pt; }
+  .receivingConfirmation { margin-top: 3mm; padding: 5mm 3mm 2mm; border: 1.2pt dashed #000; }
+  .receivingConfirmation p { margin: 1mm 0 2mm; font-size: 9pt; }
+  .customerCopy { padding: 1mm 4mm; border: 1pt solid #000; background: #000 !important; color: #fff !important; font-size: 10pt; }
+  .receivingSignature { gap: 2mm; margin-top: 3mm; font-size: 8.5pt; }
+  .receivingSignature span { width: 38mm; height: 4mm; border-color: #000; }
+  .receivingFooter { margin-top: 2mm; border: 1.2pt solid #000; }
+  .receivingShop > div { gap: 1mm; padding: 2mm; }
+  .receivingShop > div + div { border-color: #000; }
+  .receivingShop span { font-size: 9pt; }
+  .receivingFooterNote { padding: 1mm; border-color: #000; font-size: 7.5pt; }
+  .notebookVoucher {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 7mm !important;
+    border: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    font: 10pt/1.3 Arial, Helvetica, sans-serif !important;
+    break-inside: avoid;
+  }
+  .notebookVoucher * { color: #000 !important; box-shadow: none !important; }
+  .voucherDescription { min-height: 36mm; }
+  .voucherRemarks { min-height: 22mm; }
+}

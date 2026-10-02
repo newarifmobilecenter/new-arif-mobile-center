@@ -1,0 +1,12 @@
+"use client";
+import{useEffect,useMemo,useState}from"react";import Link from"next/link";
+const money=(n:number)=>Number(n||0).toLocaleString("en-PK",{maximumFractionDigits:2});
+export default function Customers(){
+ const[c,setC]=useState<any[]>([]),[sales,setSales]=useState<any[]>([]),[repairs,setRepairs]=useState<any[]>([]),[f,setF]=useState({name:"",phone:"",address:"",notes:""});
+ const load=()=>Promise.all([fetch("/api/data?collection=customers").then(r=>r.json()),fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()),fetch("/api/repairs").then(r=>r.json())]).then(([a,b,r])=>{setC(a);setSales(b);setRepairs(Array.isArray(r)?r:[])});
+ useEffect(()=>{void load()},[]);
+ async function save(){if(!f.name)return alert("Name required");const r=await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({collection:"customers",...f})});if(!r.ok)return alert("Could not save customer");setF({name:"",phone:"",address:"",notes:""});void load()}
+ return <main className="shell"><div className="nav"><Link href="/">← Dashboard</Link><Link href="/pos">POS</Link><Link href="/ledger">Ledger</Link><Link href="/repairs">Repairs</Link></div><h1>👥 Customers</h1>
+ <div className="panel"><h2>➕ Add Customer</h2><div className="grid">{Object.entries(f).map(([k,v])=><input className="input" key={k} value={v} onChange={e=>setF({...f,[k]:e.target.value})} placeholder={k[0].toUpperCase()+k.slice(1)}/>)}</div><button className="btn green" onClick={save}>Save Customer</button></div>
+ <div className="panel"><h2>Customer List</h2><table className="table"><thead><tr><th>Name</th><th>Phone</th><th>Balance</th><th>History</th></tr></thead><tbody>{c.map(x=>{const salesDue=sales.filter(s=>String(s.customerId||"")===String(x._id)).reduce((a,s)=>a+Number(s.remaining||0),0);const repairDue=repairs.filter(r=>String(r.customerId||"")===String(x._id)).reduce((a,r)=>a+Number(r.remaining||0),0);const bal=salesDue+repairDue;return <tr key={x._id}><td><Link href={`/customers/${x._id}`}>{x.name}</Link></td><td>{x.phone||"-"}</td><td>{bal>0?<b style={{color:"#ef4444"}}>Rs. {money(bal)}</b>:<b style={{color:"#22c55e"}}>Rs. 0</b>}</td><td><Link href={`/customers/${x._id}`}>Profile / History</Link> · <Link href={`/repairs/new?customerId=${x._id}`}>New Repair</Link></td></tr>})}</tbody></table></div></main>
+}

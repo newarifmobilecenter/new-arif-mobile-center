@@ -1,0 +1,14 @@
+node_modules
+.next
+.env.local
+
+.vercel
+.env*
+
+.vs/
+
+*.zip
+_zip_restore/
+
+*.zip
+_zip_restore/
