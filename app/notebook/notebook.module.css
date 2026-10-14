@@ -234,15 +234,18 @@
   .receivingSlip {
     page: receivingSlipPage;
     display: block !important;
-    width: 76mm !important;
-    max-width: 76mm !important;
+    /* Slip scale: 0.45 = half of the old printed size (old scale was 0.9).
+       Layout width is paper width / scale so the slip still fills the 76mm roll. Change --slip-scale to resize. */
+    --slip-scale: .45;
+    width: calc(68.4mm / var(--slip-scale)) !important;
+    max-width: calc(68.4mm / var(--slip-scale)) !important;
     height: auto !important;
     max-height: none !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 2mm !important;
     box-sizing: border-box !important;
-    zoom: .9 !important;
+    zoom: var(--slip-scale) !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: #fff !important;
