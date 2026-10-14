@@ -8,7 +8,7 @@ export default function Purchases(){
  const [supplier,setSupplier]=useState(""),[search,setSearch]=useState(""),[lines,setLines]=useState<Line[]>([]);
  const [invoice,setInvoice]=useState(""),[payment,setPayment]=useState("Cash"),[paid,setPaid]=useState("");
  const [tcs,setTcs]=useState(""),[bilty,setBilty]=useState(""),[freight,setFreight]=useState(""),[other,setOther]=useState("");
- useEffect(()=>{Promise.all(["products","suppliers"].map(c=>fetch("/api/data?collection="+c).then(r=>r.json()))).then(([p,s])=>{setProducts(p);setSuppliers(s)})},[]);
+ useEffect(()=>{Promise.all(["products","suppliers"].map(c=>fetch("/api/data?collection="+c).then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]))).then(([p,s])=>{setProducts(p);setSuppliers(s)})},[]);
  const subtotal=useMemo(()=>lines.reduce((a,x)=>a+x.qty*x.costPrice,0),[lines]);
  const total=subtotal+Number(tcs||0)+Number(bilty||0)+Number(freight||0)+Number(other||0);
  const add=(p:any)=>setLines(x=>{const f=x.find(i=>i.productId===p._id);return f?x.map(i=>i.productId===p._id?{...i,qty:i.qty+1}:i):[...x,{productId:p._id,name:p.name,model:p.model,qty:1,costPrice:Number(p.costPrice||0)}]});

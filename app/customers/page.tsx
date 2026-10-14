@@ -3,7 +3,7 @@ import{useEffect,useMemo,useState}from"react";import Link from"next/link";
 const money=(n:number)=>Number(n||0).toLocaleString("en-PK",{maximumFractionDigits:2});
 export default function Customers(){
  const[c,setC]=useState<any[]>([]),[sales,setSales]=useState<any[]>([]),[repairs,setRepairs]=useState<any[]>([]),[f,setF]=useState({name:"",phone:"",address:"",notes:""});
- const load=()=>Promise.all([fetch("/api/data?collection=customers").then(r=>r.json()),fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()),fetch("/api/repairs").then(r=>r.json())]).then(([a,b,r])=>{setC(a);setSales(b);setRepairs(Array.isArray(r)?r:[])});
+ const load=()=>Promise.all([fetch("/api/data?collection=customers").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),fetch("/api/repairs").then(r=>r.json())]).then(([a,b,r])=>{setC(a);setSales(b);setRepairs(Array.isArray(r)?r:[])});
  useEffect(()=>{void load()},[]);
  async function save(){if(!f.name)return alert("Name required");const r=await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({collection:"customers",...f})});if(!r.ok)return alert("Could not save customer");setF({name:"",phone:"",address:"",notes:""});void load()}
  return <main className="shell"><div className="nav"><Link href="/">← Dashboard</Link><Link href="/pos">POS</Link><Link href="/ledger">Ledger</Link><Link href="/repairs">Repairs</Link></div><h1>👥 Customers</h1>

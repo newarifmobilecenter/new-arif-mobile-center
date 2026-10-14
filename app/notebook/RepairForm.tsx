@@ -22,6 +22,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const customerDetailsTouched = useRef(false);
+  const readyTimeTouched = useRef(false);
   const [model, setModel] = useState("");
   const [mobileType, setMobileType] = useState("Android");
   const [fault, setFault] = useState("");
@@ -77,8 +78,15 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true);
     setError("");
+    // If the form stayed open, an untouched default ready time becomes stale; refresh it to "now + 3 hours".
+    const readyValue = readyTimeTouched.current ? expectedReadyAt : localDateTime(new Date(Date.now() + 3 * 60 * 60 * 1000));
+    if (!readyTimeTouched.current) setExpectedReadyAt(readyValue);
+    if (new Date(readyValue).getTime() < Date.now()) {
+      setError("Expected ready time guzar chuka hai. Aage ki date/time chunein.");
+      return;
+    }
+    setBusy(true);
     try {
       const response = await fetch("/api/repairs", {
         method: "POST",
@@ -86,7 +94,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
         body: JSON.stringify({
           customerId: customerId || null, customerName, customerPhone, model, mobileType, fault, condition,
           accessories: receivedAccessories, imei, devicePassword,
-          expectedReadyAt: new Date(expectedReadyAt).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
+          expectedReadyAt: new Date(readyValue).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
           paymentMethod, paymentReminderDate: remaining > 0 ? reminderDate() : "", deliveryMode,
           remarks, shopkeeper: shop.shopkeeper, shopPhone: shop.phone, shopAddress: shop.address,
         }),
@@ -141,7 +149,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
     <section className={styles.formSection}>
       <h2>Expected Ready</h2>
       <div className={styles.formGrid}>
-        <label className={styles.field}>Expected ready time<input type="datetime-local" value={expectedReadyAt} onChange={(event) => setExpectedReadyAt(event.target.value)} required /></label>
+        <label className={styles.field}>Expected ready time<input type="datetime-local" value={expectedReadyAt} onChange={(event) => { readyTimeTouched.current = true; setExpectedReadyAt(event.target.value); }} required /></label>
         <label className={styles.field}>Payment reminder
           <select value={reminderPreset} onChange={(event) => setReminderPreset(event.target.value)}>
             <option value="TODAY">Today</option><option value="TOMORROW">Tomorrow</option><option value="THREE_DAYS">3 Days</option><option value="ONE_WEEK">1 Week</option><option value="CUSTOM">Custom Date</option>

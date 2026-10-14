@@ -95,7 +95,7 @@ export function normalizeRepairInput(input: any, options: { creating?: boolean; 
   if (options.creating && expectedReadyAt < receivedAt && receivedAt.getTime() - expectedReadyAt.getTime() <= 5 * 60 * 1000) {
     expectedReadyAt = new Date(receivedAt.getTime() + 3 * 60 * 60 * 1000);
   }
-  if (expectedReadyAt < receivedAt) throw new RepairValidationError("Expected ready time cannot be before the received time.");
+  if (expectedReadyAt < receivedAt) throw new RepairValidationError("Expected ready time cannot be before the received time. Choose a later date/time.");
 
   const bill = calculateRepairPayment(input.totalBill ?? input.agreedRate ?? 0, input.paid ?? 0);
   const sourceStatus = String(input.status || "RECEIVED").toUpperCase();

@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";import Link from "next/link";
 export default function SaleReturns(){const[sales,setSales]=useState<any[]>([]),[invoice,setInvoice]=useState(""),[qty,setQty]=useState("1"),[reason,setReason]=useState("Customer Return"),[msg,setMsg]=useState("");
-const load=()=>fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()).then(x=>setSales(Array.isArray(x)?x:[]));useEffect(()=>{void load()},[]);
+const load=()=>fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]).then(x=>setSales(Array.isArray(x)?x:[]));useEffect(()=>{void load()},[]);
 const sale=sales.find(x=>x.invoiceNo===invoice);const available=sale?.items||[];const [itemIndex,setItemIndex]=useState(0);const item=available[itemIndex];
 async function submit(){
   if(!sale||!item)return setMsg("Invoice aur item select karein");

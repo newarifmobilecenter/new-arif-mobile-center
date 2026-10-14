@@ -34,7 +34,7 @@ export default function Admin() {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const load = () => fetch("/api/data?collection=products").then(r => r.json()).then(x => setProducts(Array.isArray(x) ? x : []));
+  const load = () => fetch("/api/data?collection=products").then(r => r.json()).then((d:any)=>Array.isArray(d)?d:[]).then(x => setProducts(Array.isArray(x) ? x : []));
   useEffect(() => { void load(); }, []);
 
   const filtered = useMemo(() => {

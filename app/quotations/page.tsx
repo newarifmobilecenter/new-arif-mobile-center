@@ -10,7 +10,7 @@ export default function Quotations() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/data?collection=products").then((r) => r.json()).then(setProducts);
+    fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).then(setProducts);
   }, []);
 
   const shown = products.filter((x) =>

@@ -6,7 +6,7 @@ export default function Stock(){
   const[p,setP]=useState<any[]>([]),[product,setProduct]=useState(""),[qty,setQty]=useState("1"),
   [type,setType]=useState("IN"),[reason,setReason]=useState("Adjustment"),[msg,setMsg]=useState("");
 
-  const load=()=>fetch("/api/data?collection=products").then(r=>r.json()).then(x=>setP(Array.isArray(x)?x:[]));
+  const load=()=>fetch("/api/data?collection=products").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]).then(x=>setP(Array.isArray(x)?x:[]));
   useEffect(()=>{void load()},[]);
 
   async function move(){

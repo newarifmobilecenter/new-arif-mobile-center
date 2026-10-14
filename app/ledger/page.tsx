@@ -9,8 +9,8 @@ function LedgerContent(){
  const [sales,setSales]=useState<any[]>([]),[customers,setCustomers]=useState<any[]>([]),[repairs,setRepairs]=useState<any[]>([]);
  const [amount,setAmount]=useState(""),[method,setMethod]=useState("Cash"),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
  const load=()=>Promise.all([
-   fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()),
-   fetch("/api/data?collection=customers&limit=5000").then(r=>r.json()),
+   fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),
+   fetch("/api/data?collection=customers&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),
    fetch("/api/repairs").then(r=>r.json())
  ]).then(([s,c,r])=>{setSales(Array.isArray(s)?s:[]);setCustomers(Array.isArray(c)?c:[]);setRepairs(Array.isArray(r)?r:[])});
  useEffect(()=>{void load()},[]);

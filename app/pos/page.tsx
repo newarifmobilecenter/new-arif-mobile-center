@@ -62,13 +62,19 @@ export default function POS() {
   const [showHeld, setShowHeld] = useState(false);
   const [heldBills, setHeldBills] = useState<HeldBill[]>([]);
   const [done, setDone] = useState<any>(null);
+  const [loadError, setLoadError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const [p, c, s] = await Promise.all([
-      fetch("/api/data?collection=products").then((r) => r.json()),
-      fetch("/api/data?collection=customers").then((r) => r.json()),
-      fetch("/api/data?collection=sales").then((r) => r.json()).catch(() => []),
+      fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
+      fetch("/api/data?collection=customers").then(async (r) => {
+        const d = await r.json().catch(() => null);
+        if (!r.ok) { setLoadError(d?.error || "Customers load nahi ho sakay."); return []; }
+        setLoadError("");
+        return Array.isArray(d) ? d : [];
+      }).catch(() => { setLoadError("Customers load nahi ho sakay (network)."); return []; }),
+      fetch("/api/data?collection=sales").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).catch(() => []),
     ]);
     setProducts(Array.isArray(p) ? p : []);
     setCustomers(Array.isArray(c) ? c : []);
@@ -325,6 +331,7 @@ export default function POS() {
         <section className={styles.invoiceHeader}>
           <div className={styles.leftFields}>
             <label>Inv No:<input value={invoiceNo} readOnly /></label>
+            {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
             <label className={styles.wide}>Customer:
               <select id="customer" value={customer} onChange={(e) => { setCustomer(e.target.value); if (e.target.value) setSaleType("CREDIT"); }}>
                 <option value="">CASH SALES</option>

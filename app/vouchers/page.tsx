@@ -12,7 +12,7 @@ export default function Vouchers() {
   const [party, setParty] = useState("");
   const [note, setNote] = useState("");
 
-  const load = () => fetch("/api/data?collection=transactions").then((r) => r.json()).then(setTransactions);
+  const load = () => fetch("/api/data?collection=transactions").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).then(setTransactions);
   useEffect(() => { void load(); }, []);
 
   async function save() {
