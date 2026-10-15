@@ -8,17 +8,15 @@ const categories = [
   { id:"file", title:"File", icon:"📁", items:[
     ["1. Add Product","Naya product aur uski details darj karein","/admin"],
     ["2. Add Customer","Customer ka naam aur contact add karein","/customers"],
-    ["3. Change Product Cost","Product ki cost aur retail price update karein","/admin"],
-    ["Backup & Restore","Business data ka backup lein ya restore karein","/backup"],
-    ["Settings","App ki settings dekhein","/settings"],
+    ["3. Change Product Cost","Product Definition mein product select karke Cost update karein","/admin"],
   ]},
   { id:"sale", title:"Sale", icon:"🛒", items:[
     ["1. New Sale","POS par nayi sale banayein","/pos"],
-    ["2. Sales Report","Sales aur profit ka khulasa","/reports"],
-    ["3. Sales Report by Date","Date range ke mutabiq sale dekhein","/reports"],
-    ["4. Sales Report by Category","Category wise sale report","/reports"],
+    ["2. Sales Report","Sales totals aur profit dekhein","/reports"],
+    ["3. Sales Report by Date","Reports mein date range select karein","/reports"],
+    ["4. Sales Report by Category","Reports ke category/item report options kholen","/reports"],
     ["5. Mobile Repair Report","Repair records aur status dekhein","/repairs"],
-    ["6. Customer Sales Report","Customer ki sales aur balance dekhein","/sales"],
+    ["6. Customer Sales Report","Customer list se customer ki sales history kholen","/customers"],
     ["Sales History","Purani sales, invoice aur payment dekhein","/sales"],
     ["Sale Return","Returned items aur refund record karein","/sales/returns"],
     ["Quotations","Estimate banayein aur baad mein sale karein","/quotations"],
@@ -27,33 +25,28 @@ const categories = [
     ["New Purchase","Supplier se aayi stock entry karein","/purchases"],
     ["Purchase History","Purani purchase aur payments dekhein","/purchases/history"],
     ["Purchase Return","Supplier ko stock wapas record karein","/purchases/returns"],
-    ["Purchase Summary","Purchase totals aur payable dekhein","/reports"],
   ]},
   { id:"inventory", title:"Inventory", icon:"📦", items:[
     ["Product List","Products, SKU aur prices manage karein","/admin"],
     ["Stock Dashboard","Current stock aur stock value dekhein","/stock"],
-    ["Stock In / Out","Stock ki manual movement record karein","/stock"],
-    ["Damaged / Expired Stock","Reason ke saath stock adjustment karein","/stock"],
-    ["Stock Movement Report","Stock ki aamad-o-raft dekhein","/stock"],
+    ["Stock Report","Maujooda stock dekhein","/stock"],
   ]},
   { id:"customer", title:"Customer", icon:"👤", items:[
     ["Add / Find Customer","Customer record add ya search karein","/customers"],
     ["Customer Ledger","Customer ka hisaab aur baki dekhein","/ledger"],
-    ["Customer Sales","Customer ki invoices dekhein","/sales"],
-    ["Receive Customer Payment","Customer payment aur balance record karein","/ledger"],
+    ["Customer Sales / History","Customer select karke sales aur ledger history dekhein","/customers"],
   ]},
   { id:"supplier", title:"Supplier", icon:"🤝", items:[
     ["Supplier List","Supplier add karein aur account dekhein","/suppliers"],
-    ["Supplier Ledger","Supplier ka hisaab aur baki dekhein","/ledger?type=supplier"],
     ["Purchase from Supplier","Nayi supplier purchase record karein","/purchases"],
-    ["Supplier Payment","Vouchers mein supplier payment record karein","/vouchers"],
+    ["Purchase History","Purani purchases dekhein","/purchases/history"],
   ]},
   { id:"reports", title:"Reports", icon:"📊", items:[
     ["Daily Summary","Sale, purchase, cash aur expense ka summary","/reports"],
-    ["Date Wise Report","Apni date range select karke totals dekhein","/reports"],
-    ["Category / Item Sales","Sales aur profit reports","/reports"],
-    ["Customer / Supplier Balances","Ledgers aur baqi raqam","/ledger"],
-    ["Stock & Account Reports","Stock movement aur account totals","/stock"],
+    ["Date Wise Summary","From/To date select karke totals dekhein","/reports"],
+    ["Item / Category Report Options","Reports page par available report options dekhein","/reports"],
+    ["Customer Ledger","Customer balances aur entries dekhein","/ledger"],
+    ["Stock Report","Current stock dekhein","/stock"],
   ]},
   { id:"expense", title:"Expense", icon:"💸", items:[
     ["Add Expense","Naya kharcha aur category record karein","/expenses"],
@@ -91,13 +84,6 @@ const categories = [
   ]},
 ] as const;
 
-const shortcuts = [
-  ["🛒", "Sale", "/pos"], ["🧾", "Purchase", "/purchases"],
-  ["🧮", "Vouchers", "/vouchers"], ["📒", "Cash Book", "/ledger"],
-  ["📦", "Inventory", "/stock"], ["🤝", "Supplier", "/suppliers"],
-  ["👤", "Customer", "/customers"], ["📊", "Report", "/reports"],
-] as const;
-
 export default function Home(){
  const [activeCategory, setActiveCategory] = useState<string | null>(null);
  const selected = categories.find(category => category.id === activeCategory);
@@ -105,8 +91,7 @@ export default function Home(){
  return <main className="shell dashboardHome">
   <section className="hero dashboardHero"><div><div className="eyebrow">NEW ARIF MOBILE CENTER</div><h1>Business Dashboard</h1><p className="muted">Kaam ki category chunein, phir uska option kholen</p></div><div className="icon">📱</div></section>
   <nav className="dashboardMenu" aria-label="Main menu">{categories.map(category=><button type="button" key={category.id} className={activeCategory===category.id?"dashboardMenuButton active":"dashboardMenuButton"} aria-expanded={activeCategory===category.id} aria-controls="dashboardCategoryPanel" onClick={()=>setActiveCategory(activeCategory===category.id?null:category.id)}><span aria-hidden="true">{category.icon}</span>{category.title}</button>)}</nav>
-  <section className="dashboardShortcuts" aria-label="Quick shortcuts">{shortcuts.map(([icon,label,href])=><Link href={href} className="dashboardShortcut" key={label}><span className="shortcutIcon" aria-hidden="true">{icon}</span><span>{label}</span></Link>)}</section>
   {selected&&<section className="panel dashboardCategoryPanel" id="dashboardCategoryPanel"><div className="dashboardCategoryHeading"><h2>{selected.icon} {selected.title}</h2><button type="button" className="dashboardClose" onClick={()=>setActiveCategory(null)} aria-label="Close menu">×</button></div><div className="dashboardActionGrid">{selected.items.map(([title,description,href])=><Link href={href} className="dashboardAction" key={title}><span className="dashboardActionTitle">{title}</span><span className="muted">{description}</span><span className="go">Open →</span></Link>)}</div>{selected.id==="slips"&&<RepairReminderSummary/>}</section>}
-  {!selected&&<p className="dashboardHint">Upar se category chunein ya foran kaam ke liye shortcut par click karein.</p>}
+  {!selected&&<p className="dashboardHint">Upar category par click karein; us category ke options yahin khulenge.</p>}
  </main>
 }
