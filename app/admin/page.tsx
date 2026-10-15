@@ -62,6 +62,9 @@ export default function Admin() {
     ]);
     setProducts(Array.isArray(p) ? p : []);
     setOptions(Array.isArray(o) ? o : []);
+    const existingCodes = (Array.isArray(p) ? p : []).map((product: any) => String(product.code ?? product.sku ?? "").trim()).filter((code: string) => /^\d+$/.test(code)).map(Number);
+    const suggestedCode = String(Math.max(0, ...existingCodes) + 1).padStart(4, "0");
+    setForm(current => current.code ? current : { ...current, code: suggestedCode, barcode: suggestedCode });
   };
   useEffect(() => { void load(); }, []);
 
@@ -126,7 +129,7 @@ export default function Admin() {
 
   function newProduct() {
     setSelectedId("");
-    const numericCodes = products.map(p => String(p.code ?? "").trim()).filter(code => /^\d+$/.test(code)).map(Number);
+    const numericCodes = products.map(p => String(p.code ?? p.sku ?? "").trim()).filter(code => /^\d+$/.test(code)).map(Number);
     const nextCode = String(Math.max(0, ...numericCodes) + 1).padStart(4, "0");
     setForm({ ...blank, code: nextCode, barcode: nextCode });
     setTab("New Product");
