@@ -24,6 +24,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   const customerDetailsTouched = useRef(false);
   const readyTimeTouched = useRef(false);
   const [model, setModel] = useState("");
+  const [tokenNo, setTokenNo] = useState("C1000");
   const [mobileType, setMobileType] = useState("Android");
   const [fault, setFault] = useState("");
   const [condition, setCondition] = useState("");
@@ -49,7 +50,10 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
       fetch("/api/repairs/meta").then((response) => response.json()),
     ]).then(([customerData, shopData]) => {
       setCustomers(Array.isArray(customerData) ? customerData : []);
-      if (shopData && !shopData.error) setShop((current) => ({ ...current, ...shopData }));
+      if (shopData && !shopData.error) {
+        setShop((current) => ({ ...current, ...shopData }));
+        if (shopData.nextToken) setTokenNo(String(shopData.nextToken));
+      }
     }).catch(() => setError("Customer or shop information could not be loaded."));
   }, []);
 
@@ -92,7 +96,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: customerId || null, customerName, customerPhone, model, mobileType, fault, condition,
+          customerId: customerId || null, customerName, customerPhone, tokenNo, model, mobileType, fault, condition,
           accessories: receivedAccessories, imei, devicePassword,
           expectedReadyAt: new Date(readyValue).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
           paymentMethod, paymentReminderDate: remaining > 0 ? reminderDate() : "", deliveryMode,
@@ -124,6 +128,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
     <section className={styles.formSection}>
       <h2>Mobile</h2>
       <div className={styles.formGrid}>
+        <label className={styles.field}>Receiving Serial No.<input value={tokenNo} onChange={(event) => setTokenNo(event.target.value.toUpperCase())} maxLength={13} pattern="C[0-9]{1,12}" title="Use C followed by 1 to 12 digits, e.g. C1000." placeholder="C1000" required /></label>
         <label className={styles.field}>Mobile Model<input value={model} onChange={(event) => setModel(event.target.value)} maxLength={120} required /></label>
         <label className={styles.field}>Mobile Type<select value={mobileType} onChange={(event) => setMobileType(event.target.value)}>{mobileTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
       </div>

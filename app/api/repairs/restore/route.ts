@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getSession, hasRole } from "@/lib/auth";
 import { db } from "@/lib/mongodb";
-import { ensureRepairIndexes, normalizeRepairInput, REPAIR_COUNTER_COLLECTION, REPAIR_REMINDER_COLLECTION, RepairValidationError } from "@/lib/repairs";
+import { ensureRepairIndexes, normalizeRepairInput, REPAIR_COUNTER_COLLECTION, REPAIR_REMINDER_COLLECTION, REPAIR_TOKEN_COUNTER_ID, RepairValidationError } from "@/lib/repairs";
 
 export const runtime = "nodejs";
 
@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     let skipped = 0;
     const errors: string[] = [];
     let highestToken = Number.isSafeInteger(Number(body.counterValue)) && Number(body.counterValue) >= 1007 ? Number(body.counterValue) : 1007;
+    let highestCToken = 999;
 
     for (let index = 0; index < body.repairs.length; index += 1) {
       const source = body.repairs[index];
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
           receivedAt: source.receivedAt || source.createdAt,
         }, { allowUnlinked: true, legacyBackup: true });
         const tokenNo = String(source.tokenNo || "").trim();
-        if (!/^P\d{1,12}$/i.test(tokenNo)) throw new RepairValidationError("Backup contains an invalid repair token.");
+        if (!/^[PC]\d{1,12}$/i.test(tokenNo)) throw new RepairValidationError("Backup contains an invalid repair token.");
         const tokenValue = Number(tokenNo.slice(1));
         if (!Number.isSafeInteger(tokenValue)) throw new RepairValidationError("Backup contains an invalid repair token.");
         const id = ObjectId.isValid(String(source._id || "")) ? new ObjectId(source._id) : new ObjectId();
@@ -74,7 +75,8 @@ export async function POST(request: NextRequest) {
         };
         await repairsCollection.insertOne(document);
         imported += 1;
-        highestToken = Math.max(highestToken, tokenValue);
+        if (tokenNo[0].toUpperCase() === "C") highestCToken = Math.max(highestCToken, tokenValue);
+        else highestToken = Math.max(highestToken, tokenValue);
       } catch (error: any) {
         skipped += 1;
         if (error?.code !== 11000) errors.push(`Repair ${index + 1}: ${error?.message || "Invalid repair."}`);
@@ -87,6 +89,12 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       if (error?.code !== 11000) throw error;
       await counterCollection.updateOne({ _id: "mobile-repair-token" }, { $max: { value: highestToken } });
+    }
+    try {
+      await counterCollection.updateOne({ _id: REPAIR_TOKEN_COUNTER_ID }, { $max: { value: highestCToken } }, { upsert: true });
+    } catch (error: any) {
+      if (error?.code !== 11000) throw error;
+      await counterCollection.updateOne({ _id: REPAIR_TOKEN_COUNTER_ID }, { $max: { value: highestCToken } });
     }
 
     let remindersImported = 0;

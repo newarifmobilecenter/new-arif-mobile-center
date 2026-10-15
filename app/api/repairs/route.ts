@@ -4,11 +4,13 @@ import { getSession, hasRole } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 import {
   calculateRepairPayment,
+  advanceRepairTokenCounter,
   escapeRegex,
   ensureRepairIndexes,
   generateRepairToken,
   getRepairShopkeepers,
   normalizeRepairInput,
+  normalizeRepairToken,
   RepairValidationError,
   REPAIR_STATES,
   toRepairListItem,
@@ -64,7 +66,9 @@ export async function POST(req: NextRequest){
     const shopkeeper=normalized.shopkeeper||session.u;
     if(!shopkeepers.includes(shopkeeper))return NextResponse.json({error:"Select an authorized shopkeeper."},{status:400});
     const settings=await d.collection("settings").findOne({});
-    const token=await generateRepairToken();
+    const requestedToken=normalizeRepairToken(b.tokenNo);
+    const token=requestedToken||await generateRepairToken();
+    if(requestedToken)await advanceRepairTokenCounter(requestedToken);
     const now=new Date();
     const doc={
       ...normalized,
@@ -99,7 +103,8 @@ export async function POST(req: NextRequest){
     return NextResponse.json(saved?{...saved,_id:saved._id.toString()}:null,{status:201});
   }catch(e:any){
     const status=e instanceof RepairValidationError?400:e?.code===11000?409:500;
-    return NextResponse.json({error:e?.message||"Repair could not be saved."},{status});
+    const message=e?.code===11000?"That receiving serial number is already in use. Choose another serial number.":e?.message||"Repair could not be saved.";
+    return NextResponse.json({error:message},{status});
   }
 }
 export async function PATCH(req:NextRequest){
