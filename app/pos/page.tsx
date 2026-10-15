@@ -53,6 +53,8 @@ export default function POS() {
   const [invoiceNo, setInvoiceNo] = useState(nextInvoice);
   const [barcode, setBarcode] = useState("");
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [brandTypeFilter, setBrandTypeFilter] = useState("");
   const [pay, setPay] = useState("Cash");
   const [paid, setPaid] = useState("");
   const [freight, setFreight] = useState("0");
@@ -302,8 +304,10 @@ export default function POS() {
 
   const visibleProducts = products.filter((p) => {
     const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""}`.toLowerCase();
-    return Number(p.stock || 0) > 0 && text.includes(search.toLowerCase());
+    return Number(p.stock || 0) > 0 && text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
   });
+  const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
+  const brandTypes = Array.from(new Set(products.filter((p) => !categoryFilter || p.category === categoryFilter).map((p) => String(p.brandType || "").trim()).filter(Boolean))).sort();
 
   return (
     <main className="shell">
@@ -385,6 +389,10 @@ export default function POS() {
         )}
 
         <section className={styles.productSearch}>
+          <div className={styles.productFilters}>
+            <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+            <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
+          </div>
           <input className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Product / Model / SKU / Barcode..." />
           <div className={styles.productStrip}>
             {visibleProducts.slice(0, 12).map((p) => (
