@@ -143,7 +143,7 @@ export async function PATCH(req:NextRequest){
       receivedAt:current.receivedAt,
       expectedReadyAt:changes.expectedReadyAt??current.expectedReadyAt,
       paymentReminderDate:changes.paymentReminderDate??currentReminderDate,
-    },{creating:false});
+    },{creating:false,allowUnlinked:true});
     if(changes.shopkeeper!==undefined&&!getRepairShopkeepers().includes(normalized.shopkeeper))return NextResponse.json({error:"Select an authorized shopkeeper."},{status:400});
     let delivery=current.delivery||null;
     if(nextStatus==="DELIVERED"&&current.status!=="DELIVERED"){
