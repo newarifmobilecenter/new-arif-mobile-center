@@ -30,6 +30,18 @@ const blank: Form = {
 
 function num(v: string) { return Number(v || 0); }
 
+function Field({ label, value, onChange, type = "text", className = "" }: { label: string; value: string; onChange: (value: string) => void; type?: string; className?: string }) {
+  return <label className={`${styles.field} ${className}`}><span>{label}</span><input value={value} type={type} onChange={e => onChange(e.target.value)} /></label>;
+}
+
+function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  return <label className={styles.field}><span>{label}</span><select value={value} onChange={e => onChange(e.target.value)}><option value="">Select {label}</option>{options.map(x => <option key={x} value={x}>{x}</option>)}</select></label>;
+}
+
+function SelectWithN({ label, value, options, onChange, onAdd }: { label: string; value: string; options: string[]; onChange: (value: string) => void; onAdd: () => void }) {
+  return <div className={styles.selectRow}><Select label={label} value={value} options={options} onChange={onChange}/><button type="button" className={styles.nBtn} aria-label={`Add ${label}`} onClick={onAdd}>N</button></div>;
+}
+
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("New Product");
   const [products, setProducts] = useState<any[]>([]);
@@ -38,6 +50,10 @@ export default function Admin() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [brandManagerOpen, setBrandManagerOpen] = useState(false);
+  const [brandManagerTab, setBrandManagerTab] = useState<"new" | "list">("new");
+  const [brandDraft, setBrandDraft] = useState("");
+  const [brandCategory, setBrandCategory] = useState(cats[0]);
 
   const load = async () => {
     const [p, o] = await Promise.all([
@@ -64,6 +80,13 @@ export default function Admin() {
   const set = (k: keyof Form, v: string) => setForm(f => ({ ...f, [k]: v, ...(k === "category" ? { brand: "", brandType: "" } : {}) }));
 
   async function addOption(type: string, label: string) {
+    if (type === "brand") {
+      setBrandDraft("");
+      setBrandCategory(form.category);
+      setBrandManagerTab("new");
+      setBrandManagerOpen(true);
+      return;
+    }
     const name = window.prompt(`Naya ${label} name likhein:`)?.trim();
     if (!name) return;
     const category = type === "category" ? "" : form.category;
@@ -80,13 +103,31 @@ export default function Admin() {
     else setForm(f => ({ ...f, [type]: name }));
   }
 
+  async function saveBrand() {
+    const name = brandDraft.trim();
+    if (!name) { window.alert("Brand ka naam likhein."); return; }
+    const exists = options.some(option => option.type === "brand" && option.category === brandCategory && String(option.name || "").trim().toLowerCase() === name.toLowerCase());
+    if (exists) { window.alert("Yeh brand is category mein pehle se mojood hai."); return; }
+    const response = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "productOptions", type: "brand", name, category: brandCategory }) });
+    if (!response.ok) { window.alert("Brand save nahi hua."); return; }
+    await load();
+    setForm(f => ({ ...f, category: brandCategory, brand: name }));
+    setBrandManagerOpen(false);
+  }
+
+  function chooseBrand(name: string, category: string) {
+    setForm(f => ({ ...f, category, brand: name }));
+    setBrandManagerOpen(false);
+  }
+
   function updateField(k: keyof Form, value: string) {
     setForm(current => ({ ...current, [k]: value, ...(k === "code" && current.barcode === current.code ? { barcode: value } : {}) }));
   }
 
   function newProduct() {
     setSelectedId("");
-    const nextCode = String(Math.max(0, ...products.map(p => Number(p.code) || 0)) + 1);
+    const numericCodes = products.map(p => String(p.code ?? "").trim()).filter(code => /^\d+$/.test(code)).map(Number);
+    const nextCode = String(Math.max(0, ...numericCodes) + 1).padStart(4, "0");
     setForm({ ...blank, code: nextCode, barcode: nextCode });
     setTab("New Product");
   }
@@ -124,12 +165,6 @@ export default function Admin() {
     await load();
   }
 
-  const Field = ({ label, k, type = "text", className = "" }: { label: string; k: keyof Form; type?: string; className?: string }) => (
-    <label className={`${styles.field} ${className}`}><span>{label}</span><input value={form[k]} type={type} onChange={e => updateField(k, e.target.value)} /></label>
-  );
-  const Select = ({ label, k, options }: { label: string; k: keyof Form; options: string[] }) => <label className={styles.field}><span>{label}</span><select value={form[k]} onChange={e => set(k, e.target.value)}><option value="">Select {label}</option>{options.map(x => <option key={x} value={x}>{x}</option>)}</select></label>;
-  const SelectWithN = ({ label, k, type, options }: { label: string; k: keyof Form; type: string; options: string[] }) => <div className={styles.selectRow}><Select label={label} k={k} options={options}/><button type="button" className={styles.nBtn} aria-label={`Add ${label}`} onClick={() => void addOption(type, label)}>N</button></div>;
-
   return <main className={styles.page}>
     <header className={styles.titlebar}><div>▣ <b>New Item - New Arif Mobile Center</b></div><div className={styles.user}>Product Management</div></header>
     <nav className={styles.tabs}>{tabs.map(t => <button key={t} className={tab === t ? styles.activeTab : ""} onClick={() => setTab(t)}>{t}</button>)}</nav>
@@ -138,23 +173,23 @@ export default function Admin() {
       <section className={styles.heading}><h1>▣ Product Definition</h1><input type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></section>
       <section className={styles.formPanel}>
         <div className={styles.left}>
-          <Field label="Code" k="code" />
-          <Field label="Barcode" k="barcode" />
-          <Field label="Product Name" k="name" />
-          <SelectWithN label="Make / Brand" k="brand" type="brand" options={choices("brand")}/>
-          <SelectWithN label="Category" k="category" type="category" options={choices("category", "")}/>
-          <SelectWithN label="Brand Type" k="brandType" type="brandType" options={choices("brandType")}/>
-          <SelectWithN label="Bin Location" k="bin" type="bin" options={choices("bin")}/>
-          <SelectWithN label="Item Type" k="itemType" type="itemType" options={choices("itemType")}/>
-          <SelectWithN label="Product Group" k="productGroup" type="productGroup" options={choices("productGroup")}/>
-          <SelectWithN label="UOM" k="uom" type="uom" options={choices("uom")}/>
+          <Field label="Code" value={form.code} onChange={v => updateField("code", v)} />
+          <Field label="Barcode" value={form.barcode} onChange={v => updateField("barcode", v)} />
+          <Field label="Product Name" value={form.name} onChange={v => updateField("name", v)} />
+          <SelectWithN label="Make / Brand" value={form.brand} options={choices("brand")} onChange={v => set("brand", v)} onAdd={() => void addOption("brand", "Make / Brand")}/>
+          <SelectWithN label="Category" value={form.category} options={choices("category", "")} onChange={v => set("category", v)} onAdd={() => void addOption("category", "Category")}/>
+          <SelectWithN label="Brand Type" value={form.brandType} options={choices("brandType")} onChange={v => set("brandType", v)} onAdd={() => void addOption("brandType", "Brand Type")}/>
+          <SelectWithN label="Bin Location" value={form.bin} options={choices("bin")} onChange={v => set("bin", v)} onAdd={() => void addOption("bin", "Bin Location")}/>
+          <SelectWithN label="Item Type" value={form.itemType} options={choices("itemType")} onChange={v => set("itemType", v)} onAdd={() => void addOption("itemType", "Item Type")}/>
+          <SelectWithN label="Product Group" value={form.productGroup} options={choices("productGroup")} onChange={v => set("productGroup", v)} onAdd={() => void addOption("productGroup", "Product Group")}/>
+          <SelectWithN label="UOM" value={form.uom} options={choices("uom")} onChange={v => set("uom", v)} onAdd={() => void addOption("uom", "UOM")}/>
         </div>
         <div className={styles.right}>
-          <div className={styles.two}><Field label="Cost" k="costPrice" type="number"/><Field label="Retail" k="price" type="number"/></div>
-          <Field label="W.Rate" k="wholesale" type="number"/>
-          <div className={styles.branchBox}><Field label="Branch Code" k="branch"/><Field label="Open Qty" k="openingQty" type="number"/></div>
-          <Field label="SKU / Part No" k="sku" />
-          <Field label="Warranty Days" k="warrantyDays" type="number" />
+          <div className={styles.two}><Field label="Cost" value={form.costPrice} onChange={v => updateField("costPrice", v)} type="number"/><Field label="Retail" value={form.price} onChange={v => updateField("price", v)} type="number"/></div>
+          <Field label="W.Rate" value={form.wholesale} onChange={v => updateField("wholesale", v)} type="number"/>
+          <div className={styles.branchBox}><Field label="Branch Code" value={form.branch} onChange={v => updateField("branch", v)}/><Field label="Open Qty" value={form.openingQty} onChange={v => updateField("openingQty", v)} type="number"/></div>
+          <Field label="SKU / Part No" value={form.sku} onChange={v => updateField("sku", v)} />
+          <Field label="Warranty Days" value={form.warrantyDays} onChange={v => updateField("warrantyDays", v)} type="number" />
         </div>
       </section>
       <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"}</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={newProduct}>＋ New</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
@@ -167,5 +202,7 @@ export default function Admin() {
     {tab === "Multi Supplier" && <section className={styles.simplePanel}><h2>Multi Supplier</h2><p className={styles.muted}>Supplier details product ke saath maintain karne ke liye.</p><div className={styles.supplierGrid}><input placeholder="Supplier Name"/><input placeholder="Supplier Code"/><input placeholder="Purchase Rate" type="number"/><input placeholder="Supplier Item Code"/><button className={styles.save}>＋ Add Supplier</button></div></section>}
 
     {tab === "Price Level" && <section className={styles.simplePanel}><h2>Price Level</h2><p className={styles.muted}>Retail aur wholesale ke saath additional sale levels set karein.</p><div className={styles.levelGrid}>{["Level 0", "Level 1", "Level 2", "Level 3"].map((x,i) => <div className={styles.levelCard} key={x}><b>{x}</b><input placeholder="Price" type="number"/><input placeholder="Discount %" type="number" defaultValue={i === 0 ? 0 : ""}/></div>)}</div></section>}
+    {brandManagerOpen && <div className={styles.brandModalBackdrop} role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setBrandManagerOpen(false); }}><section className={styles.brandModal} role="dialog" aria-modal="true" aria-labelledby="brand-manager-title"><header className={styles.brandModalHeader}><h2 id="brand-manager-title">Brand Management</h2><button type="button" onClick={() => setBrandManagerOpen(false)} aria-label="Close">×</button></header><nav className={styles.brandModalTabs}><button type="button" className={brandManagerTab === "new" ? styles.brandModalTabActive : ""} onClick={() => setBrandManagerTab("new")}>1. Enter New Brand</button><button type="button" className={brandManagerTab === "list" ? styles.brandModalTabActive : ""} onClick={() => setBrandManagerTab("list")}>2. Category List</button></nav>{brandManagerTab === "new" ? <div className={styles.brandModalContent}><label className={styles.brandModalField}><span>Category</span><select value={brandCategory} onChange={event => setBrandCategory(event.target.value)}>{choices("category", "").map(category => <option key={category} value={category}>{category}</option>)}</select></label><label className={styles.brandModalField}><span>Brand Name</span><input autoFocus value={brandDraft} onChange={event => setBrandDraft(event.target.value)} placeholder="Enter brand name" /></label><footer className={styles.brandModalActions}><button type="button" onClick={() => setBrandManagerOpen(false)}>Cancel</button><button type="button" className={styles.brandModalSave} onClick={() => void saveBrand()}>Save Brand</button></footer></div> : <div className={styles.brandModalContent}><div className={styles.brandCategoryList}>{choices("category", "").map(category => { const categoryBrands = Array.from(new Set([...options.filter(option => option.type === "brand" && option.category === category).map(option => String(option.name || "").trim()), ...products.filter(product => product.category === category && product.brand).map(product => String(product.brand).trim())].filter(Boolean))).sort((a, b) => a.localeCompare(b)); return <section className={styles.brandCategoryGroup} key={category}><h3>{category}</h3>{categoryBrands.length ? <div className={styles.brandChips}>{categoryBrands.map(name => <button type="button" key={name} onClick={() => chooseBrand(name, category)}>{name}</button>)}</div> : <p>No saved brands</p>}</section>; })}</div></div>}</section></div>}
   </main>;
 }
+
