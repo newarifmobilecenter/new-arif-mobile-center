@@ -224,6 +224,33 @@
   .receivingShop > div:last-child { border-left: 1px solid #aaa; }
 }
 
+/* Dense layouts for repair, notebook, and ledger screens. */
+.panel { margin-top: 10px; padding: 12px; }
+.nav { gap: 8px; margin-bottom: 10px; }
+.actions { gap: 6px; }
+.filters { gap: 8px; }
+.formGrid { gap: 10px; }
+.field { gap: 4px; }
+.field input, .field select, .field textarea { padding: 8px 9px; }
+.field textarea { min-height: 82px; }
+.readonly { min-height: 34px; padding: 7px 9px; }
+.toolbar { gap: 8px; margin-top: 12px; }
+.button, .buttonSecondary, .buttonDanger { min-height: 34px; padding: 7px 11px; }
+.table th, .table td { padding: 7px 8px; }
+.formSection { padding: 11px 0; }
+.formSection h2 { margin-bottom: 9px; font-size: 16px; }
+.formSection[open] summary { margin-bottom: 9px; }
+.balanceSummary { gap: 8px; }
+.balanceValue { font-size: 17px; }
+.historyList { gap: 6px; margin-top: 9px; }
+.historyItem { padding: 8px; }
+.empty { padding: 18px 8px; }
+
+/* Keep print-only slips and vouchers out of the on-screen page flow. */
+@media screen {
+  .receivingSlip, .notebookVoucher { display: none; }
+}
+
 @media print {
   @page { size: A4 portrait; margin: 5mm; }
   @page receivingSlipPage { size: auto; margin: 0; }

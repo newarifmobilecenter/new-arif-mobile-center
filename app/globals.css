@@ -10,3 +10,39 @@
 .appAuthButton:disabled{opacity:.6;cursor:wait}
 .appAuthError{position:absolute;right:16px;top:100%;padding:8px 12px;border:1px solid #7f1d1d;border-radius:0 0 6px 6px;background:#2b1016;color:#fecaca;font-size:12px}
 @media print{.appAuthBar{display:none!important}}
+
+/* Compact application layout: use wide screens efficiently and reduce vertical scrolling. */
+body{font-size:14px}
+.shell{max-width:1600px;padding:16px 14px 24px}
+.hero{gap:14px;padding:16px;border-radius:12px}
+h1{font-size:30px;margin:2px 0 6px}
+.grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:12px}
+.card{min-height:128px;padding:14px;border-radius:12px}
+.card h2{margin:9px 0 5px}
+.icon{font-size:25px}
+.panel{padding:14px;margin-top:12px;border-radius:12px}
+.input,select,textarea{padding:9px 10px;border-radius:7px}
+.btn{padding:9px 12px;border-radius:8px}
+.nav{gap:8px;margin-bottom:10px}
+.table th,.table td{padding:7px}
+.appAuthInner{max-width:1600px;min-height:44px;padding:5px 14px;gap:12px}
+.appAuthActions{gap:8px}
+.appAuthButton{min-height:32px;padding:5px 11px}
+
+/* The dashboard is a navigation hub, so keep its sections and links on fewer rows. */
+.dashboardGroups{margin-top:8px}
+.dashboardGroups>.panel{margin-top:8px;padding:10px 12px;border-radius:10px}
+.dashboardGroups>.panel>h2{font-size:17px;line-height:1.15;margin:0 0 7px}
+.dashboardGroups .grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:0}
+.dashboardGroups .card{display:flex;flex-direction:column;justify-content:center;min-height:72px;height:72px;padding:8px 10px;border-radius:9px}
+.dashboardGroups .card h2,.dashboardGroups .card h3{font-size:14px;line-height:1.15;margin:0 0 4px}
+.dashboardGroups .card p{display:none}
+.dashboardGroups .card .go{font-size:11px;line-height:1}
+.shell:has(.dashboardGroups){padding-top:10px}
+.shell:has(.dashboardGroups) .hero{min-height:76px;padding:12px 16px}
+.shell:has(.dashboardGroups) .hero h1{font-size:26px;margin:2px 0 4px}
+.shell:has(.dashboardGroups) .hero .eyebrow{font-size:12px;letter-spacing:1.4px}
+.shell:has(.dashboardGroups) .hero .muted{margin:0;font-size:12px}
+@media(max-width:1050px){.dashboardGroups .grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.shell{padding:12px 10px 18px}.dashboardGroups .grid{grid-template-columns:repeat(2,minmax(0,1fr))}.shell:has(.dashboardGroups) .hero h1{font-size:22px}}
+@media(max-width:480px){.dashboardGroups .grid{grid-template-columns:1fr}.dashboardGroups .card{height:62px;min-height:62px}.appAuthInner{padding:5px 10px}.appAuthBrand{font-size:12px}}
