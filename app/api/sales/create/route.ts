@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
   const items = Array.isArray(body.items) ? body.items : [];
   if (!items.length) return NextResponse.json({ error: "At least one item is required." }, { status: 400 });
-  if (items.some((item:any) => !Number.isInteger(Number(item.qty)) || Number(item.qty) <= 0 || !Number.isFinite(Number(item.price)) || Number(item.price) < 0)) {
-    return NextResponse.json({ error: "Each item must have a positive whole quantity and a valid non-negative price." }, { status: 400 });
+  if (items.some((item:any) => !Number.isInteger(Number(item.qty)) || Number(item.qty) <= 0 || !Number.isFinite(Number(item.price)) || Number(item.price) < 0 || !Number.isFinite(Number(item.discountPct ?? 0)) || Number(item.discountPct ?? 0) < 0 || Number(item.discountPct ?? 0) > 100)) {
+    return NextResponse.json({ error: "Each item needs a positive whole quantity, a valid price, and a discount from 0 to 100 percent." }, { status: 400 });
   }
 
   const num = (v:any) => {
@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Freight, percentages, and paid amount must be valid non-negative values; discount cannot exceed 100%." }, { status: 400 });
   }
   const subtotal = items.reduce((sum:any, i:any) => sum + num(i.qty) * num(i.price), 0);
-  const discountAmount = subtotal * discountPct / 100;
+  const lineDiscountAmount = items.reduce((sum:any, i:any) => sum + num(i.qty) * num(i.price) * num(i.discountPct) / 100, 0);
+  const globalDiscountAmount = Math.max(0, subtotal - lineDiscountAmount) * discountPct / 100;
+  const discountAmount = lineDiscountAmount + globalDiscountAmount;
   const taxable = Math.max(0, subtotal - discountAmount + freight);
   const salesTaxValue = taxable * salesTaxPct / 100;
   const netTotal = Math.max(0, taxable + salesTaxValue);
@@ -53,7 +55,9 @@ export async function POST(req: NextRequest) {
     ...i,
     qty: num(i.qty),
     price: num(i.price),
-    total: num(i.qty) * num(i.price),
+    discountPct: num(i.discountPct),
+    discountAmount: num(i.qty) * num(i.price) * num(i.discountPct) / 100,
+    total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100),
   }));
 
   const session = client.startSession();
@@ -85,6 +89,8 @@ export async function POST(req: NextRequest) {
         items: normalizedItems,
         subtotal,
         discountAmount,
+        lineDiscountAmount,
+        globalDiscountAmount,
         discountPct,
         freight,
         salesTaxValue,
@@ -122,6 +128,8 @@ export async function POST(req: NextRequest) {
       items: normalizedItems,
       subtotal,
       discountAmount,
+      lineDiscountAmount,
+      globalDiscountAmount,
       discountPct,
       freight,
       salesTaxValue,

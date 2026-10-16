@@ -13,6 +13,7 @@ type SaleItem = {
   price: number;
   barcode?: string;
   remarks?: string;
+  discountPct?: number;
   stock?: number;
   isMisc?: boolean;
 };
@@ -42,6 +43,7 @@ export default function POS() {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<any[]>([]);
+  const [repairRecords, setRepairRecords] = useState<any[]>([]);
   const [items, setItems] = useState<SaleItem[]>([]);
   const [customer, setCustomer] = useState("");
   const [cashRef, setCashRef] = useState("");
@@ -53,6 +55,8 @@ export default function POS() {
   const [invoiceNo, setInvoiceNo] = useState(nextInvoice);
   const [barcode, setBarcode] = useState("");
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [brandTypeFilter, setBrandTypeFilter] = useState("");
   const [pay, setPay] = useState("Cash");
@@ -66,9 +70,10 @@ export default function POS() {
   const [done, setDone] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
-    const [p, c, s] = await Promise.all([
+    const [p, c, s, r] = await Promise.all([
       fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
       fetch("/api/data?collection=customers").then(async (r) => {
         const d = await r.json().catch(() => null);
@@ -77,10 +82,12 @@ export default function POS() {
         return Array.isArray(d) ? d : [];
       }).catch(() => { setLoadError("Customers load nahi ho sakay (network)."); return []; }),
       fetch("/api/data?collection=sales").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).catch(() => []),
+      fetch("/api/repairs?status=PAYMENT_DUE").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).catch(() => []),
     ]);
     setProducts(Array.isArray(p) ? p : []);
     setCustomers(Array.isArray(c) ? c : []);
     setSales(Array.isArray(s) ? s : []);
+    setRepairRecords(Array.isArray(r) ? r : []);
   };
 
   useEffect(() => {
@@ -95,9 +102,10 @@ export default function POS() {
     () => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0),
     [items]
   );
+  const lineDiscountAmount = useMemo(() => items.reduce((sum, item) => sum + item.qty * item.price * Number(item.discountPct || 0) / 100, 0), [items]);
   const discountAmount = useMemo(
-    () => (subtotal * Number(discountPct || 0)) / 100,
-    [subtotal, discountPct]
+    () => lineDiscountAmount + ((Math.max(0, subtotal - lineDiscountAmount) * Number(discountPct || 0)) / 100),
+    [subtotal, discountPct, lineDiscountAmount]
   );
   const taxable = Math.max(0, subtotal - discountAmount + Number(freight || 0));
   const salesTaxValue = useMemo(
@@ -113,18 +121,54 @@ export default function POS() {
   const currentBalance = useMemo(() => {
     if (!customer) return 0;
     const customerSales = sales.filter((s) => String(s.customerId || "") === String(customer));
-    return customerSales.reduce((sum, s) => sum + Number(s.remaining || 0), 0);
-  }, [customer, sales]);
+    const saleDue = customerSales.reduce((sum, s) => sum + Number(s.remaining || 0), 0);
+    const repairDue = repairRecords.filter((r) => String(r.customerId || "") === String(customer)).reduce((sum, r) => sum + Number(r.remaining || 0), 0);
+    return saleDue + repairDue;
+  }, [customer, sales, repairRecords]);
 
-  function priceForProduct(p: Product) {
-    if (level === "1") return Number(p.wholesalePrice ?? p.wholesale ?? p.price ?? 0);
-    if (level === "2") return Number(p.retailPrice ?? p.salePrice ?? p.price ?? 0);
+  function lastSaleForProduct(productId: string, customerOverride = customer) {
+    if (!customerOverride || !productId) return null;
+    const customerSales = sales.filter((row) => String(row.customerId || "") === String(customerOverride)).sort((a, b) => new Date(b.createdAt || b.date || 0).getTime() - new Date(a.createdAt || a.date || 0).getTime());
+    for (const sale of customerSales) {
+      const sold = (sale.items || []).find((entry: any) => String(entry.productId || "") === String(productId));
+      if (sold) return { price: Number(sold.price || 0), date: sale.date || sale.createdAt };
+    }
+    return null;
+  }
+
+  function priceForProduct(p: Product, selectedLevel = level, customerOverride = customer) {
+    if (selectedLevel === "cost") return Number(p.costPrice ?? 0);
+    if (selectedLevel === "last") return lastSaleForProduct(String(p._id), customerOverride)?.price ?? Number(p.price ?? p.salePrice ?? 0);
+    if (selectedLevel === "1") return Number(p.wholesalePrice ?? p.wholesale ?? p.price ?? 0);
+    if (selectedLevel === "2") return Number(p.retailPrice ?? p.salePrice ?? p.price ?? 0);
     return Number(p.price ?? p.salePrice ?? p.retailPrice ?? 0);
   }
 
-  function addProduct(p: Product) {
+  function changeLevel(nextLevel: string) {
+    setLevel(nextLevel);
+    setItems(current => current.map(item => {
+      const product = products.find(p => String(p._id) === String(item.productId));
+      return product ? { ...item, price: priceForProduct(product, nextLevel) } : item;
+    }));
+  }
+
+  function changeCustomer(nextCustomer: string) {
+    setCustomer(nextCustomer);
+    if (level === "last") setItems(current => current.map(item => {
+      const product = products.find(p => String(p._id) === String(item.productId));
+      return product ? { ...item, price: priceForProduct(product, "last", nextCustomer) } : item;
+    }));
+  }
+
+  function formatDate(value: any) {
+    if (!value) return "";
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleDateString();
+  }
+
+  function addProduct(p: Product, forceNewLine = false) {
     const existing = items.find((item) => item.productId === p._id);
-    if (existing) {
+    if (existing && !forceNewLine) {
       setItems((old) =>
         old.map((item) =>
           item.productId === p._id
@@ -142,12 +186,15 @@ export default function POS() {
           price: priceForProduct(p),
           barcode: p.barcode || p.sku || "",
           stock: Number(p.stock || 0),
+          discountPct: 0,
         },
       ]);
     }
     setSearch("");
+    setSearchOpen(true);
+    setShowAllProducts(false);
     setBarcode("");
-    barcodeRef.current?.focus();
+    requestAnimationFrame(() => searchRef.current?.focus());
   }
 
   function scanBarcode() {
@@ -246,6 +293,7 @@ export default function POS() {
       freight: Number(freight || 0),
       discountPct: Number(discountPct || 0),
       discountAmount,
+      lineDiscountAmount,
       salesTaxPct: Number(taxPct || 0),
       salesTaxValue,
       grandTotal: subtotal,
@@ -288,7 +336,7 @@ export default function POS() {
           <b>Customer:</b> {selectedCustomer?.name || done.cashRef || "WALKING CUSTOMER"}<br />
           <div className="line" />
           {done.items.map((i: SaleItem, index: number) => (
-            <div key={`${i.productId || "misc"}-${index}`}>{i.name} × {i.qty} — Rs. {money(i.price * i.qty)}</div>
+            <div key={`${i.productId || "misc"}-${index}`}>{i.name} × {i.qty} — Rs. {money(i.total ?? i.price * i.qty)}</div>
           ))}
           <div className="line" />
           <b>Grand Total:</b> Rs. {money(done.grandTotal || 0)}<br />
@@ -303,7 +351,7 @@ export default function POS() {
   }
 
   const visibleProducts = products.filter((p) => {
-    const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""}`.toLowerCase();
+    const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""} ${p.code || ""} ${p.brand || ""}`.toLowerCase();
     return Number(p.stock || 0) > 0 && text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
   });
   const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
@@ -314,12 +362,16 @@ export default function POS() {
       <div className={styles.saleWindow}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.toolLink}>← Dashboard</Link>
-          <button onClick={() => setSearch("")}>Show All</button>
+          <button onClick={() => { setSearch(""); setSearchOpen(true); setShowAllProducts(true); searchRef.current?.focus(); }}>Show All</button>
           <button onClick={resetSale}>New Record</button>
           <button onClick={() => window.print()}>Print Record</button>
           <button onClick={() => { setSaleType("CREDIT"); setTimeout(() => document.getElementById("customer")?.focus(), 50); }}>Credit Customer</button>
           <button onClick={() => { setSaleType("CASH"); setCustomer(""); setCashRef("WALKING CUSTOMER"); }}>Walking Customer</button>
           <Link href="/admin" className={styles.toolLink}>New Item</Link>
+          <Link href="/product-cost" className={styles.toolLink}>Change Product Cost</Link>
+          <Link href="/vouchers" className={styles.toolLink}>Vouchers / Collect Due</Link>
+          <Link href="/purchases" className={styles.toolLink}>Purchase</Link>
+          <Link href="/sales/returns" className={styles.toolLink}>Sale Return</Link>
         </header>
 
         <div className={styles.secondBar}>
@@ -337,7 +389,7 @@ export default function POS() {
             <label>Inv No:<input value={invoiceNo} readOnly /></label>
             {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
             <label className={styles.wide}>Customer:
-              <select id="customer" value={customer} onChange={(e) => { setCustomer(e.target.value); if (e.target.value) setSaleType("CREDIT"); }}>
+              <select id="customer" value={customer} onChange={(e) => { changeCustomer(e.target.value); if (e.target.value) setSaleType("CREDIT"); }}>
                 <option value="">CASH SALES</option>
                 {customers.map((c) => <option key={c._id} value={c._id}>{c.name} {c.phone ? `— ${c.phone}` : ""}</option>)}
               </select>
@@ -393,16 +445,18 @@ export default function POS() {
             <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
             <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
           </div>
-          <input className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search Product / Model / SKU / Barcode..." />
-          <div className={styles.productStrip}>
-            {visibleProducts.slice(0, 12).map((p) => (
-              <button key={p._id} className={styles.productButton} onClick={() => addProduct(p)}>
+          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[0]; if (match) addProduct(match, true); else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
+          {searchOpen && (search.trim() || showAllProducts) && <div className={styles.productStrip}>
+            {visibleProducts.slice(0, 12).map((p) => {
+              const last = lastSaleForProduct(String(p._id));
+              return <button key={p._id} className={styles.productButton} onClick={() => addProduct(p, true)}>
                 <strong>{p.name || p.model}</strong>
-                <span>{p.model || p.sku || ""}</span>
+                <span>{p.brand || ""} {p.model || p.sku || p.code || ""}</span>
                 <small>Stock {p.stock} · Rs. {money(priceForProduct(p))}</small>
-              </button>
-            ))}
-          </div>
+                <small>Cost Rs. {money(Number(p.costPrice || 0))} · Last Level {last ? `Rs. ${money(last.price)} ${formatDate(last.date)}` : "—"}</small>
+              </button>;
+            })}
+          </div>}
         </section>
 
         <section className={styles.tableWrap}>
@@ -417,10 +471,10 @@ export default function POS() {
                   <td><b>{item.name}</b></td>
                   <td><input type="number" min="1" value={item.qty} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, Number(e.target.value || 1)) } : x))} /></td>
                   <td><input type="number" value={item.price} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: Number(e.target.value || 0) } : x))} /></td>
-                  <td>0</td>
-                  <td>Rs. {money(item.qty * item.price)}</td>
+                  <td><input aria-label={`${item.name} discount percent`} type="number" min="0" max="100" value={item.discountPct || 0} onChange={(e) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,Number(e.target.value||0)))}:x))}/></td>
+                  <td>Rs. {money(item.qty * item.price * (1 - Number(item.discountPct || 0) / 100))}</td>
                   <td><button className={styles.deleteBtn} onClick={() => setItems((old) => old.filter((_, i) => i !== index))}>Delete</button></td>
-                  <td><button onClick={() => barcodeRef.current?.focus()}>New</button></td>
+                  <td><button onClick={() => { setSearchOpen(true); setSearch(""); requestAnimationFrame(() => searchRef.current?.focus()); }}>＋</button></td>
                   <td><input value={item.remarks || ""} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, remarks: e.target.value } : x))} /></td>
                   <td>{item.barcode || "-"}</td>
                 </tr>
@@ -431,7 +485,7 @@ export default function POS() {
         </section>
 
         <section className={styles.bottomArea}>
-          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span>Level: {level}</span></div>
+          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>
           <div className={styles.calcGrid}>
             <label>Grand Total<input value={money(subtotal)} readOnly /></label>
             <label>Freight<input type="number" value={freight} onChange={(e) => setFreight(e.target.value)} /></label>
@@ -442,7 +496,7 @@ export default function POS() {
             <label>Net Total<input className={styles.netInput} value={money(netTotal)} readOnly /></label>
             <label>Cash Rec:<input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} /></label>
             <label>Remaining<input value={money(remaining)} readOnly /></label>
-            <label>Level / Price Level<select value={level} onChange={(e) => setLevel(e.target.value)}><option value="0">Level 0</option><option value="1">Level 1</option><option value="2">Level 2</option></select></label>
+            <label>Level / Price Level<select value={level} onChange={(e) => changeLevel(e.target.value)}><option value="0">Level 0 · Retail</option><option value="1">Level 1 · Wholesale</option><option value="2">Level 2 · Retail Price</option><option value="cost">Level 3 · Purchase Cost</option><option value="last">Last Level · This Customer</option></select></label>
           </div>
         </section>
 

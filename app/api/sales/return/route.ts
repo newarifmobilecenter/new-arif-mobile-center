@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
     const sale = await sales.findOne({ _id: new ObjectId(saleId) });
     if (!sale) return NextResponse.json({ error: "Sale not found." }, { status: 404 });
 
-    const item = (Array.isArray(sale.items) ? sale.items : []).find((x:any) => String(x.productId || "") === productId);
-    if (!item) return NextResponse.json({ error: "Product is not part of this sale." }, { status: 400 });
+    const saleItems = (Array.isArray(sale.items) ? sale.items : []).filter((x:any) => String(x.productId || "") === productId);
+    if (!saleItems.length) return NextResponse.json({ error: "Product is not part of this sale." }, { status: 400 });
 
     const previous = await returns.aggregate([
       { $match: { saleId, productId, type: "SALE_RETURN" } },
@@ -38,11 +38,17 @@ export async function POST(req: NextRequest) {
     ]).toArray();
     const returnedQty = Number(previous[0]?.qty || 0);
     const alreadyReturnedAmount = Number(previous[0]?.amount || 0);
-    const soldQty = Number(item.qty || 0);
+    const soldQty = saleItems.reduce((sum:number, row:any) => sum + Number(row.qty || 0), 0);
     if (returnedQty + qty > soldQty)
       return NextResponse.json({ error: `Only ${Math.max(0, soldQty - returnedQty)} item(s) are still returnable.` }, { status: 409 });
 
-    const amount = Number(item.price || 0) * qty;
+    const lineGross = saleItems.reduce((sum:number, row:any) => sum + Number(row.price || 0) * Number(row.qty || 0), 0);
+    const itemDiscount = saleItems.reduce((sum:number, row:any) => sum + Number(row.discountAmount ?? Number(row.price || 0) * Number(row.qty || 0) * Number(row.discountPct || 0) / 100), 0);
+    const invoiceGlobalDiscount = Number(sale.globalDiscountAmount ?? Math.max(0, Number(sale.discountAmount || 0) - Number(sale.lineDiscountAmount || 0)));
+    const allocatedGlobalDiscount = lineGross > 0 ? invoiceGlobalDiscount * (lineGross / Math.max(0.000001, Number(sale.subtotal || lineGross))) : 0;
+    const netLine = Math.max(0, lineGross - itemDiscount - allocatedGlobalDiscount);
+    const taxFactor = 1 + Math.max(0, Number(sale.salesTaxPct || 0)) / 100;
+    const amount = (netLine / soldQty) * qty * taxFactor;
     const salePaid = Number(sale.paid || 0);
     const saleRefunded = Number(sale.refunded || 0);
     const refundAvailable = Math.max(0, salePaid - saleRefunded);
