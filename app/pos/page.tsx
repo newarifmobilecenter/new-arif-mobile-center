@@ -11,6 +11,7 @@ type SaleItem = {
   name: string;
   qty: number;
   price: number;
+  total?: number;
   barcode?: string;
   remarks?: string;
   discountPct?: number;
