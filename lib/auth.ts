@@ -4,7 +4,7 @@ export const AUTH_COOKIE = "new_arif_session";
 const SESSION_TTL = 12 * 60 * 60;
 
 function secret() {
-  const value = process.env.AUTH_SECRET;
+  const value = (process.env.AUTH_SECRET || "").trim();
 
   if (!value || value.length < 32) {
     throw new Error(

@@ -261,9 +261,9 @@
   .receivingSlip {
     page: receivingSlipPage;
     display: block !important;
-    /* Slip scale: 0.45 = half of the old printed size (old scale was 0.9).
+    /* Slip scale: 0.55 prints at about half the old length (old scale 0.9 = ~285mm, 0.55 = ~141mm).
        Layout width is paper width / scale so the slip still fills the 76mm roll. Change --slip-scale to resize. */
-    --slip-scale: .45;
+    --slip-scale: .55;
     width: calc(68.4mm / var(--slip-scale)) !important;
     max-width: calc(68.4mm / var(--slip-scale)) !important;
     height: auto !important;
@@ -351,4 +351,36 @@
   .notebookVoucher * { color: #000 !important; box-shadow: none !important; }
   .voucherDescription { min-height: 36mm; }
   .voucherRemarks { min-height: 22mm; }
+}
+
+/* ===== Compact desktop forms/tables (screen only) ===== */
+@media screen and (min-width: 900px) {
+  .panel { margin-top: 8px; padding: 10px 12px; }
+  .nav { margin-bottom: 6px; gap: 8px; }
+  .header h1 { font-size: 20px; margin: 0 0 2px; }
+  .field { gap: 3px; font-size: 12px; }
+  .field input, .field select, .field textarea { padding: 6px 8px; font-size: 13px; }
+  .field textarea { min-height: 48px; }
+  .formGrid { gap: 8px; }
+  .formSection { padding: 8px 0; }
+  .formSection h2 { margin: 0 0 8px; font-size: 15px; }
+  .readonly { min-height: 32px; padding: 6px 8px; }
+  .button, .buttonSecondary, .buttonDanger { min-height: 32px; padding: 5px 11px; font-size: 13px; }
+  .table th, .table td { padding: 6px 8px; }
+  .toolbar { margin-top: 8px; }
+  .tabs { margin-top: 8px; }
+  .tab, .activeTab { padding: 5px 10px; }
+  .accessoryFieldset { margin-top: 8px; padding: 8px; gap: 8px 14px; }
+  /* The repair/notebook intake form uses three columns instead of one very long column. */
+  .repairForm { display: block; columns: 3 360px; column-gap: 18px; }
+  .repairForm > .formSection { break-inside: avoid; margin: 0 0 10px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .repairForm > .formSection:last-child, .repairForm > .toolbar { column-span: all; }
+  .repairForm .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Repair detail: the record sections sit in two columns so the page fits one window (screen only; the slip is print-only). */
+@media screen and (min-width: 1100px) {
+  body > main[class*="repairDetailPage"] { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; align-content: start; grid-auto-rows: min-content; }
+  body > main[class*="repairDetailPage"] > :nth-child(-n+3) { grid-column: 1 / -1; }
+  body > main[class*="repairDetailPage"] > section { margin-top: 8px; align-self: start; }
 }
