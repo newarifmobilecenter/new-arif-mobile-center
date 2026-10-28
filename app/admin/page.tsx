@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
 
-const cats = ["Displays / LCD", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
+const cats = ["Displays / LCD", "Displays / INCELL / TFT", "Displays LED ORG", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
 const brands = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone", "Universal", "Other"];
 const baseOptions: Record<string, string[]> = {
   category: cats, brand: brands, brandType: ["Phone", "Parts", "Accessories", "Other"],
@@ -31,6 +31,8 @@ const blank: Form = {
 const categoryRules: [string, RegExp][] = [
   ["Charging Ports", /charging|charger|\bport\b|\bpcb\b|\bboard\b/i],
   ["Batteries", /batter/i],
+  ["Displays / INCELL / TFT", /incell|\btft\b/i],
+  ["Displays LED ORG", /(panel|lcd|led|display|screen|touch).*\b(org|original)\b|\b(org|original)\b.*(panel|lcd|led|display|screen|touch)/i],
   ["Displays / LCD", /panel|\blcd\b|display|screen|touch|\bfolder\b/i],
   ["Speakers / Mic", /speaker|\bmic\b|microphone|ringer|buzzer/i],
   ["Cameras", /camera/i],
