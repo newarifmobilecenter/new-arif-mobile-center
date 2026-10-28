@@ -37,6 +37,30 @@ export default function AuthNavigation() {
     };
   }, [refreshSession]);
 
+  // Global shortcuts. Ctrl+C / Ctrl+V / Ctrl+P / Ctrl+A are needed by the browser (copy, paste, print, select all),
+  // so those four use Alt instead.
+  useEffect(() => {
+    if (!session.authenticated) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.shiftKey) return;
+      const k = e.key.toLowerCase();
+      const ctrl = (e.ctrlKey || e.metaKey) && !e.altKey;
+      const alt = e.altKey && !e.ctrlKey && !e.metaKey;
+      let to = "";
+      if (ctrl && k === "g") to = "/pos";
+      else if (ctrl && k === "r") to = "/sales/returns";
+      else if (alt && k === "p") to = "/purchases";
+      else if (alt && k === "c") to = "/customers";
+      else if (alt && k === "v") to = "/vouchers";
+      else if (alt && k === "a") to = "/repairs/new";
+      if (!to) return;
+      e.preventDefault();
+      if (pathname !== to) router.push(to);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [session.authenticated, pathname, router]);
+
   async function logout() {
     setBusy(true);
     setError("");
