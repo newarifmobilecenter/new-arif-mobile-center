@@ -216,6 +216,19 @@ export default function Admin() {
     } catch { alert("Product save nahi hua."); } finally { setBusy(false); }
   }
 
+  // Keyboard shortcuts: Ctrl+S = save product, Alt+N = new product. Always call the latest handlers.
+  const keyActions = useRef<{ save: () => void; fresh: () => void }>({ save: () => {}, fresh: () => {} });
+  keyActions.current = { save: () => { if (!busy && tab === "New Product") void save(); }, fresh: () => newProduct() };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase();
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && k === "s") { e.preventDefault(); keyActions.current.save(); }
+      else if (e.altKey && !e.ctrlKey && k === "n") { e.preventDefault(); keyActions.current.fresh(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   async function del(id: string) {
     if (!confirm("Product delete karein? Historical sales remain rahengi.")) return;
     await fetch(`/api/data?collection=products&id=${id}`, { method: "DELETE" });
@@ -249,7 +262,7 @@ export default function Admin() {
           <Field label="Warranty Days" value={form.warrantyDays} onChange={v => updateField("warrantyDays", v)} type="number" />
         </div>
       </section>
-      <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"}</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={() => newProduct()}>＋ New</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
+      <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"} (Ctrl+S)</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={() => newProduct()}>＋ New (Alt+N)</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
     </>}
 
     {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / barcode..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={() => newProduct()}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand Type</th><th>Brand</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.barcode ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brandType ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{p.stock ?? 0}</td><td><button onClick={() => loadProduct(p)}>Edit</button><button onClick={() => del(String(p._id))}>Delete</button></td></tr>)}</tbody></table></div></section>}
