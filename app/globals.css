@@ -112,3 +112,13 @@ h1{font-size:30px;margin:2px 0 6px}
 }
 @media screen and (min-width: 900px) and (max-height: 640px) { :root { --z: .78; } }
 @media screen and (min-width: 900px) and (min-height: 1000px) { :root { --z: .95; } }
+
+/* Dashboard search */
+.dashSearch{margin:8px 0}
+.dashSearchInput{width:100%;box-sizing:border-box;padding:9px 12px;font-size:15px;border:1px solid #475569;border-radius:8px;background:#0f172a;color:#e5e7eb}
+.dashSearchResults{margin-top:6px;max-height:48vh;overflow:auto;border:1px solid #334155;border-radius:8px;background:#111827;padding:6px 8px}
+.dashSearchGroup h3{margin:6px 0 3px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#93c5fd}
+.dashSearchItem{display:flex;flex-direction:column;gap:1px;padding:5px 8px;border-radius:6px;color:#e5e7eb;text-decoration:none}
+.dashSearchItem:hover,.dashSearchItem:focus{background:#1e293b}
+.dashSearchItem span{font-size:12px;color:#9ca3af}
+.dashSearchNote{margin:6px 4px;color:#9ca3af;font-size:13px}
