@@ -20,3 +20,16 @@
   .empty { padding: 18px !important; }
   .bottomArea { padding: 4px; }
 }
+
+/* Desktop POS v2: give the item table the room (screen only). */
+@media screen and (min-width: 900px) {
+  .saleWindow { flex: 1 0 auto !important; overflow: visible; }
+  .saleWindow > .tableWrap { flex: 1 1 auto; height: auto; min-height: 190px; }
+  .barcodeRow { grid-template-columns: auto minmax(200px, 1fr) auto 150px; padding: 3px 6px; }
+  .productSearch { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 6px; align-items: center; padding: 4px 6px; }
+  .productSearch > .productStrip, .productSearch > .heldPanel { grid-column: 1 / -1; }
+  .productFilters { margin-bottom: 0; }
+  .searchInput { margin: 0; min-height: 30px; padding: 4px 8px; }
+  .bottomArea { grid-template-columns: 150px minmax(0, 1fr); }
+  .calcGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
