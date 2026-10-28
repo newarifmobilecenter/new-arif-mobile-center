@@ -12,13 +12,14 @@ type F = {
   discount: string; priceLevel: string; creditLimit: string; creditDays: string;
   branch: string; salesman: string; cnic: string; fax: string; area: string; city: string; country: string;
   address1: string; address2: string; remarks: string;
+  ntn: string; strn: string; openingBalance: string; target: string;
 };
-const blank: F = { code: "", name: "", mobile: "", phoneNo: "", email: "", type: "", terms: "", discount: "0", priceLevel: "0", creditLimit: "0", creditDays: "0", branch: "Main Branch", salesman: "", cnic: "", fax: "", area: "", city: "", country: "", address1: "", address2: "", remarks: "" };
+const blank: F = { code: "", name: "", mobile: "", phoneNo: "", email: "", type: "", terms: "", discount: "0", priceLevel: "0", creditLimit: "0", creditDays: "0", branch: "Main Branch", salesman: "", cnic: "", fax: "", area: "", city: "", country: "", address1: "", address2: "", remarks: "", ntn: "", strn: "", openingBalance: "0", target: "0" };
 const t = (v: unknown) => String(v ?? "");
 const nextCode = (list: any[]) => String(Math.max(0, ...list.map(c => String(c.code ?? "").trim()).filter(c => /^\d+$/.test(c)).map(Number)) + 1).padStart(4, "0");
 
 export default function Customers() {
-  const [tab, setTab] = useState<"new" | "list">("new");
+  const [tab, setTab] = useState<"new" | "ntn" | "open" | "list" | "target">("new");
   const [cust, setCust] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [repairs, setRepairs] = useState<any[]>([]);
@@ -71,6 +72,7 @@ export default function Customers() {
       discount: t(c.discount ?? "0"), priceLevel: t(c.priceLevel ?? "0"), creditLimit: t(c.creditLimit ?? "0"), creditDays: t(c.creditDays ?? "0"),
       branch: t(c.branch || "Main Branch"), salesman: t(c.salesman), cnic: t(c.cnic), fax: t(c.fax), area: t(c.area), city: t(c.city), country: t(c.country),
       address1: t(c.address1 ?? c.address), address2: t(c.address2), remarks: t(c.remarks ?? c.notes),
+      ntn: t(c.ntn), strn: t(c.strn), openingBalance: t(c.openingBalance ?? "0"), target: t(c.target ?? "0"),
     });
   }
 
@@ -92,6 +94,7 @@ export default function Customers() {
         discount: Number(f.discount || 0), priceLevel: Number(f.priceLevel || 0), creditLimit: Number(f.creditLimit || 0), creditDays: Number(f.creditDays || 0),
         branch: f.branch, salesman: f.salesman, cnic: f.cnic.trim(), fax: f.fax.trim(), area: f.area, city: f.city, country: f.country,
         address: [f.address1.trim(), f.address2.trim()].filter(Boolean).join(", "), address1: f.address1.trim(), address2: f.address2.trim(), notes: f.remarks.trim(), remarks: f.remarks.trim(),
+        ntn: f.ntn.trim(), strn: f.strn.trim(), openingBalance: Number(f.openingBalance || 0), target: Number(f.target || 0),
       };
       const r = await fetch("/api/data", { method: editId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "customers", ...(editId ? { id: editId } : {}), ...doc }) });
       if (!r.ok) throw new Error();
@@ -129,12 +132,15 @@ export default function Customers() {
     <div className={styles.titlebar}><span>▣ Customer — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/pos">POS</Link><Link href="/ledger">Ledger</Link><Link href="/repairs">Repairs</Link></span></div>
     <nav className={styles.tabs}>
       <button className={`${styles.tab} ${tab === "new" ? styles.tabActive : ""}`} onClick={() => setTab("new")}>New Customer</button>
+      <button className={`${styles.tab} ${tab === "ntn" ? styles.tabActive : ""}`} onClick={() => setTab("ntn")}>NTN info</button>
+      <button className={`${styles.tab} ${tab === "open" ? styles.tabActive : ""}`} onClick={() => setTab("open")}>Opening</button>
       <button className={`${styles.tab} ${tab === "list" ? styles.tabActive : ""}`} onClick={() => setTab("list")}>Customer List ({cust.length})</button>
+      <button className={`${styles.tab} ${tab === "target" ? styles.tabActive : ""}`} onClick={() => setTab("target")}>Target</button>
     </nav>
 
-    {tab === "new" && <section className={styles.body}>
-      <div className={styles.head}><h1>Accounts Receivable (Customer){editId ? " — Edit" : ""}</h1><input type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></div>
-      <div className={styles.panel}>
+    {tab !== "list" && <section className={styles.body}>
+      <div className={styles.head}><h1>{tab === "ntn" ? "NTN / Tax Info" : tab === "open" ? "Opening Balance" : tab === "target" ? "Sales Target" : "Accounts Receivable (Customer)"}{editId ? " — Edit" : ""}</h1><input type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></div>
+      {tab === "new" && <div className={styles.panel}>
         <div className={styles.col}>
           <label className={styles.row}><span>Code:</span><input className={`${styles.in} ${styles.code}`} value={f.code} onChange={e => set("code", e.target.value)} /></label>
           <label className={styles.row}><span>Search:</span><span style={{ position: "relative" }}>
@@ -164,7 +170,25 @@ export default function Customers() {
           <label className={styles.row}><span>Address2:</span><textarea className={`${styles.in} ${styles.area}`} value={f.address2} onChange={e => set("address2", e.target.value)} /></label>
           <label className={styles.row}><span>Remarks:</span>{txt("remarks")}</label>
         </div>
-      </div>
+      </div>}
+      {tab !== "new" && <div className={styles.panel}><div className={styles.col}>
+        <div className={styles.who}>Customer: <b>{f.name || "— pehle New Customer tab mein naam likhein ya Search se customer chunein —"}</b> {f.code && <small>(Code {f.code})</small>}</div>
+        {tab === "ntn" && <>
+          <label className={styles.row}><span>NTN:</span>{txt("ntn")}</label>
+          <label className={styles.row}><span>STRN:</span>{txt("strn")}</label>
+          <label className={styles.row}><span>CNIC:</span>{txt("cnic")}</label>
+        </>}
+        {tab === "open" && <>
+          <label className={styles.row}><span>Opening Bal:</span>{num("openingBalance")}</label>
+          <label className={styles.row}><span>Credit Limit:</span>{num("creditLimit")}</label>
+          <label className={styles.row}><span>Cr. Days:</span>{num("creditDays")}</label>
+        </>}
+        {tab === "target" && <>
+          <label className={styles.row}><span>Target (Rs.):</span>{num("target")}</label>
+          <label className={styles.row}><span>Disc (%):</span>{num("discount")}</label>
+          <label className={styles.row}><span>P. Level:</span>{num("priceLevel")}</label>
+        </>}
+      </div></div>}
       <div className={styles.bar}>
         <button className={`${styles.ico} ${styles.save}`} onClick={() => void save()} disabled={busy} title="Save (Ctrl+S)">💾</button>
         <button className={`${styles.ico} ${styles.edit}`} onClick={() => (editId ? void save() : setMsg({ text: "Edit ke liye Search se ya Customer List se customer chunein.", ok: false }))} title="Edit / Update">✎</button>
