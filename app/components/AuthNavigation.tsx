@@ -37,12 +37,12 @@ export default function AuthNavigation() {
     };
   }, [refreshSession]);
 
-  // Global shortcuts: Ctrl+Alt+Shift + letter (no clash with browser copy/paste/print/select-all/reload).
+  // Global shortcuts: Alt + letter.
   useEffect(() => {
     if (!session.authenticated) return;
     const routes: Record<string, string> = { KeyG: "/pos", KeyR: "/sales/returns", KeyP: "/purchases", KeyC: "/customers", KeyV: "/vouchers", KeyA: "/repairs/new" };
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey && e.altKey && e.shiftKey)) return;
+      if (!e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
       const to = routes[e.code];
       if (!to) return;
       e.preventDefault();
