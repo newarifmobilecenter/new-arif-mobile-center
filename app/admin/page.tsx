@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
 
@@ -28,6 +28,32 @@ const blank: Form = {
   openingQty: "0", description: "", sku: "", warrantyDays: "0",
 };
 
+const categoryRules: [string, RegExp][] = [
+  ["Charging Ports", /charging|charger|\bport\b|\bpcb\b|\bboard\b/i],
+  ["Batteries", /batter/i],
+  ["Displays / LCD", /panel|\blcd\b|display|screen|touch|\bfolder\b/i],
+  ["Speakers / Mic", /speaker|\bmic\b|microphone|ringer|buzzer/i],
+  ["Cameras", /camera/i],
+  ["Buttons / Flex", /button|\bflex\b|power key|volume/i],
+  ["Body / Housing", /\bbody\b|housing|back cover|\bframe\b|\bpanel back\b/i],
+  ["Tools", /\btool|screwdriver|soldering|\bkit\b/i],
+];
+const brandAliases: [string, RegExp][] = [["iPhone", /\b(iphone|apple)\b/i]];
+
+function detectCategory(name: string) {
+  for (const [category, rx] of categoryRules) if (rx.test(name)) return category;
+  return "";
+}
+function detectBrand(name: string, brandList: string[]) {
+  for (const [brand, rx] of brandAliases) if (rx.test(name)) return brand;
+  const sorted = [...brandList].filter(b => b && !/^(other|universal)$/i.test(b)).sort((a, b) => b.length - a.length);
+  for (const b of sorted) {
+    const esc = b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, "i").test(name)) return b;
+  }
+  return "";
+}
+
 function num(v: string) { return Number(v || 0); }
 
 function Field({ label, value, onChange, type = "text", className = "" }: { label: string; value: string; onChange: (value: string) => void; type?: string; className?: string }) {
@@ -52,6 +78,8 @@ export default function Admin() {
   const [busy, setBusy] = useState(false);
   const [brandManagerOpen, setBrandManagerOpen] = useState(false);
   const [brandManagerTab, setBrandManagerTab] = useState<"new" | "list">("new");
+  // Fields the user changed by hand are not auto-filled again from the product name.
+  const touched = useRef<Record<string, boolean>>({});
   const [brandDraft, setBrandDraft] = useState("");
   const [brandCategory, setBrandCategory] = useState(cats[0]);
 
@@ -65,6 +93,7 @@ export default function Admin() {
     const existingCodes = (Array.isArray(p) ? p : []).map((product: any) => String(product.code ?? product.sku ?? "").trim()).filter((code: string) => /^\d+$/.test(code)).map(Number);
     const suggestedCode = String(Math.max(0, ...existingCodes) + 1).padStart(4, "0");
     setForm(current => current.code ? current : { ...current, code: suggestedCode, barcode: suggestedCode });
+    return Array.isArray(p) ? p : [];
   };
   useEffect(() => { void load(); }, []);
 
@@ -80,7 +109,30 @@ export default function Admin() {
     return products.filter(p => [p.name, p.model, p.brand, p.category, p.sku, p.code, p.barcode].some(v => String(v ?? "").toLowerCase().includes(q)));
   }, [products, search]);
 
-  const set = (k: keyof Form, v: string) => setForm(f => ({ ...f, [k]: v, ...(k === "category" ? { brand: "", brandType: "" } : {}) }));
+  const set = (k: keyof Form, v: string) => {
+    touched.current[k] = true;
+    if (k === "category") { touched.current.brandType = true; touched.current.productGroup = true; touched.current.itemType = true; }
+    setForm(f => ({ ...f, [k]: v, ...(k === "category" ? { brand: touched.current.brand ? f.brand : "", brandType: "" } : {}) }));
+  };
+
+  function changeName(value: string) {
+    setForm(current => {
+      const next: Form = { ...current, name: value };
+      const t = touched.current;
+      const brandList = Array.from(new Set([...baseOptions.brand, ...options.filter(o => o.type === "brand").map(o => String(o.name || "").trim()), ...products.map(pr => String(pr.brand || "").trim())].filter(Boolean)));
+      if (!t.brand) { const b = detectBrand(value, brandList); if (b) next.brand = b; }
+      if (!t.category) {
+        const c = detectCategory(value);
+        if (c) {
+          next.category = c;
+          if (!t.brandType) next.brandType = c === "Tools" ? "Other" : "Parts";
+          if (!t.productGroup) next.productGroup = c === "Tools" ? "Tools" : "Mobile Parts";
+          if (!t.itemType) next.itemType = c === "Tools" ? "Tool" : "Part";
+        }
+      }
+      return next;
+    });
+  }
 
   async function addOption(type: string, label: string) {
     if (type === "brand") {
@@ -127,9 +179,10 @@ export default function Admin() {
     setForm(current => ({ ...current, [k]: value, ...(k === "code" && current.barcode === current.code ? { barcode: value } : {}) }));
   }
 
-  function newProduct() {
+  function newProduct(list: any[] = products) {
     setSelectedId("");
-    const numericCodes = products.map(p => String(p.code ?? p.sku ?? "").trim()).filter(code => /^\d+$/.test(code)).map(Number);
+    touched.current = {};
+    const numericCodes = list.map(p => String(p.code ?? p.sku ?? "").trim()).filter(code => /^\d+$/.test(code)).map(Number);
     const nextCode = String(Math.max(0, ...numericCodes) + 1).padStart(4, "0");
     setForm({ ...blank, code: nextCode, barcode: nextCode });
     setTab("New Product");
@@ -137,6 +190,7 @@ export default function Admin() {
 
   function loadProduct(p: any) {
     setSelectedId(String(p._id || ""));
+    touched.current = { brand: true, category: true, brandType: true, productGroup: true, itemType: true };
     setForm({ ...blank, ...p, code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? p.code ?? ""), name: String(p.name ?? ""), brand: String(p.brand ?? ""), brandType: String(p.brandType ?? ""), bin: String(p.bin ?? ""), category: String(p.category ?? cats[0]), itemType: String(p.itemType ?? "Part"), productGroup: String(p.productGroup ?? ""), uom: String(p.uom ?? "PCS"), costPrice: String(p.costPrice ?? "0"), price: String(p.price ?? "0"), wholesale: String(p.wholesale ?? p.wholesalePrice ?? "0"), branch: String(p.branch ?? "Main Branch"), openingQty: String(p.openingQty ?? p.stock ?? "0"), description: String(p.description ?? ""), sku: String(p.sku ?? ""), warrantyDays: String(p.warrantyDays ?? "0") });
     setTab("New Product");
   }
@@ -156,9 +210,9 @@ export default function Admin() {
       };
       const r = await fetch("/api/data", { method: selectedId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       if (!r.ok) throw new Error();
-      await load();
+      const fresh = await load();
       alert(selectedId ? "Product updated successfully" : "Product saved successfully");
-      newProduct();
+      newProduct(fresh);
     } catch { alert("Product save nahi hua."); } finally { setBusy(false); }
   }
 
@@ -178,7 +232,7 @@ export default function Admin() {
         <div className={styles.left}>
           <Field label="Code" value={form.code} onChange={v => updateField("code", v)} />
           <Field label="Barcode" value={form.barcode} onChange={v => updateField("barcode", v)} />
-          <Field label="Product Name" value={form.name} onChange={v => updateField("name", v)} />
+          <Field label="Product Name" value={form.name} onChange={changeName} />
           <SelectWithN label="Make / Brand" value={form.brand} options={choices("brand")} onChange={v => set("brand", v)} onAdd={() => void addOption("brand", "Make / Brand")}/>
           <SelectWithN label="Category" value={form.category} options={choices("category", "")} onChange={v => set("category", v)} onAdd={() => void addOption("category", "Category")}/>
           <SelectWithN label="Brand Type" value={form.brandType} options={choices("brandType")} onChange={v => set("brandType", v)} onAdd={() => void addOption("brandType", "Brand Type")}/>
@@ -195,10 +249,10 @@ export default function Admin() {
           <Field label="Warranty Days" value={form.warrantyDays} onChange={v => updateField("warrantyDays", v)} type="number" />
         </div>
       </section>
-      <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"}</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={newProduct}>＋ New</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
+      <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"}</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={() => newProduct()}>＋ New</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
     </>}
 
-    {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / barcode..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={newProduct}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand Type</th><th>Brand</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.barcode ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brandType ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{p.stock ?? 0}</td><td><button onClick={() => loadProduct(p)}>Edit</button><button onClick={() => del(String(p._id))}>Delete</button></td></tr>)}</tbody></table></div></section>}
+    {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / barcode..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={() => newProduct()}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand Type</th><th>Brand</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.barcode ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brandType ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{p.stock ?? 0}</td><td><button onClick={() => loadProduct(p)}>Edit</button><button onClick={() => del(String(p._id))}>Delete</button></td></tr>)}</tbody></table></div></section>}
 
     {tab === "Opening" && <section className={styles.simplePanel}><h2>Opening Stock</h2><p className={styles.muted}>Product select karein aur opening quantity set karein.</p><div className={styles.openGrid}>{products.slice(0, 30).map(p => <div className={styles.openCard} key={p._id}><b>{p.name}</b><span>{p.brand} • {p.model}</span><label>Opening Qty<input type="number" defaultValue={p.stock ?? 0} onBlur={async e => { const q = Number(e.target.value || 0); await fetch("/api/data", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({collection:"products",id:String(p._id),openingQty:q,stock:q})}); }}/></label></div>)}</div></section>}
 
