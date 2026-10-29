@@ -22,7 +22,7 @@ export async function POST(request: NextRequest, context: Context) {
     const customer = await d.collection("customers").findOne({ _id: new ObjectId(id) });
     if (!customer) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
     const [sales, repairs] = await Promise.all([
-      d.collection("sales").find({ customerId: id, remaining: { $gt: 0 } }).project({ remaining: 1 }).toArray(),
+      d.collection("sales").find({ customerId: id, status: { $ne: "cancelled" }, remaining: { $gt: 0 } }).project({ remaining: 1 }).toArray(),
       d.collection("notebookEntries").find({ recordType: "REPAIR", deletedAt: null, customerId: id, remaining: { $gt: 0 } }).project({ remaining: 1 }).toArray(),
     ]);
     const balance = [...sales, ...repairs].reduce((sum, record) => sum + Number(record.remaining || 0), 0);

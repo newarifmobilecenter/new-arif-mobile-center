@@ -37,6 +37,16 @@ export default function AuthNavigation() {
     };
   }, [refreshSession]);
 
+  // Typing in a number box replaces its content (so "0" never gets stuck).
+  useEffect(() => {
+    const onFocus = (e: FocusEvent) => {
+      const el = e.target as HTMLInputElement | null;
+      if (el && el.tagName === "INPUT" && el.type === "number") { try { el.select(); } catch {} }
+    };
+    document.addEventListener("focusin", onFocus);
+    return () => document.removeEventListener("focusin", onFocus);
+  }, []);
+
   // Global shortcuts: Alt + letter.
   useEffect(() => {
     if (!session.authenticated) return;

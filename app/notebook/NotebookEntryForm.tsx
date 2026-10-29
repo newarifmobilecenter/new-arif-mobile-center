@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./notebook.module.css";
+import NumInput from "../components/NumInput";
 
 export type NotebookEntry = {
   _id?: string;
@@ -149,8 +150,8 @@ export default function NotebookEntryForm({ entry, initialCustomerId = "", onSav
     <section className={styles.formSection}>
       <h2>Payment</h2>
       <div className={styles.formGrid}>
-        <label className={styles.field}>Amount<input type="number" min="0" max="1000000000000" step="0.01" value={form.amount} onChange={(event) => update("amount", Number(event.target.value))} required /></label>
-        <label className={styles.field}>Paid<input type="number" min="0" max="1000000000000" step="0.01" value={form.paid} onChange={(event) => update("paid", Number(event.target.value))} required /></label>
+        <label className={styles.field}>Amount<NumInput min="0" max="1000000000000" step="0.01" value={form.amount} onValue={(v) => update("amount", v)} required /></label>
+        <label className={styles.field}>Paid<NumInput min="0" max="1000000000000" step="0.01" value={form.paid} onValue={(v) => update("paid", v)} required /></label>
         <div className={styles.field}>Remaining (calculated)<span className={styles.readonly}>Rs. {amountText(remainingPreview)}</span></div>
         <label className={styles.field}>Payment Method<select value={form.paymentMethod} onChange={(event) => update("paymentMethod", event.target.value)}>{paymentMethods.map((method) => <option key={method}>{method}</option>)}</select></label>
         <label className={`${styles.field} ${styles.wide}`}>Remarks<textarea value={form.remarks} onChange={(event) => update("remarks", event.target.value)} maxLength={1500} rows={3} /></label>

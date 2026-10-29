@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import NumInput from "../components/NumInput";
 
 export default function Quotations() {
   const [products, setProducts] = useState<any[]>([]);
@@ -61,8 +62,8 @@ export default function Quotations() {
         {lines.map((x, i) => (
           <div className="row" key={i}>
             <div className="col">{x.name}</div>
-            <input className="input" style={{ maxWidth: 100 }} type="number" min="1" value={x.qty} onChange={(e) => setLines((a) => a.map((z, j) => j === i ? { ...z, qty: Number(e.target.value) } : z))} />
-            <input className="input" style={{ maxWidth: 150 }} type="number" value={x.price} onChange={(e) => setLines((a) => a.map((z, j) => j === i ? { ...z, price: Number(e.target.value) } : z))} />
+            <NumInput className="input" style={{ maxWidth: 100 }} min="1" value={x.qty} emptyValue={1} onValue={(v) => setLines((a) => a.map((z, j) => j === i ? { ...z, qty: v } : z))} />
+            <NumInput className="input" style={{ maxWidth: 150 }} value={x.price} onValue={(v) => setLines((a) => a.map((z, j) => j === i ? { ...z, price: v } : z))} />
           </div>
         ))}
         <h2>Total: Rs. {total.toLocaleString()}</h2>

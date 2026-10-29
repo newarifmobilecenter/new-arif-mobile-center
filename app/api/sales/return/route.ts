@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
+import { nextNumber } from "@/lib/counters";
 
 export async function POST(req: NextRequest) {
   const sessionUser = await getSession();
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     const refundAmount = Math.min(refundAvailable, amount);
     const unpaidReduction = Math.max(0, amount - refundAmount);
 
+    const returnNo = await nextNumber(d, "saleReturn");
     const session = client.startSession();
     try {
       let result:any;
@@ -78,6 +80,7 @@ export async function POST(req: NextRequest) {
 
         await returns.insertOne({
           type: "SALE_RETURN",
+          returnNo,
           saleId,
           invoiceId: sale._id,
           invoiceNo: sale.invoiceNo,
@@ -124,6 +127,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         ok: true,
         invoiceNo: sale.invoiceNo,
+        returnNo,
         returnedQty: returnedQty + qty,
         amount,
         refundAmount,

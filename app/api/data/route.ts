@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
     if (!allowed.includes(c)) return NextResponse.json({error:"Invalid collection"}, {status:400});
     const d = await db();
     const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 1000), 5000);
-    const rows = await d.collection(c).find({}).sort({createdAt:-1}).limit(limit).toArray();
+    const filter: Record<string, unknown> = c === "sales" && req.nextUrl.searchParams.get("includeCancelled") !== "1" ? { status: { $ne: "cancelled" } } : {};
+    const rows = await d.collection(c).find(filter).sort({createdAt:-1}).limit(limit).toArray();
     return NextResponse.json(rows.map(x=>({...x,_id:x._id.toString()})));
   } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
 }

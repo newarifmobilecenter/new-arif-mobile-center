@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
+import { nextNumber } from "@/lib/counters";
 
 export async function POST(req: NextRequest) {
   const user = await getSession();
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     const returnable = Math.max(0, Number(item.qty || 0) - Number(prior[0]?.qty || 0));
     if (qty > returnable) return NextResponse.json({ error: `Is invoice mein sirf ${returnable} quantity return ho sakti hai.` }, { status: 409 });
     const amount = Number(item.costPrice || 0) * qty;
+    const returnNo = await nextNumber(d, "purchaseReturn");
     const session = client.startSession(); let remaining = Number(purchase.remaining || 0), supplierCredit = Number(purchase.supplierCredit || 0);
     try {
       await session.withTransaction(async () => {
@@ -27,10 +29,10 @@ export async function POST(req: NextRequest) {
         if (!stock) throw new Error("Current stock is less than return quantity.");
         const dueReduction = Math.min(remaining, amount); remaining -= dueReduction; supplierCredit += amount - dueReduction;
         await purchases.updateOne({ _id: purchase._id }, { $set: { remaining, supplierCredit, status: remaining > 0 ? "credit" : "paid", updatedAt: new Date() } }, { session });
-        await returns.insertOne({ type: "PURCHASE_RETURN", purchaseId, invoiceId: purchase._id, invoiceNo: purchase.invoiceNo, supplierId: purchase.supplierId, productId, qty, amount, dueReduction, supplierCreditAdded: amount - dueReduction, reason, user: user.u, createdAt: new Date() }, { session });
+        await returns.insertOne({ type: "PURCHASE_RETURN", returnNo, purchaseId, invoiceId: purchase._id, invoiceNo: purchase.invoiceNo, supplierId: purchase.supplierId, productId, qty, amount, dueReduction, supplierCreditAdded: amount - dueReduction, reason, user: user.u, createdAt: new Date() }, { session });
         await movements.insertOne({ type: "OUT", productId, qty, ref: purchase.invoiceNo, reason: `Purchase return: ${reason}`, user: user.u, createdAt: new Date() }, { session });
       }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
     } finally { await session.endSession(); }
-    return NextResponse.json({ ok: true, invoiceNo: purchase.invoiceNo, qty, amount, remaining, supplierCredit });
+    return NextResponse.json({ ok: true, invoiceNo: purchase.invoiceNo, returnNo, qty, amount, remaining, supplierCredit });
   } catch (error: any) { return NextResponse.json({ error: error?.message || "Purchase return save nahi hua." }, { status: 409 }); }
 }

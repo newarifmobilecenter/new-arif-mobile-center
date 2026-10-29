@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
+import { nextNumber } from "@/lib/counters";
 
 export async function POST(req: NextRequest) {
   const sessionUser = await getSession();
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
     total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100),
   }));
 
+  body.invoiceNo = await nextNumber(d, "sale");
   const session = client.startSession();
   try {
     let saved:any;

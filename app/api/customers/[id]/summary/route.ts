@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest, context: Context) {
     const customer = await d.collection("customers").findOne({ _id: new ObjectId(id) });
     if (!customer) return NextResponse.json({ error: "Customer not found." }, { status: 404 });
     const [sales, repairs, transactions, reminders] = await Promise.all([
-      d.collection("sales").find({ customerId: id }).sort({ createdAt: -1 }).limit(5000).toArray(),
+      d.collection("sales").find({ customerId: id, status: { $ne: "cancelled" } }).sort({ createdAt: -1 }).limit(5000).toArray(),
       (await ensureRepairIndexes()).find({ recordType: "REPAIR", deletedAt: null, customerId: id }).sort({ receivedAt: -1 }).limit(5000).toArray(),
       d.collection("transactions").find({ customerId: id }).sort({ createdAt: -1 }).limit(500).toArray(),
       d.collection(REPAIR_REMINDER_COLLECTION).find({ customerId: id }).sort({ createdAt: -1 }).limit(100).toArray(),

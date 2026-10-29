@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./pos.module.css";
+import NumInput from "../components/NumInput";
 
 type Product = any;
 type Customer = any;
@@ -36,8 +37,12 @@ function money(value: number) {
   });
 }
 
-function nextInvoice() {
-  return `INV-${Date.now()}`;
+async function fetchNextInvoice(): Promise<string> {
+  try {
+    const r = await fetch("/api/counters?type=sale", { cache: "no-store" });
+    const d = await r.json();
+    return r.ok && d.next ? String(d.next) : "";
+  } catch { return ""; }
 }
 
 export default function POS() {
@@ -53,7 +58,9 @@ export default function POS() {
   const [salesman, setSalesman] = useState("admin");
   const [saleType, setSaleType] = useState("CASH");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [invoiceNo, setInvoiceNo] = useState(nextInvoice);
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [editId, setEditId] = useState("");
+  const editLoaded = useRef(false);
   const [barcode, setBarcode] = useState("");
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -93,11 +100,37 @@ export default function POS() {
 
   useEffect(() => {
     void load();
+    void fetchNextInvoice().then((n) => setInvoiceNo((cur) => cur || n));
     try {
       const raw = localStorage.getItem("new-arif-held-bills");
       if (raw) setHeldBills(JSON.parse(raw));
     } catch {}
   }, []);
+
+  // Modify an existing invoice: /pos?edit=<saleId>
+  useEffect(() => {
+    if (editLoaded.current || !sales.length) return;
+    const id = new URLSearchParams(window.location.search).get("edit");
+    if (!id) { editLoaded.current = true; return; }
+    const sale = sales.find((x: any) => String(x._id) === id);
+    editLoaded.current = true;
+    if (!sale) { alert("Ye invoice nahi mili ya cancel ho chuki hai."); return; }
+    setEditId(id);
+    setInvoiceNo(String(sale.invoiceNo || ""));
+    setItems(Array.isArray(sale.items) ? sale.items.map((i: any) => ({ ...i })) : []);
+    setCustomer(String(sale.customerId || ""));
+    setCashRef(String(sale.cashRef || ""));
+    setCustRef(String(sale.custRef || ""));
+    setRemarks(String(sale.remarks || ""));
+    setSalesman(String(sale.salesman || "admin"));
+    setSaleType(String(sale.type || "CASH"));
+    if (sale.date) setDate(String(sale.date).slice(0, 10));
+    setPay(String(sale.paymentMethod || "Cash"));
+    setPaid(String(sale.paid ?? ""));
+    setFreight(String(sale.freight ?? 0));
+    setDiscountPct(String(sale.discountPct ?? 0));
+    setTaxPct(String(sale.salesTaxPct ?? 0));
+  }, [sales]);
 
   const subtotal = useMemo(
     () => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0),
@@ -221,7 +254,9 @@ export default function POS() {
     setRemarks("");
     setSaleType("CASH");
     setDate(new Date().toISOString().slice(0, 10));
-    setInvoiceNo(nextInvoice());
+    setEditId("");
+    setInvoiceNo("");
+    void fetchNextInvoice().then(setInvoiceNo);
     setBarcode("");
     setSearch("");
     setPaid("");
@@ -307,15 +342,15 @@ export default function POS() {
       createdAt: new Date().toISOString(),
     };
 
-    const response = await fetch("/api/sales/create", {
+    const response = await fetch(editId ? "/api/sales/modify" : "/api/sales/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(sale),
+      body: JSON.stringify(editId ? { ...sale, saleId: editId } : sale),
     });
     const saved = await response.json();
     if (!response.ok) return alert(saved.error || "Sale failed");
 
-    setDone(saved);
+    setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : saved);
     await load();
   }
 
@@ -388,6 +423,7 @@ export default function POS() {
         <section className={styles.invoiceHeader}>
           <div className={styles.leftFields}>
             <label>Inv No:<input value={invoiceNo} readOnly /></label>
+            {editId && <div role="status" style={{ color: "#fbbf24", fontWeight: 700 }}>✎ Modify mode: {invoiceNo} — <a href="/pos" style={{ color: "#22d3ee" }}>edit cancel</a></div>}
             {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
             <label className={styles.wide}>Customer:
               <select id="customer" value={customer} onChange={(e) => { changeCustomer(e.target.value); if (e.target.value) setSaleType("CREDIT"); }}>
@@ -470,9 +506,9 @@ export default function POS() {
                 <tr key={`${item.productId || "misc"}-${index}`}>
                   <td>{index + 1}</td>
                   <td><b>{item.name}</b></td>
-                  <td><input type="number" min="1" value={item.qty} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, Number(e.target.value || 1)) } : x))} /></td>
-                  <td><input type="number" value={item.price} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: Number(e.target.value || 0) } : x))} /></td>
-                  <td><input aria-label={`${item.name} discount percent`} type="number" min="0" max="100" value={item.discountPct || 0} onChange={(e) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,Number(e.target.value||0)))}:x))}/></td>
+                  <td><NumInput min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
+                  <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
+                  <td><NumInput aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>
                   <td>Rs. {money(item.qty * item.price * (1 - Number(item.discountPct || 0) / 100))}</td>
                   <td><button className={styles.deleteBtn} onClick={() => setItems((old) => old.filter((_, i) => i !== index))}>Delete</button></td>
                   <td><button onClick={() => { setSearchOpen(true); setSearch(""); requestAnimationFrame(() => searchRef.current?.focus()); }}>＋</button></td>

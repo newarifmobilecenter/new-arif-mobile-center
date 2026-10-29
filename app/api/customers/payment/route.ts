@@ -14,7 +14,7 @@ export async function POST(req:NextRequest){
   const s=client.startSession(); let applied=0, left=amount;
   try{
    await s.withTransaction(async()=>{
-    const credits=await sales.find({customerId,remaining:{$gt:0}}).sort({createdAt:1}).toArray();
+    const credits=await sales.find({customerId,status:{$ne:"cancelled"},remaining:{$gt:0}}).sort({createdAt:1}).toArray();
     for(const sale of credits){
       if(left<=0)break; const due=Number(sale.remaining||0), use=Math.min(due,left); if(use<=0)continue;
       const r=await sales.updateOne({_id:sale._id,remaining:{$gte:use}},{$inc:{paid:use},$set:{remaining:due-use,status:due-use>0?"credit":"paid",updatedAt:new Date()}},{session:s});
