@@ -13,6 +13,7 @@ const categories = [
   ]},
   { id:"sale", title:"Sale", icon:"🛒", items:[
     ["1. New Sale","POS par nayi sale banayein","/pos"],
+    ["Daily Summary","Aaj ka sale, purchase, cash aur expense","/daily-summary"],
     ["2. Sales Report","Sales totals aur profit dekhein","/reports"],
     ["3. Sales Report by Date","Reports mein date range select karein","/reports"],
     ["4. Sales Report by Category","Reports ke category/item report options kholen","/reports"],
@@ -28,7 +29,7 @@ const categories = [
     ["Purchase Return","Supplier ko stock wapas record karein","/purchases/returns"],
   ]},
   { id:"inventory", title:"Inventory", icon:"📦", items:[
-    ["Product List","Products, SKU aur prices manage karein","/admin"],
+    ["Product List","Products, SKU aur prices manage karein","/admin?tab=list"],
     ["Stock Dashboard","Current stock aur stock value dekhein","/stock"],
     ["Stock Report","Maujooda stock dekhein","/stock"],
   ]},
@@ -43,7 +44,7 @@ const categories = [
     ["Purchase History","Purani purchases dekhein","/purchases/history"],
   ]},
   { id:"reports", title:"Reports", icon:"📊", items:[
-    ["Daily Summary","Sale, purchase, cash aur expense ka summary","/reports"],
+    ["Daily Summary","Sale, purchase, cash aur expense ka summary","/daily-summary"],
     ["Date Wise Summary","From/To date select karke totals dekhein","/reports"],
     ["Item / Category Report Options","Reports page par available report options dekhein","/reports"],
     ["Customer Ledger","Customer balances aur entries dekhein","/ledger"],
@@ -82,6 +83,7 @@ const categories = [
     ["Finder Tool","Phone tools aur supported parts dhoondein","/tools"],
     ["Salaries","Employees aur salary payments","/salaries"],
     ["Backup & Restore","Business data backup manage karein","/backup"],
+    ["Settings & Themes","Theme, auto-select rules aur shop settings","/settings"],
   ]},
 ] as const;
 

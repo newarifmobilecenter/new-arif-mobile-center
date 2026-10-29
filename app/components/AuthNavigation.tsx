@@ -50,7 +50,7 @@ export default function AuthNavigation() {
   // Global shortcuts: Alt + letter.
   useEffect(() => {
     if (!session.authenticated) return;
-    const routes: Record<string, string> = { KeyG: "/pos", KeyR: "/sales/returns", KeyP: "/purchases", KeyC: "/customers", KeyV: "/vouchers", KeyA: "/repairs/new" };
+    const routes: Record<string, string> = { KeyG: "/pos", KeyR: "/sales/returns", KeyP: "/purchases", KeyC: "/customers", KeyV: "/vouchers", KeyA: "/repairs/new", KeyD: "/daily-summary" };
     const onKey = (e: KeyboardEvent) => {
       if (!e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
       const to = routes[e.code];

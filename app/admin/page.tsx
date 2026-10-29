@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
+import { applyRules, detectBrand, AUTO_RULES_TYPE, DEFAULT_RULES, AutoRule } from "@/lib/autoRules";
 
 const cats = ["Displays / LCD", "Displays / INCELL / TFT", "Displays LED ORG", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
 const brands = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone", "Universal", "Other"];
@@ -27,34 +28,6 @@ const blank: Form = {
   price: "0", wholesale: "0", branch: "Main Branch",
   openingQty: "0", description: "", sku: "", warrantyDays: "0",
 };
-
-const categoryRules: [string, RegExp][] = [
-  ["Charging Ports", /charging|charger|\bport\b|\bpcb\b|\bboard\b/i],
-  ["Batteries", /batter/i],
-  ["Displays / INCELL / TFT", /incell|\btft\b/i],
-  ["Displays LED ORG", /(panel|lcd|led|display|screen|touch).*\b(org|original)\b|\b(org|original)\b.*(panel|lcd|led|display|screen|touch)/i],
-  ["Displays / LCD", /panel|\blcd\b|display|screen|touch|\bfolder\b/i],
-  ["Speakers / Mic", /speaker|\bmic\b|microphone|ringer|buzzer/i],
-  ["Cameras", /camera/i],
-  ["Buttons / Flex", /button|\bflex\b|power key|volume/i],
-  ["Body / Housing", /\bbody\b|housing|back cover|\bframe\b|\bpanel back\b/i],
-  ["Tools", /\btool|screwdriver|soldering|\bkit\b/i],
-];
-const brandAliases: [string, RegExp][] = [["iPhone", /\b(iphone|apple)\b/i]];
-
-function detectCategory(name: string) {
-  for (const [category, rx] of categoryRules) if (rx.test(name)) return category;
-  return "";
-}
-function detectBrand(name: string, brandList: string[]) {
-  for (const [brand, rx] of brandAliases) if (rx.test(name)) return brand;
-  const sorted = [...brandList].filter(b => b && !/^(other|universal)$/i.test(b)).sort((a, b) => b.length - a.length);
-  for (const b of sorted) {
-    const esc = b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, "i").test(name)) return b;
-  }
-  return "";
-}
 
 function num(v: string) { return Number(v || 0); }
 
@@ -82,6 +55,7 @@ export default function Admin() {
   const [brandManagerTab, setBrandManagerTab] = useState<"new" | "list">("new");
   // Fields the user changed by hand are not auto-filled again from the product name.
   const touched = useRef<Record<string, boolean>>({});
+  const rules: AutoRule[] = useMemo(() => { const saved = options.find(o => o.type === AUTO_RULES_TYPE); return Array.isArray(saved?.rules) && saved.rules.length ? saved.rules : DEFAULT_RULES; }, [options]);
   const [brandDraft, setBrandDraft] = useState("");
   const [brandCategory, setBrandCategory] = useState(cats[0]);
 
@@ -98,9 +72,11 @@ export default function Admin() {
     return Array.isArray(p) ? p : [];
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => { const t = new URLSearchParams(window.location.search).get("tab"); if (t === "list") setTab("Product List"); }, []);
 
   const choices = (type: string, category = form.category) => Array.from(new Set([
     ...(baseOptions[type] || []),
+    ...(["category", "brandType", "productGroup", "itemType"].includes(type) ? rules.map(r => String((r as any)[type] || "").trim()).filter(Boolean) : []),
     ...options.filter(option => option.type === type && (!option.category || option.category === category)).map(option => String(option.name || "").trim()).filter(Boolean),
     ...products.filter(product => product[type] && (!category || type === "category" || product.category === category)).map(product => String(product[type]).trim()).filter(Boolean),
   ]));
@@ -122,15 +98,13 @@ export default function Admin() {
       const next: Form = { ...current, name: value };
       const t = touched.current;
       const brandList = Array.from(new Set([...baseOptions.brand, ...options.filter(o => o.type === "brand").map(o => String(o.name || "").trim()), ...products.map(pr => String(pr.brand || "").trim())].filter(Boolean)));
-      if (!t.brand) { const b = detectBrand(value, brandList); if (b) next.brand = b; }
-      if (!t.category) {
-        const c = detectCategory(value);
-        if (c) {
-          next.category = c;
-          if (!t.brandType) next.brandType = c === "Tools" ? "Other" : "Parts";
-          if (!t.productGroup) next.productGroup = c === "Tools" ? "Tools" : "Mobile Parts";
-          if (!t.itemType) next.itemType = c === "Tools" ? "Tool" : "Part";
-        }
+      const rule = applyRules(value, rules);
+      if (!t.brand) { const b = (rule && rule.brand) || detectBrand(value, brandList); if (b) next.brand = b; }
+      if (!t.category && rule && rule.category) {
+        next.category = rule.category;
+        if (!t.brandType && rule.brandType) next.brandType = rule.brandType;
+        if (!t.productGroup && rule.productGroup) next.productGroup = rule.productGroup;
+        if (!t.itemType && rule.itemType) next.itemType = rule.itemType;
       }
       return next;
     });

@@ -139,3 +139,16 @@ h1{font-size:30px;margin:2px 0 6px}
 .loginCard button{width:100%;margin-top:6px;padding:12px;border:0;border-radius:9px;background:linear-gradient(90deg,#0891b2,#2563eb);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
 .loginCard button:disabled{opacity:.7}
 @media (max-height:560px){.loginBrand{display:none}}
+
+/* Themes (screen only): shift hue of the whole blue UI */
+html[data-theme="emerald"]{filter:hue-rotate(-75deg)}
+html[data-theme="purple"]{filter:hue-rotate(55deg)}
+html[data-theme="sunset"]{filter:hue-rotate(150deg) saturate(1.15)}
+html[data-theme="rose"]{filter:hue-rotate(115deg)}
+html[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
+@media print{html[data-theme]{filter:none!important}}
+
+/* Helpline watermark */
+.helplineMark{position:fixed;inset:0;z-index:2;pointer-events:none;display:grid;place-items:center;overflow:hidden}
+.helplineMark span{transform:rotate(-24deg);font-size:clamp(30px,6vw,92px);font-weight:900;letter-spacing:.06em;white-space:nowrap;color:#fff;opacity:.045;user-select:none}
+@media print{.helplineMark span{color:#000;opacity:.09;font-size:34px}}

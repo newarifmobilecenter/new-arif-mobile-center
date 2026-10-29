@@ -171,12 +171,22 @@ export default function Customers() {
     </section>}
 
     {tab === "list" && <section className={styles.list}>
-      <div className={styles.listTop}><h2>Customer List ({listRows.length})</h2><input className={styles.in} style={{ maxWidth: 320 }} value={listQ} onChange={e => setListQ(e.target.value)} placeholder="Search naam / mobile / code / city" /><button className={styles.nbtn} style={{ padding: "0 12px" }} onClick={() => reset()}>＋ New Customer</button></div>
-      <div style={{ overflow: "auto" }}>
-        <table className={styles.tbl}><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>City / Area</th><th>Type</th><th>Balance</th><th>Action</th></tr></thead>
+      <div className={styles.banner}>
+        <div><div className={styles.bannerTitle}>👥 Customer List</div><div className={styles.bannerSub}>NEW ARIF MOBILE CENTER · Kamar Mushani</div></div>
+        <div className={styles.chips}>
+          <span className={styles.chip}><small>Customers</small><b>{cust.length}</b></span>
+          <span className={styles.chip}><small>Udhaar wale</small><b>{cust.filter(c => balance(String(c._id)) > 0).length}</b></span>
+          <span className={styles.chip}><small>Total baki</small><b>Rs. {money(cust.reduce((a, c) => a + balance(String(c._id)), 0))}</b></span>
+        </div>
+      </div>
+      <div className={styles.listTop}><input className={styles.in} style={{ maxWidth: 360 }} value={listQ} onChange={e => setListQ(e.target.value)} placeholder="🔍 Search naam / phone / code / city" /><span className={styles.count}>{listRows.length} dikhaye ja rahe hain</span><button className={styles.nbtn} style={{ padding: "0 14px" }} onClick={() => reset()}>Naya Customer</button></div>
+      <div className={styles.tblWrap}>
+        <table className={styles.tbl}><thead><tr><th>Code</th><th>Customer</th><th>Phone</th><th>City / Area</th><th>Type</th><th>Balance</th><th>Action</th></tr></thead>
           <tbody>{listRows.map(c => { const b = balance(String(c._id)); return <tr key={c._id}>
-            <td>{t(c.code) || "-"}</td><td><Link href={`/customers/${c._id}`}>{c.name}</Link></td><td>{t(c.phoneNo || c.mobile || c.phone) || "-"}</td><td>{[c.city, c.area].filter(Boolean).join(" / ") || "-"}</td><td>{t(c.type) || "-"}</td>
-            <td className={b > 0 ? styles.debt : styles.clear}>Rs. {money(b)}</td>
+            <td>{t(c.code) || "-"}</td>
+            <td><span className={styles.avatar}>{(t(c.name).trim()[0] || "?").toUpperCase()}</span><Link href={`/customers/${c._id}`}>{c.name}</Link></td>
+            <td>{t(c.phoneNo || c.mobile || c.phone) || "-"}</td><td>{[c.city, c.area].filter(Boolean).join(" / ") || "-"}</td><td>{t(c.type) || "-"}</td>
+            <td><span className={b > 0 ? styles.debtPill : styles.clearPill}>Rs. {money(b)}</span></td>
             <td><button onClick={() => edit(c)}>Edit</button><Link href={`/customers/${c._id}`}>History</Link> · <Link href={`/repairs/new?customerId=${c._id}`}>New Repair</Link></td>
           </tr>; })}</tbody></table>
       </div>
