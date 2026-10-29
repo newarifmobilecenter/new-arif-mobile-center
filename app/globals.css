@@ -122,3 +122,20 @@ h1{font-size:30px;margin:2px 0 6px}
 .dashSearchItem:hover,.dashSearchItem:focus{background:#1e293b}
 .dashSearchItem span{font-size:12px;color:#9ca3af}
 .dashSearchNote{margin:6px 4px;color:#9ca3af;font-size:13px}
+
+/* Login wallpaper */
+.loginWall{position:relative;width:100%;max-width:none!important;margin:0!important;min-height:100vh;display:grid;place-items:center;padding:24px;overflow:hidden;background:#05070f}
+.loginArt{position:absolute;inset:0;width:100%;height:100%}
+.loginBrand{position:absolute;top:6%;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;padding:12px 28px;border-radius:14px;background:rgba(5,7,15,.82);border:1px solid rgba(34,211,238,.25);text-align:center;display:grid;gap:4px;color:#e5e7eb;pointer-events:none}
+.loginBrand b{font-size:clamp(20px,3.2vw,38px);letter-spacing:.16em;text-shadow:0 0 18px rgba(34,211,238,.6)}
+.loginBrand span{font-size:clamp(12px,1.4vw,16px);letter-spacing:.3em;color:#7dd3fc;text-transform:uppercase}
+.loginCard{position:relative;width:100%;max-width:400px;padding:26px 28px;border-radius:16px;background:rgba(9,13,24,.78);border:1px solid rgba(34,211,238,.35);box-shadow:0 0 40px rgba(34,211,238,.18),0 20px 50px rgba(0,0,0,.55);backdrop-filter:blur(8px)}
+.loginCard h1{margin:0 0 4px;font-size:22px;font-weight:800;color:#fff}
+.loginCard p{margin:0 0 18px;color:#93a4bd}
+.loginCard label{display:block;font-weight:700;margin-bottom:6px;color:#cbd5e1;font-size:14px}
+.loginCard input{width:100%;padding:11px 12px;margin-bottom:14px;border:1px solid #334155;border-radius:9px;background:#0b1220;color:#fff;font-size:15px}
+.loginCard input:focus{outline:2px solid #22d3ee;border-color:#22d3ee}
+.loginCard .loginError{color:#f87171;font-size:14px;margin:0 0 12px}
+.loginCard button{width:100%;margin-top:6px;padding:12px;border:0;border-radius:9px;background:linear-gradient(90deg,#0891b2,#2563eb);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.loginCard button:disabled{opacity:.7}
+@media (max-height:560px){.loginBrand{display:none}}
