@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
+import Toaster from "./components/Toaster";
 import "./globals.css";
 import { THEME_BOOT_SCRIPT } from "@/lib/themes";
 
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthNavigation />
         {children}
         <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: 03290882200</span></div>
+        <Toaster />
         <Analytics />
       </body>
     </html>
