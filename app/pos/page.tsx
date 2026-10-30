@@ -400,8 +400,9 @@ export default function POS() {
 
   const visibleProducts = products.filter((p) => {
     const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""} ${p.code || ""} ${p.brand || ""}`.toLowerCase();
-    return Number(p.stock || 0) > 0 && text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
+    return text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
   });
+  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { window.alert(`"${p.name || p.model}" ka stock zero hai.`); return; } addProduct(p, true); setHlp(0); requestAnimationFrame(() => searchRef.current?.focus()); };
   const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
   const brandTypes = Array.from(new Set(products.filter((p) => !categoryFilter || p.category === categoryFilter).map((p) => String(p.brandType || "").trim()).filter(Boolean))).sort();
 
@@ -494,20 +495,10 @@ export default function POS() {
             <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
             <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
           </div>
-          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); setHlp(0); }} onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setHlp(h => Math.min(Math.min(visibleProducts.length, 12) - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHlp(h => Math.max(0, h - 1)); } else if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[hlp] || visibleProducts[0]; if (match) { addProduct(match, true); setHlp(0); } else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
-          {searchOpen && (search.trim() || showAllProducts) && <div className={styles.productStrip}>
-            {visibleProducts.slice(0, 12).map((p, pi) => {
-              const last = lastSaleForProduct(String(p._id));
-              return <button key={p._id} className={styles.productButton} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} style={pi === hlp ? { outline: "2px solid #22d3ee", background: "#1d4ed8" } : undefined} onClick={() => addProduct(p, true)}>
-                <strong>{p.name || p.model}</strong>
-                <span>{p.brand || ""} {p.model || p.sku || p.code || ""}</span>
-                <small>Stock {p.stock} · Rs. {money(priceForProduct(p))}</small>
-                <small>Cost Rs. {money(Number(p.costPrice || 0))} · Last Level {last ? `Rs. ${money(last.price)} ${formatDate(last.date)}` : "—"}</small>
-              </button>;
-            })}
-          </div>}
+          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); setHlp(0); }} onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setHlp(h => Math.min(visibleProducts.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHlp(h => Math.max(0, h - 1)); } else if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[hlp] || visibleProducts[0]; if (match) pickProduct(match); else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
         </section>
 
+        <div className={styles.splitWrap}>
         <section className={styles.tableWrap}>
           <table>
             <thead>
@@ -532,6 +523,13 @@ export default function POS() {
             </tbody>
           </table>
         </section>
+        {searchOpen && (search.trim() || showAllProducts) && <aside className={styles.pickerPane}>
+          <table><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Stock</th><th>Rate</th><th>Cost</th><th>Last Level</th></tr></thead>
+            <tbody>{visibleProducts.slice(0, 80).map((p, pi) => { const last = lastSaleForProduct(String(p._id)); const zero = Number(p.stock || 0) <= 0; return <tr key={p._id} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${zero ? styles.zeroRow : ""} ${pi === hlp ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pickProduct(p); }}>
+              <td>{p.code ?? p.sku ?? ""}</td><td>{p.name || p.model}{zero ? " ⚠ STOCK ZERO" : ""}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}
+              {!visibleProducts.length && <tr><td colSpan={8}>Koi product nahi mila.</td></tr>}</tbody></table>
+        </aside>}
+        </div>
 
         <section className={styles.bottomArea}>
           <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>

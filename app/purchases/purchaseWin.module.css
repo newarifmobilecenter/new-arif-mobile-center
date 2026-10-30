@@ -59,3 +59,6 @@
 }
 
 .pickOn { background: #1d4ed8 !important; color: #fff; outline: 1px solid #22d3ee; }
+
+.zeroRow td { background: #5b1620; color: #ffd1d6; font-weight: 700; }
+.pickOn td { background: #1d4ed8 !important; color: #fff !important; }

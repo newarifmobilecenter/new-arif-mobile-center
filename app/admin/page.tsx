@@ -205,11 +205,6 @@ export default function Admin() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  async function del(id: string) {
-    if (!confirm("Product delete karein? Historical sales remain rahengi.")) return;
-    await fetch(`/api/data?collection=products&id=${id}`, { method: "DELETE" });
-    await load();
-  }
 
   return <main className={styles.page}>
     <header className={styles.titlebar}><div>▣ <b>New Item - New Arif Mobile Center</b></div><div className={styles.user}>Product Management</div></header>
@@ -241,7 +236,7 @@ export default function Admin() {
       <section className={styles.actions}><button className={styles.save} onClick={save} disabled={busy}>▣ {busy ? "Saving..." : "Save"} (Ctrl+S)</button><button className={styles.edit} onClick={() => selectedId ? save() : alert("Product List se product select karein.")}>✎ Edit</button><button className={styles.newBtn} onClick={() => newProduct()}>＋ New (Alt+N)</button><Link href="/" className={styles.back}>← Dashboard</Link></section>
     </>}
 
-    {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / barcode..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={() => newProduct()}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand Type</th><th>Brand</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.barcode ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brandType ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{p.stock ?? 0}</td><td><button onClick={() => loadProduct(p)}>Edit</button><button onClick={() => del(String(p._id))}>Delete</button></td></tr>)}</tbody></table></div></section>}
+    {tab === "Product List" && <section className={styles.listPanel}><div className={styles.listTop}><h2>Product List ({filtered.length})</h2><input placeholder="Search name / code / brand / barcode..." value={search} onChange={e => setSearch(e.target.value)}/><button onClick={() => newProduct()}>＋ New Product</button></div><div className={styles.tableWrap}><table><thead><tr><th>Code</th><th>Barcode</th><th>Product Name</th><th>Category</th><th>Brand Type</th><th>Brand</th><th>Retail</th><th>W.Rate</th><th>Stock</th><th>Action</th></tr></thead><tbody>{filtered.map(p => <tr key={p._id} className={Number(p.stock ?? 0) <= 0 ? styles.zeroStock : ""}><td>{p.code ?? p.sku ?? "-"}</td><td>{p.barcode ?? "-"}</td><td>{p.name}</td><td>{p.category ?? "-"}</td><td>{p.brandType ?? "-"}</td><td>{p.brand ?? "-"}</td><td>{p.price ?? 0}</td><td>{p.wholesale ?? 0}</td><td>{Number(p.stock ?? 0) <= 0 ? "⚠ 0 (Stock zero)" : p.stock}</td><td><button onClick={() => loadProduct(p)}>Edit</button></td></tr>)}</tbody></table></div></section>}
 
     {tab === "Opening" && <section className={styles.simplePanel}><h2>Opening Stock</h2><p className={styles.muted}>Product select karein aur opening quantity set karein.</p><div className={styles.openGrid}>{products.slice(0, 30).map(p => <div className={styles.openCard} key={p._id}><b>{p.name}</b><span>{p.brand} • {p.model}</span><label>Opening Qty<input type="number" defaultValue={p.stock ?? 0} onBlur={async e => { const q = Number(e.target.value || 0); await fetch("/api/data", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({collection:"products",id:String(p._id),openingQty:q,stock:q})}); }}/></label></div>)}</div></section>}
 

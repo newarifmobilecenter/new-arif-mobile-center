@@ -168,7 +168,7 @@ export default function Purchases() {
       </div>
       {active !== null && <div className={styles.picker}>
         <table className={styles.tbl}><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Cost</th><th>In Hand</th><th>Retail</th></tr></thead>
-          <tbody>{matches.map((p, mi) => <tr key={p._id} ref={mi === hl ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${mi === hl ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
+          <tbody>{matches.map((p, mi) => <tr key={p._id} ref={mi === hl ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${Number(p.stock || 0) <= 0 ? styles.zeroRow : ""} ${mi === hl ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
             {!matches.length && <tr><td colSpan={7} className={styles.dim}>Koi product nahi mila. <Link href="/admin">Naya item banayein</Link></td></tr>}</tbody></table>
       </div>}
     </section>
