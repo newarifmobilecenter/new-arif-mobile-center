@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
+import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 
 export async function POST(req: NextRequest) {
   const user = await getSession();
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
           if (!product) throw new Error(`Product not found: ${item.name || productId}`);
           await d.collection("stockMovements").insertOne({ type: "IN", productId, qty: Number(item.qty), ref: invoiceNo, reason: "Purchase", costPrice: Number(item.costPrice), user: user.u, createdAt: new Date() }, { session });
         }
+        await clearOrdersForPurchase(d, items.map((it: any) => ({ productId: String(it.productId), name: String(it.name || "") })), invoiceNo, session);
         const purchase = { ...body, supplierName: supplier.name || "", invoiceNo, suppRef, items, subtotal, discount, total, paid, remaining: total - paid, status: total - paid > 0 ? "credit" : "paid", createdAt: new Date(), updatedAt: new Date(), createdBy: user.u };
         delete purchase._id;
         const result = await d.collection("purchases").insertOne(purchase, { session });

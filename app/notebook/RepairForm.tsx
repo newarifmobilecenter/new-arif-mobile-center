@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import styles from "./notebook.module.css";
 import { suggestParts } from "@/lib/partMatch";
 import { notify } from "@/lib/toast";
+import { analyzeFault } from "@/lib/orderBook";
 
 const accessories = ["SIM", "Memory Card", "Simtray", "Battery", "Other"];
 const mobileTypes = ["Android", "iPhone", "Keypad", "Other"];
@@ -49,6 +50,9 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   const [extra, setExtra] = useState<string[]>([]);
   const [partSearch, setPartSearch] = useState("");
   const warned = useRef<Set<string>>(new Set());
+  const [orderOff, setOrderOff] = useState<Record<string, boolean>>({});
+  const needs = analyzeFault(products, holds, model, fault);
+  const toOrder = needs.filter((n) => n.needOrder && !orderOff[n.name]);
   const suggested = suggestParts(products, model, fault);
   const availableOf = (p: any) => Number(p.stock || 0) - (holds[String(p._id)] || []).reduce((n: number, h: any) => n + Number(h.qty || 0), 0);
   const candidates = [...suggested, ...extra.map((id) => products.find((p) => String(p._id) === id)).filter(Boolean)].filter((p, i, a) => a.findIndex((x) => x._id === p._id) === i);
@@ -139,6 +143,11 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Repair could not be received.");
+      if (toOrder.length) {
+        try {
+          await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: toOrder.map((n) => ({ name: n.name, category: n.category, productId: n.product ? String(n.product._id) : null, qty: 1, repairId: String(data._id), token: String(data.tokenNo || ""), customerName, model })) }) });
+        } catch { /* order book is best effort; the repair itself is saved */ }
+      }
       router.push(`/repairs/${data._id}?print=1`);
     } catch (caught: any) {
       setError(caught.message || "Repair could not be received.");
@@ -192,6 +201,15 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
         {partMatches.length > 0 && <div style={{ border: "1px solid #334155", borderRadius: 6, background: "#0b1220", marginTop: 2 }}>{partMatches.map((p) => <button type="button" key={p._id} style={{ display: "block", width: "100%", textAlign: "left", padding: "5px 8px", background: "none", border: 0, color: "#e5e7eb", cursor: "pointer" }} onClick={() => { setExtra((cur) => (cur.includes(String(p._id)) ? cur : [...cur, String(p._id)])); setPick((cur) => ({ ...cur, [p._id]: true })); setPartSearch(""); }}>{p.name} · Stock {Number(p.stock || 0)}</button>)}</div>}
       </div>
     </section>
+
+    {needs.some((n) => n.needOrder) && <section className={styles.formSection}>
+      <h2>📒 Order Book (jo stock mein nahi)</h2>
+      <p className={styles.muted}>Fault mein likhi in cheezon ka stock nahi hai. Tick wali cheezen mobile receive karte hi Urgent Order Book mein chali jayengi aur purchase aate hi khud hat jayengi.</p>
+      {needs.filter((n) => n.needOrder).map((n) => <label key={n.name} style={{ display: "flex", gap: 8, alignItems: "center", padding: "4px 6px", borderRadius: 6, background: "rgba(245,158,11,.14)" }}>
+        <input type="checkbox" checked={!orderOff[n.name]} onChange={(event) => setOrderOff((cur) => ({ ...cur, [n.name]: !event.target.checked }))} />
+        <b>{n.name}</b><span className={styles.muted}>{n.category}</span><span style={{ marginLeft: "auto", color: "#fbbf24", fontWeight: 700 }}>{n.product ? "Available 0" : "Stock mein nahi"}</span>
+      </label>)}
+    </section>}
 
     <details className={styles.formSection}>
       <summary>Security / Internal (staff only)</summary>

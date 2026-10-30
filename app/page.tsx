@@ -73,6 +73,10 @@ const categories = [
     ["Bank Account Ledger","Bank account ka in/out hisaab","/accounts"],
     ["Cheque Payment Summary","Bank payments aur account totals","/reports"],
   ]},
+  { id:"orders", title:"Order Book", icon:"📒", items:[
+    ["Urgent Order Book","Repair ke liye jo parts stock mein nahi, category wise list","/orders"],
+    ["Out of Stock","Jo saman stock mein nahi (Panel, CHB Strip, Back Ring...)","/orders?tab=stock"],
+  ]},
   { id:"slips", title:"Slips", icon:"🖨️", items:[
     ["Repair Receiving Slip","Customer phone receiving slip kholen","/repairs"],
     ["Sale Invoice","Sale invoice aur print options","/invoices"],

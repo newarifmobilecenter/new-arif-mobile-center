@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { getSession, hasRole } from "@/lib/auth";
+import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 
 const allowed = ["products","productOptions","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns"];
 const oid = (id:string) => ObjectId.isValid(id) ? new ObjectId(id) : null;
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
     doc.createdAt = new Date();
     doc.updatedAt = new Date();
     const r = await d.collection(collection).insertOne(doc);
+    if (collection === "products" && Number(doc.stock || doc.openingQty || 0) > 0) { try { await clearOrdersForPurchase(d, [{ productId: r.insertedId.toString(), name: String(doc.name || "") }], "New product"); } catch {} }
     return NextResponse.json({_id:r.insertedId.toString(), ...doc}, {status:201});
   } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
 }
