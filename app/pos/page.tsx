@@ -402,7 +402,7 @@ export default function POS() {
     const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""} ${p.code || ""} ${p.brand || ""}`.toLowerCase();
     return text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
   });
-  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { window.alert(`"${p.name || p.model}" ka stock zero hai.`); return; } addProduct(p, true); setHlp(0); requestAnimationFrame(() => searchRef.current?.focus()); };
+  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { window.alert(`"${p.name || p.model}" ka stock zero hai.`); return; } const at = items.length; addProduct(p, true); setHlp(0); setSearch(""); window.setTimeout(() => (document.querySelector(`[data-qrow="${at}"]`) as HTMLElement | null)?.focus(), 40); };
   const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
   const brandTypes = Array.from(new Set(products.filter((p) => !categoryFilter || p.category === categoryFilter).map((p) => String(p.brandType || "").trim()).filter(Boolean))).sort();
 
@@ -495,7 +495,6 @@ export default function POS() {
             <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
             <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
           </div>
-          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); setHlp(0); }} onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setHlp(h => Math.min(visibleProducts.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHlp(h => Math.max(0, h - 1)); } else if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[hlp] || visibleProducts[0]; if (match) pickProduct(match); else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
         </section>
 
         <div className={styles.splitWrap}>
@@ -509,21 +508,21 @@ export default function POS() {
                 <tr key={`${item.productId || "misc"}-${index}`}>
                   <td>{index + 1}</td>
                   <td><b>{item.name}</b></td>
-                  <td><NumInput min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
+                  <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
                   <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
-                  <td><NumInput aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>
+                  <td><NumInput onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchRef.current?.focus(); } }} aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>
                   <td>Rs. {money(item.qty * item.price * (1 - Number(item.discountPct || 0) / 100))}</td>
                   <td><button className={styles.deleteBtn} onClick={() => setItems((old) => old.filter((_, i) => i !== index))}>Delete</button></td>
-                  <td><button onClick={() => { setSearchOpen(true); setSearch(""); requestAnimationFrame(() => searchRef.current?.focus()); }}>＋</button></td>
+                  <td><button type="button" title="Nayi line" onClick={() => { setSearch(""); requestAnimationFrame(() => searchRef.current?.focus()); }}>＋</button></td>
                   <td><input value={item.remarks || ""} onChange={(e) => setItems((old) => old.map((x, i) => i === index ? { ...x, remarks: e.target.value } : x))} /></td>
                   <td>{item.barcode || "-"}</td>
                 </tr>
               ))}
-              {!items.length && <tr><td colSpan={10} className={styles.empty}>No items added. Scan a barcode or search/select a product above.</td></tr>}
+              <tr className={styles.entryRow}><td>{items.length + 1}</td><td><input ref={searchRef} className={styles.entryInput} data-sn="1" value={search} onFocus={() => { setSearchOpen(true); setHlp(0); }} onBlur={() => setSearchOpen(false)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); setHlp(0); }} onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setHlp(h => Math.min(visibleProducts.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHlp(h => Math.max(0, h - 1)); } else if (e.key === "Escape") { setSearchOpen(false); } else if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[hlp] || visibleProducts[0]; if (match) pickProduct(match); else if (barcode.trim()) scanBarcode(); } }} placeholder="product naam / code likhein ya yahan click karein" /></td><td></td><td></td><td></td><td></td><td></td><td><button type="button" title="Nayi line" onClick={() => searchRef.current?.focus()}>＋</button></td><td></td><td></td></tr>
             </tbody>
           </table>
         </section>
-        {searchOpen && (search.trim() || showAllProducts) && <aside className={styles.pickerPane}>
+        {searchOpen && <aside className={styles.pickerPane}>
           <table><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Stock</th><th>Rate</th><th>Cost</th><th>Last Level</th></tr></thead>
             <tbody>{visibleProducts.slice(0, 80).map((p, pi) => { const last = lastSaleForProduct(String(p._id)); const zero = Number(p.stock || 0) <= 0; return <tr key={p._id} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${zero ? styles.zeroRow : ""} ${pi === hlp ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pickProduct(p); }}>
               <td>{p.code ?? p.sku ?? ""}</td><td>{p.name || p.model}{zero ? " ⚠ STOCK ZERO" : ""}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}

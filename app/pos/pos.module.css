@@ -40,7 +40,7 @@
 
 /* POS split: items table + product picker (same as Purchase window) */
 .splitWrap { display: flex; min-height: 0; }
-.pickerPane { flex: 0 0 52%; overflow: auto; border-left: 2px solid #1b78bd; background: #071d34; }
+.pickerPane { flex: 0 0 44%; overflow: auto; border-left: 2px solid #1b78bd; background: #071d34; }
 .pickerPane table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .pickerPane th { position: sticky; top: 0; background: #0d3a66; color: #fff; text-align: left; padding: 4px 6px; }
 .pickerPane td { padding: 3px 6px; border-bottom: 1px solid #12365a; color: #e8f4ff; }
@@ -51,4 +51,12 @@
 @media screen and (min-width: 900px) {
   .saleWindow > .splitWrap { flex: 1 1 auto; min-height: 190px; }
   .splitWrap > .tableWrap { flex: 1 1 0; height: auto; min-height: 0; min-width: 0; }
+}
+
+/* POS entry row: product search lives inside the items table (like Purchase) */
+.entryInput { width: 100%; min-height: 28px; padding: 4px 8px; border: 1px solid #236c9f; border-radius: 4px; background: #04101f; color: #e8f4ff; font-size: 13px; }
+.entryInput:focus { outline: 2px solid #22d3ee; }
+.entryRow td { background: #08243f; }
+@media screen and (min-width: 900px) {
+  .productSearch { grid-template-columns: minmax(0, 1fr); }
 }
