@@ -33,3 +33,7 @@
   .bottomArea { grid-template-columns: 150px minmax(0, 1fr); }
   .calcGrid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
+
+.printSel{display:inline-flex;gap:10px;align-items:center;margin:0 0 0 12px;padding:2px 10px;border:1px solid #236c9f;border-radius:4px;color:#cfe8ff;font-size:13px}
+.printSel legend{font-size:11px;padding:0 4px}
+.hint{margin-left:auto;color:#7dd3fc;font-size:12px}

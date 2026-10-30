@@ -85,6 +85,7 @@ export async function POST(req: NextRequest) {
           invoiceId: sale._id,
           invoiceNo: sale.invoiceNo,
           productId,
+          productName: String((sale.items || []).find((row: any) => String(row.productId) === productId)?.name || ""),
           qty,
           amount,
           refundAmount,

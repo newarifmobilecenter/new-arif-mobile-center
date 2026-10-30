@@ -59,6 +59,8 @@ export default function POS() {
   const [saleType, setSaleType] = useState("CASH");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [invoiceNo, setInvoiceNo] = useState("");
+  const [hlp, setHlp] = useState(0);
+  const [printSize, setPrintSize] = useState("");
   const [editId, setEditId] = useState("");
   const editLoaded = useRef(false);
   const [barcode, setBarcode] = useState("");
@@ -354,9 +356,19 @@ export default function POS() {
     await load();
   }
 
+  const completeRef = useRef(complete); completeRef.current = complete;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "s") { e.preventDefault(); void completeRef.current(); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => { if (done && printSize) { const t = window.setTimeout(() => window.print(), 400); return () => window.clearTimeout(t); } }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (done) {
     return (
       <main className="shell">
+        {printSize === "a4" && <style>{`@media print{@page{size:A4;margin:12mm}.receipt{width:100%!important;max-width:none!important}}`}</style>}
+        {printSize === "a5" && <style>{`@media print{@page{size:A5;margin:10mm}.receipt{width:100%!important;max-width:none!important}}`}</style>}
         <div className="nav no-print">
           <Link href="/">← Dashboard</Link>
           <button className="btn" onClick={() => window.print()}>🖨 Print Record</button>
@@ -482,11 +494,11 @@ export default function POS() {
             <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
             <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
           </div>
-          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[0]; if (match) addProduct(match, true); else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
+          <input ref={searchRef} className={styles.searchInput} value={search} onFocus={() => setSearchOpen(true)} onChange={(e) => { setSearch(e.target.value); setSearchOpen(true); setShowAllProducts(false); setHlp(0); }} onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setHlp(h => Math.min(Math.min(visibleProducts.length, 12) - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHlp(h => Math.max(0, h - 1)); } else if (e.key === "Enter") { e.preventDefault(); const match = visibleProducts[hlp] || visibleProducts[0]; if (match) { addProduct(match, true); setHlp(0); } else if (barcode.trim()) scanBarcode(); } }} placeholder="Search product / model / SKU / code / barcode, then press Enter..." />
           {searchOpen && (search.trim() || showAllProducts) && <div className={styles.productStrip}>
-            {visibleProducts.slice(0, 12).map((p) => {
+            {visibleProducts.slice(0, 12).map((p, pi) => {
               const last = lastSaleForProduct(String(p._id));
-              return <button key={p._id} className={styles.productButton} onClick={() => addProduct(p, true)}>
+              return <button key={p._id} className={styles.productButton} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} style={pi === hlp ? { outline: "2px solid #22d3ee", background: "#1d4ed8" } : undefined} onClick={() => addProduct(p, true)}>
                 <strong>{p.name || p.model}</strong>
                 <span>{p.brand || ""} {p.model || p.sku || p.code || ""}</span>
                 <small>Stock {p.stock} · Rs. {money(priceForProduct(p))}</small>
@@ -541,6 +553,8 @@ export default function POS() {
           <button onClick={complete} className={styles.saveBtn}>💾 Save Sale</button>
           <select value={pay} onChange={(e) => setPay(e.target.value)}><option>Cash</option><option>JazzCash</option><option>Easypaisa</option><option>Raast</option><option>NayaPay</option><option>UBL</option><option>Other Bank</option></select>
           <button onClick={() => window.print()}>Thermal Print</button>
+          <fieldset className={styles.printSel}><legend>Print after save</legend>{[["A4", "a4"], ["A5", "a5"], ["Thermal", "thermal"]].map(([label, v]) => <label key={v}><input type="checkbox" checked={printSize === v} onChange={e => setPrintSize(e.target.checked ? v : "")} /> {label}</label>)}</fieldset>
+          <span className={styles.hint}>Ctrl+S = Save · Enter = agla field · ↑↓ = product chunein</span>
         </footer>
       </div>
     </main>

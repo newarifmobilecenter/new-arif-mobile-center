@@ -148,7 +148,8 @@ html[data-theme="rose"]{filter:hue-rotate(115deg)}
 html[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
 @media print{html[data-theme]{filter:none!important}}
 
-/* Helpline watermark */
-.helplineMark{position:fixed;inset:0;z-index:2;pointer-events:none;display:grid;place-items:center;overflow:hidden}
-.helplineMark span{transform:rotate(-24deg);font-size:clamp(30px,6vw,92px);font-weight:900;letter-spacing:.06em;white-space:nowrap;color:#fff;opacity:.045;user-select:none}
-@media print{.helplineMark span{color:#000;opacity:.09;font-size:34px}}
+/* Helpline watermark: slim strip at the bottom of every page */
+.helplineMark{position:fixed;left:0;right:0;bottom:0;z-index:2;pointer-events:none;display:flex;justify-content:center}
+.helplineMark span{padding:2px 14px;border-radius:8px 8px 0 0;background:rgba(9,13,24,.85);border:1px solid #26304a;border-bottom:0;font-size:12px;font-weight:700;letter-spacing:.08em;color:#7dd3fc;user-select:none}
+@media print{.helplineMark span{background:none;border:0;color:#000;font-size:11px}}
+@media screen and (min-width:900px){body{padding-bottom:20px}}

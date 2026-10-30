@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         if (!stock) throw new Error("Current stock is less than return quantity.");
         const dueReduction = Math.min(remaining, amount); remaining -= dueReduction; supplierCredit += amount - dueReduction;
         await purchases.updateOne({ _id: purchase._id }, { $set: { remaining, supplierCredit, status: remaining > 0 ? "credit" : "paid", updatedAt: new Date() } }, { session });
-        await returns.insertOne({ type: "PURCHASE_RETURN", returnNo, purchaseId, invoiceId: purchase._id, invoiceNo: purchase.invoiceNo, supplierId: purchase.supplierId, productId, qty, amount, dueReduction, supplierCreditAdded: amount - dueReduction, reason, user: user.u, createdAt: new Date() }, { session });
+        await returns.insertOne({ type: "PURCHASE_RETURN", returnNo, purchaseId, invoiceId: purchase._id, invoiceNo: purchase.invoiceNo, productName: String(item.name || ""), supplierId: purchase.supplierId, productId, qty, amount, dueReduction, supplierCreditAdded: amount - dueReduction, reason, user: user.u, createdAt: new Date() }, { session });
         await movements.insertOne({ type: "OUT", productId, qty, ref: purchase.invoiceNo, reason: `Purchase return: ${reason}`, user: user.u, createdAt: new Date() }, { session });
       }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
     } finally { await session.endSession(); }

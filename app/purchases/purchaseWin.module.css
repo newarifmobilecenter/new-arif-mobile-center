@@ -57,3 +57,5 @@
 @media (max-width: 899px) {
   .headBox, .bottom, .split { grid-template-columns: minmax(0, 1fr); }
 }
+
+.pickOn { background: #1d4ed8 !important; color: #fff; outline: 1px solid #22d3ee; }

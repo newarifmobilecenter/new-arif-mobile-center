@@ -62,6 +62,38 @@ export default function AuthNavigation() {
     return () => window.removeEventListener("keydown", onKey);
   }, [session.authenticated, pathname, router]);
 
+  // Keyboard flow on every page: Enter = next field, Arrow Up/Down = same column in the row above/below (tables).
+  useEffect(() => {
+    const FOCUS = 'input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([readonly]):not([disabled]), select:not([disabled]), textarea:not([disabled])';
+    const visible = (el: HTMLElement) => el.offsetParent !== null || el === document.activeElement;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.isComposing) return;
+      const t = e.target as HTMLElement | null;
+      if (!t || !/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
+      if (t.closest("[data-no-nav]") || (t.closest("form") && !t.closest("main"))) return;
+      const input = t as HTMLInputElement;
+      if (e.key === "Enter") {
+        if (t.tagName === "TEXTAREA" || t.closest("form#login-form")) return;
+        if (["checkbox", "radio", "button", "submit"].includes(input.type)) return;
+        const scope = (t.closest("main") || document.body) as HTMLElement;
+        const list = Array.from(scope.querySelectorAll<HTMLElement>(FOCUS)).filter(visible);
+        const i = list.indexOf(t);
+        const next = list[i + 1];
+        if (next) { e.preventDefault(); next.focus(); if (next instanceof HTMLInputElement && next.type !== "date") next.select?.(); }
+      } else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && t.tagName === "INPUT" && input.type !== "number") {
+        const cell = t.closest("td");
+        const row = cell?.parentElement as HTMLTableRowElement | null;
+        if (!cell || !row) return;
+        const col = Array.from(row.children).indexOf(cell);
+        const other = (e.key === "ArrowDown" ? row.nextElementSibling : row.previousElementSibling) as HTMLTableRowElement | null;
+        const target = other?.children[col]?.querySelector<HTMLElement>(FOCUS);
+        if (target) { e.preventDefault(); target.focus(); if (target instanceof HTMLInputElement) target.select(); }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   async function logout() {
     setBusy(true);
     setError("");

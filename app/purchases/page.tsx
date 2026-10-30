@@ -18,6 +18,7 @@ export default function Purchases() {
   const [purchases, setPurchases] = useState<any[]>([]);
   const [lines, setLines] = useState<Line[]>([emptyLine()]);
   const [active, setActive] = useState<number | null>(null);
+  const [hl, setHl] = useState(0);
   const [purchaseNo, setPurchaseNo] = useState("");
   const [supplier, setSupplier] = useState("");
   const [suppRef, setSuppRef] = useState("");
@@ -61,9 +62,10 @@ export default function Purchases() {
   const setLine = (key: number, patch: Partial<Line>) => setLines(cur => cur.map(l => l.key === key ? { ...l, ...patch } : l));
   const pick = (key: number, p: any) => {
     setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), cost: String(p.costPrice ?? 0), retail: String(p.price ?? ""), stock: Number(p.stock || 0), category: String(p.category || "") });
-    setActive(null);
+    setActive(null); setHl(0); focusEl(`[data-ql="${key}"]`);
   };
-  const addLineAfter = (key: number) => setLines(cur => { const i = cur.findIndex(l => l.key === key); const next = [...cur]; next.splice(i + 1, 0, emptyLine()); return next; });
+  const focusEl = (sel: string) => window.setTimeout(() => (document.querySelector(sel) as HTMLElement | null)?.focus(), 30);
+  const addLineAfter = (key: number) => { const fresh = emptyLine(); setLines(cur => { const i = cur.findIndex(l => l.key === key); const next = [...cur]; next.splice(i + 1, 0, fresh); return next; }); return fresh.key; };
   const removeLine = (key: number) => setLines(cur => (cur.length > 1 ? cur.filter(l => l.key !== key) : [emptyLine()]));
 
   const activeLine = lines.find(l => l.key === active);
@@ -152,21 +154,21 @@ export default function Purchases() {
           <thead><tr><th>S#</th><th>Product Name</th><th>Qty</th><th>Disc %</th><th>Cost</th><th>Total</th><th>G Retail</th><th>Del</th><th>New</th><th>Barcode</th></tr></thead>
           <tbody>{lines.map((l, i) => <tr key={l.key} className={active === l.key ? styles.rowOn : ""}>
             <td>{i + 1}</td>
-            <td><input className={styles.pname} value={l.name} placeholder="product naam / code likhein ya yahan click karein" onFocus={() => setActive(l.key)} onChange={e => { setLine(l.key, { name: e.target.value, productId: "" }); setActive(l.key); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (matches[0]) pick(l.key, matches[0]); } else if (e.key === "Escape") setActive(null); }} /></td>
-            <td><input value={l.qty} inputMode="numeric" onFocus={selectAll} onChange={e => setLine(l.key, { qty: e.target.value.replace(/[^\d]/g, "") })} /></td>
+            <td><input className={styles.pname} value={l.name} placeholder="product naam / code likhein ya yahan click karein" data-ln={l.key} onFocus={() => { setActive(l.key); setHl(0); }} onChange={e => { setLine(l.key, { name: e.target.value, productId: "" }); setActive(l.key); setHl(0); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (matches[hl] || matches[0]) pick(l.key, matches[hl] || matches[0]); else if (l.productId) focusEl(`[data-ql="${l.key}"]`); } else if (e.key === "ArrowDown") { e.preventDefault(); setHl(h => Math.min(matches.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHl(h => Math.max(0, h - 1)); } else if (e.key === "Escape") setActive(null); }} /></td>
+            <td><input data-ql={l.key} value={l.qty} inputMode="numeric" onFocus={selectAll} onChange={e => setLine(l.key, { qty: e.target.value.replace(/[^\d]/g, "") })} /></td>
             <td><input value={l.disc} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { disc: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td><input value={l.cost} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { cost: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td className={styles.tot}>{l.productId ? money(n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100)) : ""}</td>
-            <td><input value={l.retail} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { retail: e.target.value.replace(/[^\d.]/g, "") })} /></td>
+            <td><input value={l.retail} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const last = lines[lines.length - 1]; if (last && last.key === l.key) focusEl(`[data-ln="${addLineAfter(l.key)}"]`); else { const nx = lines[lines.findIndex(x => x.key === l.key) + 1]; if (nx) focusEl(`[data-ln="${nx.key}"]`); } } }} onFocus={selectAll} onChange={e => setLine(l.key, { retail: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td><button type="button" className={styles.ico} title="Line delete" onClick={() => removeLine(l.key)}>🗑</button></td>
-            <td><button type="button" className={styles.ico} title="Is ke neeche nayi line" onClick={() => addLineAfter(l.key)}>＋</button></td>
+            <td><button type="button" className={styles.ico} title="Is ke neeche nayi line" onClick={() => focusEl(`[data-ln="${addLineAfter(l.key)}"]`)}>＋</button></td>
             <td className={styles.dim}>{l.code}{l.barcode && l.barcode !== l.code ? ` / ${l.barcode}` : ""}</td>
           </tr>)}</tbody>
         </table>
       </div>
       {active !== null && <div className={styles.picker}>
         <table className={styles.tbl}><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Cost</th><th>In Hand</th><th>Retail</th></tr></thead>
-          <tbody>{matches.map(p => <tr key={p._id} className={styles.pickRow} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
+          <tbody>{matches.map((p, mi) => <tr key={p._id} ref={mi === hl ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${mi === hl ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
             {!matches.length && <tr><td colSpan={7} className={styles.dim}>Koi product nahi mila. <Link href="/admin">Naya item banayein</Link></td></tr>}</tbody></table>
       </div>}
     </section>
