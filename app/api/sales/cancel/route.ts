@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession, hasRole } from "@/lib/auth";
+import { REPAIR_COLLECTION } from "@/lib/repairs";
 
 export async function POST(req: NextRequest) {
   const user = await getSession();
@@ -26,6 +27,18 @@ export async function POST(req: NextRequest) {
           if (!item.productId || !ObjectId.isValid(String(item.productId))) continue;
           await d.collection("products").updateOne({ _id: new ObjectId(String(item.productId)) }, { $inc: { stock: Number(item.qty || 0) }, $set: { updatedAt: new Date() } }, { session });
           await d.collection("stockMovements").insertOne({ type: "IN", productId: String(item.productId), qty: Number(item.qty || 0), reason: `Sale cancelled: ${reason}`, ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
+        }
+        for (const item of Array.isArray(sale.items) ? sale.items : []) {
+          if (!item.repairId || !ObjectId.isValid(String(item.repairId))) continue;
+          const repair = await d.collection(REPAIR_COLLECTION).findOne({ _id: new ObjectId(String(item.repairId)), billedSaleId: saleId }, { session });
+          if (!repair) continue;
+          for (const part of Array.isArray(repair.parts) ? repair.parts : []) {
+            if (!ObjectId.isValid(String(part.productId))) continue;
+            const q = Math.max(1, Number(part.qty || 1));
+            await d.collection("products").updateOne({ _id: new ObjectId(String(part.productId)) }, { $inc: { stock: q }, $set: { updatedAt: new Date() } }, { session });
+            await d.collection("stockMovements").insertOne({ type: "IN", productId: String(part.productId), qty: q, reason: `Sale cancelled: repair ${repair.tokenNo}`, ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
+          }
+          await d.collection(REPAIR_COLLECTION).updateOne({ _id: repair._id }, { $set: { billedSaleId: null, billedInvoiceNo: null }, $unset: { billedAt: "" } }, { session });
         }
         const paid = Number(sale.paid || 0);
         if (paid > 0) {

@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./notebook.module.css";
+import { suggestParts } from "@/lib/partMatch";
+import { notify } from "@/lib/toast";
 
 const accessories = ["SIM", "Memory Card", "Simtray", "Battery", "Other"];
 const mobileTypes = ["Android", "iPhone", "Keypad", "Other"];
@@ -41,6 +43,18 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   const [remarks, setRemarks] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [products, setProducts] = useState<any[]>([]);
+  const [holds, setHolds] = useState<Record<string, any[]>>({});
+  const [pick, setPick] = useState<Record<string, boolean>>({});
+  const [extra, setExtra] = useState<string[]>([]);
+  const [partSearch, setPartSearch] = useState("");
+  const warned = useRef<Set<string>>(new Set());
+  const suggested = suggestParts(products, model, fault);
+  const availableOf = (p: any) => Number(p.stock || 0) - (holds[String(p._id)] || []).reduce((n: number, h: any) => n + Number(h.qty || 0), 0);
+  const candidates = [...suggested, ...extra.map((id) => products.find((p) => String(p._id) === id)).filter(Boolean)].filter((p, i, a) => a.findIndex((x) => x._id === p._id) === i);
+  const isOn = (p: any) => pick[p._id] ?? (extra.includes(String(p._id)) || availableOf(p) > 0);
+  const chosen = candidates.filter(isOn);
+  const partMatches = partSearch.trim().length >= 2 ? products.filter((p) => `${p.name || ""} ${p.code || ""} ${p.barcode || ""}`.toLowerCase().includes(partSearch.trim().toLowerCase())).slice(0, 8) : [];
   const remaining = Math.max(0, Number(totalBill || 0) - Number(paid || 0));
   const paymentStatus = remaining > 0 ? "PAYMENT_DUE" : "PAID";
 
@@ -56,6 +70,23 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
       }
     }).catch(() => setError("Customer or shop information could not be loaded."));
   }, []);
+
+  useEffect(() => {
+    fetch("/api/data?collection=products&limit=5000").then((r) => r.json()).then((d) => setProducts(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch("/api/reservations").then((r) => r.json()).then((d) => setHolds(d && !d.error ? d : {})).catch(() => {});
+  }, []);
+
+  // Warn as soon as a needed part is already promised to another repair (or out of stock).
+  useEffect(() => {
+    for (const p of candidates) {
+      const key = String(p._id);
+      if (warned.current.has(key) || availableOf(p) > 0) continue;
+      warned.current.add(key);
+      const hs = holds[key] || [];
+      const who = hs.map((h: any) => `${h.token} (${h.customerName || h.model})`).join(", ");
+      notify(hs.length ? `${p.name}: stock ${Number(p.stock || 0)}, lekin ${who} ke liye pehle se lagana hai. Abhi available: ${Math.max(0, availableOf(p))}.` : `${p.name}: stock zero hai.`, { title: "Part available nahi", kind: "danger" });
+    }
+  }, [products, holds, model, fault, extra]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!initialCustomerId || customers.length === 0 || customerDetailsTouched.current) return;
@@ -90,6 +121,8 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
       setError("Expected ready time guzar chuka hai. Aage ki date/time chunein.");
       return;
     }
+    const short = chosen.filter((p) => availableOf(p) < 1);
+    if (short.length && !window.confirm(`Ye part(s) available nahi: ${short.map((p) => p.name).join(", ")}. Phir bhi mobile receive karein?`)) return;
     setBusy(true);
     try {
       const response = await fetch("/api/repairs", {
@@ -100,12 +133,13 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
           accessories: receivedAccessories, imei, devicePassword,
           expectedReadyAt: new Date(readyValue).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
           paymentMethod, paymentReminderDate: remaining > 0 ? reminderDate() : "", deliveryMode,
+          parts: chosen.map((p) => ({ productId: String(p._id), name: String(p.name || ""), qty: 1 })),
           remarks, shopkeeper: shop.shopkeeper, shopPhone: shop.phone, shopAddress: shop.address,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Repair could not be received.");
-      router.push(`/repairs/${data._id}`);
+      router.push(`/repairs/${data._id}?print=1`);
     } catch (caught: any) {
       setError(caught.message || "Repair could not be received.");
     } finally {
@@ -141,6 +175,22 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
         <label className={`${styles.field} ${styles.wide}`}>Condition<textarea value={condition} onChange={(event) => setCondition(event.target.value)} maxLength={1000} /></label>
       </div>
       <fieldset className={styles.accessoryFieldset}><legend>Accessories received</legend>{accessories.map((item) => <label key={item}><input type="checkbox" checked={receivedAccessories.includes(item)} onChange={(event) => setReceivedAccessories((current) => event.target.checked ? [...current, item] : current.filter((value) => value !== item))} /> {item}</label>)}</fieldset>
+    </section>
+
+    <section className={styles.formSection}>
+      <h2>Parts for this repair (stock se)</h2>
+      <p className={styles.muted}>Model aur fault likhte hi matching parts khud dikhte hain. Tick wale parts is repair ke liye reserve ho jate hain.</p>
+      {candidates.length === 0 && <p className={styles.muted}>Abhi koi matching part nahi mila. Neeche se khud search karke add kar sakte hain.</p>}
+      {candidates.map((p) => { const av = availableOf(p); const hs = holds[String(p._id)] || []; return <label key={p._id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "4px 6px", borderRadius: 6, background: av < 1 ? "rgba(239,68,68,.14)" : "transparent" }}>
+        <input type="checkbox" checked={isOn(p)} onChange={(event) => setPick((cur) => ({ ...cur, [p._id]: event.target.checked }))} />
+        <b>{p.name}</b><span className={styles.muted}>Stock {Number(p.stock || 0)}</span>
+        {hs.length > 0 && <span style={{ color: "#fbbf24" }}>• {hs.map((h: any) => `${h.token} ke liye reserved`).join(", ")}</span>}
+        <span style={{ marginLeft: "auto", fontWeight: 700, color: av < 1 ? "#f87171" : "#4ade80" }}>{av < 1 ? "⚠ Available 0" : `Available ${av}`}</span>
+      </label>; })}
+      <div style={{ position: "relative", marginTop: 6 }}>
+        <input placeholder="Koi aur part dhoondein (naam / code)…" value={partSearch} onChange={(event) => setPartSearch(event.target.value)} data-no-nav="1" />
+        {partMatches.length > 0 && <div style={{ border: "1px solid #334155", borderRadius: 6, background: "#0b1220", marginTop: 2 }}>{partMatches.map((p) => <button type="button" key={p._id} style={{ display: "block", width: "100%", textAlign: "left", padding: "5px 8px", background: "none", border: 0, color: "#e5e7eb", cursor: "pointer" }} onClick={() => { setExtra((cur) => (cur.includes(String(p._id)) ? cur : [...cur, String(p._id)])); setPick((cur) => ({ ...cur, [p._id]: true })); setPartSearch(""); }}>{p.name} · Stock {Number(p.stock || 0)}</button>)}</div>}
+      </div>
     </section>
 
     <details className={styles.formSection}>

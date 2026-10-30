@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import ReceivingSlip from "../ReceivingSlip";
 import NotebookEntryForm, { type NotebookEntry } from "../NotebookEntryForm";
 import NotebookVoucher from "../NotebookVoucher";
+import RepairParts from "../RepairParts";
 import styles from "../notebook.module.css";
 
 const money = (value: number) => Number(value || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
@@ -55,6 +56,17 @@ function RepairDetailPage() {
   }
 
   useEffect(() => { void load(); }, [id]);
+
+  // Opened right after "Receive Mobile": print the customer copy automatically.
+  useEffect(() => {
+    if (!repair || typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("print") !== "1") return;
+    url.searchParams.delete("print");
+    window.history.replaceState(null, "", url.pathname + url.search);
+    const t = window.setTimeout(() => window.print(), 700);
+    return () => window.clearTimeout(t);
+  }, [repair]);
 
   function beginEdit() {
     setEdit({
@@ -175,6 +187,8 @@ function RepairDetailPage() {
         </div>
         <details className={styles.formSection}><summary>Internal security details</summary><div className={styles.formGrid}><div><b>IMEI:</b> {repair.imei || "-"}</div><div><b>Password:</b> {repair.devicePassword || "-"}</div></div></details>
       </section>
+
+      <RepairParts repair={repair} onSaved={load} />
 
       <section className={`${styles.panel} ${styles.noPrint}`}>
         <h2>Delivery / Handover</h2>

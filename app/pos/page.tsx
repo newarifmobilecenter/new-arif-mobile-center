@@ -5,6 +5,7 @@ import Link from "next/link";
 import styles from "./pos.module.css";
 import { notify } from "@/lib/toast";
 import NumInput from "../components/NumInput";
+import RepairBox from "./RepairBox";
 
 type Product = any;
 type Customer = any;
@@ -19,6 +20,7 @@ type SaleItem = {
   discountPct?: number;
   stock?: number;
   isMisc?: boolean;
+  repairId?: string;
 };
 
 type HeldBill = {
@@ -51,6 +53,8 @@ export default function POS() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [repairRecords, setRepairRecords] = useState<any[]>([]);
+  const [readyRepairs, setReadyRepairs] = useState<any[]>([]);
+  const [holds, setHolds] = useState<Record<string, any[]>>({});
   const [items, setItems] = useState<SaleItem[]>([]);
   const [customer, setCustomer] = useState("");
   const [cashRef, setCashRef] = useState("");
@@ -84,6 +88,13 @@ export default function POS() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
+    const cutoff = Date.now() - 45 * 86400000;
+    const readyList = (x: any) => Array.isArray(x) ? x.filter((r: any) => ((r.parts || []).length > 0 || Number(r.remaining || 0) > 0) && new Date(r.updatedAt || r.receivedAt || 0).getTime() >= cutoff) : [];
+    fetch("/api/reservations").then((r) => r.json()).then((d: any) => setHolds(d && !d.error ? d : {})).catch(() => {});
+    Promise.all([
+      fetch("/api/repairs?status=READY&unbilled=1").then((r) => r.json()).catch(() => []),
+      fetch("/api/repairs?status=DELIVERED&unbilled=1").then((r) => r.json()).catch(() => []),
+    ]).then(([a, b]) => setReadyRepairs([...readyList(a), ...readyList(b)].sort((x: any, y: any) => String(y.updatedAt || "").localeCompare(String(x.updatedAt || ""))))).catch(() => {});
     const [p, c, s, r] = await Promise.all([
       fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
       fetch("/api/data?collection=customers").then(async (r) => {
@@ -243,7 +254,7 @@ export default function POS() {
         .some((x: any) => String(x).toLowerCase() === value)
     );
     if (product && Number(product.stock || 0) > 0) {
-      addProduct(product);
+      if (holdGuard(product)) addProduct(product);
       return;
     }
     setSearch(barcode);
@@ -403,7 +414,37 @@ export default function POS() {
     const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""} ${p.code || ""} ${p.brand || ""}`.toLowerCase();
     return text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
   });
-  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; } const at = items.length; addProduct(p, true); setHlp(0); setSearch(""); window.setTimeout(() => (document.querySelector(`[data-qrow="${at}"]`) as HTMLElement | null)?.focus(), 40); };
+  // Parts promised to repairs: HARD (fitted on Ready/Delivered mobile) cannot be sold; SOFT (repair in progress) asks first.
+  const holdGuard = (p: Product): boolean => {
+    const hs = holds[String(p._id)] || [];
+    if (!hs.length) return true;
+    const stock = Number(p.stock || 0);
+    const inCartQty = items.filter((i) => i.productId === p._id).reduce((n, i) => n + Number(i.qty || 0), 0);
+    const hard = hs.filter((h) => h.state === "HARD");
+    const soft = hs.filter((h) => h.state === "SOFT");
+    const hardQty = hard.reduce((n, h) => n + Number(h.qty || 0), 0);
+    const softQty = soft.reduce((n, h) => n + Number(h.qty || 0), 0);
+    const who = (list: any[]) => list.map((h) => `${h.token} (${h.customerName || h.model})`).join(", ");
+    if (stock - hardQty - inCartQty < 1) {
+      notify(`${p.name || p.model}: ${who(hard)} pe lagi hui hai. Is ka bill New Sale ke Repair box se hoga, alag sale nahi ho sakti.`, { title: "Part mobile pe lagi hui hai", kind: "danger" });
+      return false;
+    }
+    if (softQty > 0 && stock - hardQty - softQty - inCartQty < 1) {
+      return window.confirm(`${p.name || p.model}: stock ${stock} hai, lekin ${who(soft)} repair mein lagana hai.\n\nPhir bhi sale karein?`);
+    }
+    return true;
+  };
+  const addRepairToSale = (r: any) => {
+    if (items.some((i) => i.repairId === String(r._id))) return;
+    const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
+    const partNames = (r.parts || []).map((x: any) => x.name).filter(Boolean).join(" + ");
+    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}${partNames ? ` (${partNames})` : ""}`, qty: 1, price: baqi, isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
+    if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
+    notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
+  };
+  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }
+    if (!holdGuard(p)) return;
+     const at = items.length; addProduct(p, true); setHlp(0); setSearch(""); window.setTimeout(() => (document.querySelector(`[data-qrow="${at}"]`) as HTMLElement | null)?.focus(), 40); };
   const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
   const brandTypes = Array.from(new Set(products.filter((p) => !categoryFilter || p.category === categoryFilter).map((p) => String(p.brandType || "").trim()).filter(Boolean))).sort();
 
@@ -464,6 +505,7 @@ export default function POS() {
               <button className={styles.danger} onClick={holdBill}>Hold Bill</button>
             </div>
           </div>
+        <RepairBox repairs={readyRepairs} inCart={new Set(items.map((i) => String(i.repairId || "")).filter(Boolean))} onAdd={addRepairToSale} onChanged={load} />
         </section>
 
         <section className={styles.barcodeRow}>
@@ -526,7 +568,7 @@ export default function POS() {
         {searchOpen && <aside className={styles.pickerPane}>
           <table><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Stock</th><th>Rate</th><th>Cost</th><th>Last Level</th></tr></thead>
             <tbody>{visibleProducts.slice(0, 80).map((p, pi) => { const last = lastSaleForProduct(String(p._id)); const zero = Number(p.stock || 0) <= 0; return <tr key={p._id} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${zero ? styles.zeroRow : ""} ${pi === hlp ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pickProduct(p); }}>
-              <td>{p.code ?? p.sku ?? ""}</td><td>{p.name || p.model}{zero ? " ⚠ STOCK ZERO" : ""}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}
+              <td>{p.code ?? p.sku ?? ""}</td><td>{p.name || p.model}{zero ? " ⚠ STOCK ZERO" : ""}{(holds[String(p._id)] || []).map((h: any) => <span key={h.repairId} className={h.state === "HARD" ? styles.tagHard : styles.tagSoft}> {h.state === "HARD" ? "🔒" : "🔧"} {h.token}</span>)}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}
               {!visibleProducts.length && <tr><td colSpan={8}>Koi product nahi mila.</td></tr>}</tbody></table>
         </aside>}
         </div>

@@ -60,3 +60,30 @@
 @media screen and (min-width: 900px) {
   .productSearch { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Repair Ready to Sale box */
+.repairBox { position: relative; display: flex; flex-direction: column; min-width: 0; border: 1px solid #1b78bd; border-radius: 6px; background: #071d34; padding: 3px 5px; }
+.repairBoxHead { font-size: 11px; color: #7dd3fc; margin-bottom: 2px; }
+.repairGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 34px; gap: 3px; overflow: auto; max-height: 74px; align-content: start; }
+.repairEmpty { grid-column: 1 / -1; color: #7a93ad; font-size: 11px; padding: 6px 2px; }
+.repairCard { display: flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 5px; border: 1px solid #236c9f; min-width: 0; }
+.repairReady { background: #3a2b05; border-color: #b78a14; }
+.repairDelivered { background: #06301a; border-color: #1f9d55; }
+.repairTxt { flex: 1 1 auto; min-width: 0; display: grid; font-size: 11px; line-height: 1.15; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.repairTxt small { color: #cfe8ff; font-size: 10px; }
+.repairCard button { flex: 0 0 22px; height: 22px; padding: 0; border: 1px solid #236c9f; border-radius: 4px; background: #0d3a66; color: #fff; cursor: pointer; font-size: 12px; }
+.repairCard button:disabled { opacity: .5; cursor: default; }
+.repairModalBg { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6); display: grid; place-items: center; }
+.repairModal { width: min(440px, 92vw); background: #0b1220; border: 1px solid #22d3ee; border-radius: 10px; padding: 16px 18px; color: #e5e7eb; display: grid; gap: 8px; font-size: 14px; }
+.repairModal h3 { margin: 0; color: #22d3ee; }
+.repairModal p { margin: 0; color: #9fb3c8; font-size: 13px; }
+.repairModal label { display: grid; gap: 3px; font-size: 13px; }
+.repairModal input { padding: 8px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #fff; font-size: 14px; }
+.repairModalBtns { display: flex; justify-content: flex-end; gap: 8px; }
+.repairModalBtns button { padding: 8px 16px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e5e7eb; cursor: pointer; }
+.repairModalBtns .repairSave { background: linear-gradient(90deg,#0891b2,#2563eb); border: 0; color: #fff; font-weight: 700; }
+.tagHard { margin-left: 6px; padding: 0 5px; border-radius: 4px; background: #7f1d1d; color: #fecaca; font-size: 11px; }
+.tagSoft { margin-left: 6px; padding: 0 5px; border-radius: 4px; background: #78350f; color: #fde68a; font-size: 11px; }
+@media screen and (min-width: 900px) {
+  .invoiceHeader { grid-template-columns: 1.65fr 1fr minmax(250px, .85fr); }
+}

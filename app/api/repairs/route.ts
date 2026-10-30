@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
     const filter:any={recordType:"REPAIR",deletedAt:null};
     if(q){const pattern=new RegExp(escapeRegex(q),"i");filter.$or=[{tokenNo:pattern},{customerName:pattern},{customerPhone:pattern},{model:pattern},{imei:pattern}];}
     if(customerId)filter.customerId=customerId;
+    if(req.nextUrl.searchParams.get("unbilled")==="1")filter.billedSaleId={$in:[null]};
     if(status==="PAYMENT_DUE")filter.remaining={$gt:0};else if(status)filter.status=status;
     if(Object.keys(dateFilter).length)filter.receivedAt=dateFilter;
     const rows=await (await ensureRepairIndexes()).find(filter).sort({receivedAt:-1,createdAt:-1}).limit(5000).toArray();
@@ -122,7 +123,7 @@ export async function PATCH(req:NextRequest){
     if(!current)return NextResponse.json({error:"Repair not found."},{status:404});
     if(b.paid!==undefined||b.remaining!==undefined||b.paymentStatus!==undefined)
       return NextResponse.json({error:"Repair payments must be recorded through Customer Payment."},{status:400});
-    const allowed=new Set(["status","expectedReadyAt","paymentReminderDate","totalBill","agreedRate","model","mobileType","fault","condition","accessories","imei","devicePassword","shopkeeper","remarks","deliveryMode"]);
+    const allowed=new Set(["parts","status","expectedReadyAt","paymentReminderDate","totalBill","agreedRate","model","mobileType","fault","condition","accessories","imei","devicePassword","shopkeeper","remarks","deliveryMode"]);
     const changes:Record<string,any>={};
     for(const [key,value] of Object.entries(b))if(allowed.has(key))changes[key]=value;
     if(Object.keys(changes).length===0)return NextResponse.json({error:"No editable repair fields were provided."},{status:400});
@@ -166,6 +167,7 @@ export async function PATCH(req:NextRequest){
       remaining:normalized.remaining,paymentStatus:normalized.paymentStatus,expectedReadyAt:normalized.expectedReadyAt,
       expectedHours:Math.max(0,(normalized.expectedReadyAt.getTime()-new Date(current.receivedAt).getTime())/3600000),
       paymentReminderAt:normalized.paymentReminderAt,shopkeeper:normalized.shopkeeper,remarks:normalized.remarks,deliveryMode:normalized.deliveryMode,
+      parts:normalized.parts,
       status:nextStatus,delivery,statusHistory:[...(current.statusHistory||[]),...(nextStatus!==current.status?[{status:nextStatus,at:now,user:session.u}]:[])],updatedAt:now,updatedBy:session.u,
     };
     if(nextStatus==="READY"&&current.status!=="READY")update.readyAt=now;

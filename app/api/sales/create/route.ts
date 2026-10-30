@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
+import { REPAIR_COLLECTION } from "@/lib/repairs";
 
 export async function POST(req: NextRequest) {
   const sessionUser = await getSession();
@@ -86,6 +87,26 @@ export async function POST(req: NextRequest) {
         }, { session });
       }
 
+      // Repair lines: fitted parts leave stock now (they were only reserved until billing).
+      const billedRepairs: ObjectId[] = [];
+      for (const item of normalizedItems) {
+        if (!item.repairId) continue;
+        if (!ObjectId.isValid(String(item.repairId))) throw new Error("Invalid repair on bill.");
+        const repair = await d.collection(REPAIR_COLLECTION).findOne({ _id: new ObjectId(String(item.repairId)), recordType: "REPAIR" }, { session });
+        if (!repair) throw new Error("Repair nahi mili.");
+        if (repair.billedSaleId) throw new Error(`Repair ${repair.tokenNo} pehle hi bill ho chuki hai.`);
+        if (!["READY", "DELIVERED"].includes(String(repair.status))) throw new Error(`Repair ${repair.tokenNo} abhi Ready nahi hai.`);
+        for (const part of Array.isArray(repair.parts) ? repair.parts : []) {
+          if (!ObjectId.isValid(String(part.productId))) continue;
+          const q = Math.max(1, Number(part.qty || 1));
+          const prod = await products.findOne({ _id: new ObjectId(String(part.productId)) }, { session });
+          if (!prod) continue;
+          await products.updateOne({ _id: prod._id }, { $set: { stock: Math.max(0, Number(prod.stock || 0) - q), updatedAt: new Date() } }, { session });
+          await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
+        }
+        billedRepairs.push(repair._id);
+      }
+
       const sale = {
         ...body,
         items: normalizedItems,
@@ -108,6 +129,7 @@ export async function POST(req: NextRequest) {
       };
       delete (sale as any)._id;
       saved = await sales.insertOne(sale, { session });
+      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, billedAt: new Date() } }, { session });
 
       if (paid > 0) {
         await transactions.insertOne({

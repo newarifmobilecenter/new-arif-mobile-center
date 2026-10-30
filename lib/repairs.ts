@@ -69,6 +69,22 @@ function validDate(value: unknown, label: string) {
   return parsed;
 }
 
+export type RepairPart = { productId: string; name: string; qty: number };
+
+export function normalizeParts(raw: unknown): RepairPart[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: RepairPart[] = [];
+  for (const item of raw.slice(0, 30)) {
+    const productId = String((item as any)?.productId ?? "").trim();
+    if (!ObjectId.isValid(productId) || seen.has(productId)) continue;
+    const qty = Math.min(99, Math.max(1, Math.floor(Number((item as any)?.qty) || 1)));
+    seen.add(productId);
+    out.push({ productId, name: String((item as any)?.name ?? "").trim().slice(0, 160), qty });
+  }
+  return out;
+}
+
 export function normalizeRepairInput(input: any, options: { creating?: boolean; allowUnlinked?: boolean; legacyBackup?: boolean } = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new RepairValidationError("Invalid repair record.");
   const customerIdValue = String(input.customerId ?? "").trim();
@@ -146,6 +162,7 @@ export function normalizeRepairInput(input: any, options: { creating?: boolean; 
     shopPhone: text(input.shopPhone, "Shop phone", 40),
     shopAddress: text(input.shopAddress, "Shop address", 240),
     remarks: text(input.remarks, "Remarks", 1500),
+    parts: normalizeParts(input.parts),
     deliveryMode,
     delivery: input.delivery && typeof input.delivery === "object" ? input.delivery : null,
   };
