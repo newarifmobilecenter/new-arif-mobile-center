@@ -174,3 +174,12 @@ html[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
 @keyframes toastIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 @keyframes toastShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @keyframes toastBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* Dashboard bottom bar */
+.dashFoot{display:grid;grid-template-columns:1fr auto 1fr 1fr;align-items:center;gap:10px;margin-top:auto;padding:8px 14px;border:1px solid #26304a;border-radius:10px;background:#090d18}
+.dashFoot a{color:#22d3ee;text-decoration:none;font-weight:700;font-size:14px;text-align:center;padding:5px 8px;border-radius:7px}
+.dashFoot a:hover{background:#17243a}
+.dashFootHelp{color:#7dd3fc;font-weight:800;letter-spacing:.06em;font-size:14px;text-align:center;white-space:nowrap}
+body:has(.dashFoot) .helplineMark{display:none}
+@media (max-width:700px){.dashFoot{grid-template-columns:1fr 1fr}}
+@media print{.dashFoot{display:none}}

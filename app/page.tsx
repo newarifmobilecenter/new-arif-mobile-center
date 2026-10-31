@@ -101,5 +101,11 @@ export default function Home(){
   <nav className="dashboardMenu" aria-label="Main menu">{categories.map(category=><button type="button" key={category.id} className={activeCategory===category.id?"dashboardMenuButton active":"dashboardMenuButton"} aria-expanded={activeCategory===category.id} aria-controls="dashboardCategoryPanel" onClick={()=>setActiveCategory(activeCategory===category.id?null:category.id)}><span aria-hidden="true">{category.icon}</span>{category.title}</button>)}</nav>
   {selected&&<section className="panel dashboardCategoryPanel" id="dashboardCategoryPanel"><div className="dashboardCategoryHeading"><h2>{selected.icon} {selected.title}</h2><button type="button" className="dashboardClose" onClick={()=>setActiveCategory(null)} aria-label="Close menu">×</button></div><div className="dashboardActionGrid">{selected.items.map(([title,description,href])=><Link href={href} target={href==="/product-cost"?"_blank":undefined} rel={href==="/product-cost"?"noreferrer":undefined} className="dashboardAction" key={title}><span className="dashboardActionTitle">{title}</span><span className="muted">{description}</span><span className="go">Open →</span></Link>)}</div>{selected.id==="slips"&&<RepairReminderSummary/>}</section>}
   {!selected&&<p className="dashboardHint">Upar category par click karein; us category ke options yahin khulenge.</p>}
+ <footer className="dashFoot" aria-label="Quick links">
+  <Link href="/daily-summary">📅 Daily Summary</Link>
+  <span className="dashFootHelp">📞 Helpline: 03290882200</span>
+  <Link href="/orders">📒 Order Book</Link>
+  <Link href="/orders?tab=stock">📦 Out of Stock</Link>
+ </footer>
  </main>
 }
