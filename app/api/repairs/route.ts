@@ -8,7 +8,6 @@ import {
   escapeRegex,
   ensureRepairIndexes,
   generateRepairToken,
-  getRepairShopkeepers,
   normalizeRepairInput,
   normalizeRepairToken,
   RepairValidationError,
@@ -63,9 +62,7 @@ export async function POST(req: NextRequest){
       customerName:String(b.customerName||customer?.name||""),
       customerPhone:String(b.customerPhone||customer?.phone||""),
     },{creating:true,allowUnlinked:true});
-    const shopkeepers=getRepairShopkeepers();
     const shopkeeper=normalized.shopkeeper||session.u;
-    if(!shopkeepers.includes(shopkeeper))return NextResponse.json({error:"Select an authorized shopkeeper."},{status:400});
     const settings=await d.collection("settings").findOne({});
     const requestedToken=normalizeRepairToken(b.tokenNo);
     const token=requestedToken||await generateRepairToken();
@@ -75,7 +72,7 @@ export async function POST(req: NextRequest){
       ...normalized,
       shopkeeper,
       shopName:String(settings?.shopName||"NEW ARIF MOBILE"),
-      shopPhone:String(settings?.phone||""),
+      shopPhone:normalized.shopPhone||"03060882200",
       shopAddress:String(settings?.address||"Al saif plaza kamar mushani, mianwali"),
       tokenNo:token,
       entryNo:token,
@@ -145,7 +142,7 @@ export async function PATCH(req:NextRequest){
       expectedReadyAt:changes.expectedReadyAt??current.expectedReadyAt,
       paymentReminderDate:changes.paymentReminderDate??currentReminderDate,
     },{creating:false,allowUnlinked:true});
-    if(changes.shopkeeper!==undefined&&!getRepairShopkeepers().includes(normalized.shopkeeper))return NextResponse.json({error:"Select an authorized shopkeeper."},{status:400});
+    
     let delivery=current.delivery||null;
     if(nextStatus==="DELIVERED"&&current.status!=="DELIVERED"){
       const recipientType=String(b.deliveryRecipientType||"").toUpperCase();

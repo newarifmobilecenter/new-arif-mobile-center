@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOPKEEPER_OPTIONS, SHOP_PHONES } from "@/lib/shopOptions";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./notebook.module.css";
@@ -69,7 +70,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
     ]).then(([customerData, shopData]) => {
       setCustomers(Array.isArray(customerData) ? customerData : []);
       if (shopData && !shopData.error) {
-        setShop((current) => ({ ...current, ...shopData }));
+        setShop((current) => ({ ...current, ...shopData, shopkeeper: "", phone: SHOP_PHONES.includes(shopData.phone) ? shopData.phone : SHOP_PHONES[0] }));
         if (shopData.nextToken) setTokenNo(String(shopData.nextToken));
       }
     }).catch(() => setError("Customer or shop information could not be loaded."));
@@ -138,7 +139,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
           expectedReadyAt: new Date(readyValue).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
           paymentMethod, paymentReminderDate: remaining > 0 ? reminderDate() : "", deliveryMode,
           parts: chosen.map((p) => ({ productId: String(p._id), name: String(p.name || ""), qty: 1 })),
-          remarks, shopkeeper: shop.shopkeeper, shopPhone: shop.phone, shopAddress: shop.address,
+          remarks, shopkeeper: shop.shopkeeper.trim() || "Imran", shopPhone: shop.phone || SHOP_PHONES[0], shopAddress: shop.address,
         }),
       });
       const data = await response.json();
@@ -247,10 +248,12 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
       <h2>Delivery</h2>
       <div className={styles.formGrid}>
         <label className={styles.field}>Handover plan<select value={deliveryMode} onChange={(event) => setDeliveryMode(event.target.value)}><option value="PICKUP">Customer pickup</option><option value="DELIVERY">Mobile delivery</option></select></label>
-        <label className={styles.field}>Shopkeeper<select value={shop.shopkeeper} onChange={(event) => setShop((current) => ({ ...current, shopkeeper: event.target.value }))}><option value="">Select shopkeeper</option>{shop.shopkeepers.map((name) => <option key={name}>{name}</option>)}</select></label>
+        <label className={styles.field}>Shopkeeper<select value={SHOPKEEPER_OPTIONS.includes(shop.shopkeeper) ? shop.shopkeeper : shop.shopkeeper ? "__other" : ""} onChange={(event) => setShop((current) => ({ ...current, shopkeeper: event.target.value === "__other" ? " " : event.target.value }))}><option value="">Select shopkeeper</option>{SHOPKEEPER_OPTIONS.map((name) => <option key={name} value={name}>{name}</option>)}<option value="__other">Other</option></select></label>
+        {shop.shopkeeper && !SHOPKEEPER_OPTIONS.includes(shop.shopkeeper) && <label className={styles.field}>Other shopkeeper name<input value={shop.shopkeeper.trim() === "" ? "" : shop.shopkeeper} maxLength={60} placeholder="Write name" onChange={(event) => setShop((current) => ({ ...current, shopkeeper: event.target.value || " " }))} /></label>}
+        <label className={styles.field}>Shop phone<select value={shop.phone} onChange={(event) => setShop((current) => ({ ...current, phone: event.target.value }))}>{SHOP_PHONES.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         <label className={`${styles.field} ${styles.wide}`}>Remarks<textarea value={remarks} onChange={(event) => setRemarks(event.target.value)} maxLength={1500} /></label>
       </div>
-      <p className={styles.muted}>Shop details: {shop.address || "Al saif plaza kamar mushani, mianwali"}{shop.phone ? ` · ${shop.phone}` : " · No shop phone configured"}</p>
+      <p className={styles.muted}>Shop details: {shop.address || "Al saif plaza kamar mushani, mianwali"}</p>
     </section>
 
     {error && <p className={styles.notice} role="alert">{error}</p>}
