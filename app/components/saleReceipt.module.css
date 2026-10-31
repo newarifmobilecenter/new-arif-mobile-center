@@ -1,0 +1,36 @@
+.rc { background: #fff; max-width: 400px; margin: 12px auto; padding: 12px; border-radius: 8px; font-family: Arial, Helvetica, sans-serif; color: #000; font-size: 12px; line-height: 1.35; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.head { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: center; }
+.logo { display: grid; place-items: center; height: 60px; border: 3px solid #000; border-radius: 9px; font-size: 10px; line-height: 1.05; text-align: center; }
+.brand { text-align: center; }
+.name { font-size: 22px; font-weight: 900; line-height: 1; }
+.sub { font-size: 13px; font-weight: 800; letter-spacing: 1px; }
+.svc { font-size: 7.5px; font-weight: 700; }
+.tag { margin: 3px 0; text-align: center; font-size: 12px; font-style: italic; font-weight: 700; }
+.dark { background: #000; color: #fff; }
+.rc .dark, .rc .dark * { color: #fff !important; }
+.title { padding: 4px; border-radius: 4px; text-align: center; font-size: 16px; font-weight: 900; letter-spacing: 1px; }
+.meta { display: grid; gap: 2px; margin: 6px 0; padding-bottom: 6px; border-bottom: 1px dashed #000; }
+.meta > div { display: flex; justify-content: space-between; gap: 8px; }
+.meta b { text-align: right; font-weight: 800; }
+.inv { padding: 0 6px; border: 1.5px solid #000; border-radius: 4px; font-size: 14px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tbl th { padding: 3px 3px; text-align: right; font-size: 10px; }
+.tbl th:nth-child(1), .tbl th:nth-child(2) { text-align: left; }
+.tbl td { padding: 2px 3px; text-align: right; vertical-align: top; font-weight: 700; border-bottom: 1px dotted #000; }
+.tbl td:nth-child(1), .tbl td.nm { text-align: left; }
+.nm small { display: block; font-size: 9px; font-weight: 600; }
+.cat td { padding: 3px 4px; border: 1px solid #000; border-left: 0; border-right: 0; background: #e8e8e8; font-size: 10px; font-weight: 900; letter-spacing: .6px; text-align: left !important; }
+.totals { display: grid; gap: 2px; margin-top: 6px; padding-top: 4px; border-top: 1px solid #000; }
+.totals > div { display: flex; justify-content: space-between; font-weight: 700; }
+.net { margin: 2px 0; padding: 3px 4px; border: 2px solid #000; border-radius: 4px; font-size: 14px; font-weight: 900; }
+.due b { font-size: 14px; }
+.warr { margin-top: 8px; padding: 5px 6px; border: 1.5px solid #000; border-radius: 5px; font-size: 11px; }
+.warr p { margin: 3px 0 0; font-weight: 700; }
+.copy { margin-top: 8px; padding: 4px; border-radius: 4px; text-align: center; font-size: 13px; font-weight: 900; }
+.shop { display: grid; gap: 1px; margin-top: 6px; text-align: center; font-size: 11px; font-weight: 700; }
+.shop b { font-size: 13px; }
+.foot { margin-top: 6px; padding-top: 4px; border-top: 1px solid #000; text-align: center; font-size: 10px; font-style: italic; font-weight: 700; }
+@media print {
+  .rc, .rc * { font-weight: 800; }
+  .cat td { background: #fff !important; }
+}

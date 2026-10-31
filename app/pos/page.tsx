@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import SaleReceipt from "../components/SaleReceipt";
 import styles from "./pos.module.css";
 import { notify } from "@/lib/toast";
 import NumInput from "../components/NumInput";
@@ -21,6 +22,7 @@ type SaleItem = {
   stock?: number;
   isMisc?: boolean;
   repairId?: string;
+  category?: string;
 };
 
 type HeldBill = {
@@ -229,6 +231,7 @@ export default function POS() {
         ...old,
         {
           productId: p._id,
+          category: String(p.category || ""),
           name: p.name || p.model || p.sku || "Product",
           qty: 1,
           price: priceForProduct(p),
@@ -387,25 +390,7 @@ export default function POS() {
           <Link className="btn" href={`/invoice/${done._id}`}>Invoice Details</Link>
           <Link className="btn green" href="/pos">New Record</Link>
         </div>
-        <div className="panel receipt">
-          <h2 style={{ textAlign: "center" }}>NEW ARIF MOBILE CENTER</h2>
-          <h3 style={{ textAlign: "center" }}>SALE INVOICE</h3>
-          <div className="line" />
-          <b>Invoice:</b> {done.invoiceNo}<br />
-          <b>Date:</b> {done.date || new Date(done.createdAt).toLocaleDateString()}<br />
-          <b>Customer:</b> {selectedCustomer?.name || done.cashRef || "WALKING CUSTOMER"}<br />
-          <div className="line" />
-          {done.items.map((i: SaleItem, index: number) => (
-            <div key={`${i.productId || "misc"}-${index}`}>{i.name} × {i.qty} — Rs. {money(i.total ?? i.price * i.qty)}</div>
-          ))}
-          <div className="line" />
-          <b>Grand Total:</b> Rs. {money(done.grandTotal || 0)}<br />
-          <b>Discount:</b> Rs. {money(done.discountAmount || 0)}<br />
-          <b>Sales Tax:</b> Rs. {money(done.salesTaxValue || 0)}<br />
-          <b>Net Total:</b> Rs. {money(done.total || 0)}<br />
-          <b>Paid:</b> Rs. {money(done.paid || 0)}<br />
-          <b>Remaining:</b> Rs. {money(done.remaining || 0)}
-        </div>
+        <SaleReceipt sale={done} customerName={selectedCustomer?.name} customerPhone={selectedCustomer?.phone} />
       </main>
     );
   }
@@ -438,7 +423,7 @@ export default function POS() {
     if (items.some((i) => i.repairId === String(r._id))) return;
     const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
     const partNames = (r.parts || []).map((x: any) => x.name).filter(Boolean).join(" + ");
-    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}${partNames ? ` (${partNames})` : ""}`, qty: 1, price: baqi, isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
+    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}${partNames ? ` (${partNames})` : ""}`, qty: 1, price: baqi, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
     if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
     notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
   };

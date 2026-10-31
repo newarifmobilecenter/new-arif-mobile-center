@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import SaleReceipt from "../../components/SaleReceipt";
 import { jsPDF } from "jspdf";
 
 function makePdf(invoice: any) {
@@ -77,15 +78,6 @@ export default function InvoiceActions({ invoice }: any) {
       <button className="btn" onClick={() => print()} disabled={busy}>🖨 Print</button>
       <button className="btn green" onClick={whatsapp} disabled={busy}>📲 WhatsApp PDF</button>
     </div>
-    <div className="panel receipt">
-      <h2 style={{ textAlign: "center" }}>NEW ARIF MOBILE CENTER</h2>
-      <p style={{ textAlign: "center" }}>Mobile Parts • Repairing • Better Service</p><div className="line" />
-      <b>Invoice:</b> {invoice.invoiceNo}<br/><b>Date:</b> {new Date(invoice.createdAt).toLocaleString()}<br/>
-      <b>Customer:</b> {invoice.customerName}<br/><b>Mobile:</b> {invoice.customerPhone || "-"}<br/><b>Pickup By:</b> {invoice.pickupBy || "Customer"}<div className="line" />
-      {(invoice.items || []).map((i: any) => <div key={i.productId || i.name}>{i.name} × {i.qty} — Rs. {Number(i.price || 0) * Number(i.qty || 0)}</div>)}
-      <div className="line" /><b>TOTAL:</b> Rs. {invoice.total}<br/><b>PAID:</b> Rs. {invoice.paid}<br/><b>REMAINING:</b> Rs. {invoice.remaining}<br/><b>Payment:</b> {invoice.paymentMethod}<div className="line" />
-      <b>Warranty:</b> {invoice.warrantyDays || 0} days<br/><b>IMEI/Serial:</b> {invoice.imei || "-"}
-      <p>Warranty starts on {new Date(invoice.warrantyStart || invoice.createdAt).toLocaleDateString()}. Physical damage, water damage and broken seal are not covered. Receipt required.</p>
-    </div>
+    <SaleReceipt sale={invoice} customerName={invoice.customerName} customerPhone={invoice.customerPhone} />
   </>;
 }
