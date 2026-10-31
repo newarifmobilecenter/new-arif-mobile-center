@@ -310,8 +310,8 @@
     /* Slip scale: 0.55 prints at about half the old length (old scale 0.9 = ~285mm, 0.55 = ~141mm).
        Layout width is paper width / scale so the slip still fills the 76mm roll. Change --slip-scale to resize. */
     --slip-scale: .55;
-    width: calc(68.4mm / var(--slip-scale)) !important;
-    max-width: calc(68.4mm / var(--slip-scale)) !important;
+    width: calc(64mm / var(--slip-scale)) !important;
+    max-width: calc(64mm / var(--slip-scale)) !important;
     height: auto !important;
     max-height: none !important;
     min-height: 0 !important;
@@ -327,7 +327,9 @@
     font: 10pt/1.3 Arial, Helvetica, sans-serif !important;
   }
   .receivingSlip * { color: #000 !important; box-shadow: none !important; }
-  .receivingSlip { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 3mm !important; }
+  .receivingSlip { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 2mm 5mm 2mm 6mm !important; font-weight: 700 !important; }
+  .receivingSlip .rsInfo dt, .receivingSlip .rsInfo dd, .receivingSlip .rsTypes, .receivingSlip .rsAcc *, .receivingSlip .rsConfirm p, .receivingSlip .rsShop *, .receivingSlip .rsFoot, .receivingSlip .rsDate, .receivingSlip .rsBrands span, .receivingSlip .rsServices { font-weight: 800 !important; }
+  .receivingSlip .rsReady, .receivingSlip .rsConfirm { background: #fff !important; border: 1.2px solid #000; }
   .receivingSlip .rsDark, .receivingSlip .rsDark * { color: #fff !important; background-color: #000; }
   .receivingSlip .rsDark { background: #000 !important; }
   .receivingBrand { padding-bottom: 1mm; }
