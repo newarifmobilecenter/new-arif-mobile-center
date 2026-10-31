@@ -254,7 +254,6 @@
 @media print {
   @page { size: A4 portrait; margin: 5mm; }
   @page receivingSlipPage { size: auto; margin: 0; }
-    padding: 1.5mm !important;
   .noPrint { display: none !important; }
   .page { max-width: none !important; margin: 0 !important; padding: 0 !important; color: #111; }
   .repairDetailPage > :not(.receivingSlip), .notebookDetailPage > :not(.notebookVoucher) { display: none !important; }

@@ -119,7 +119,7 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
         <div><b>Shop Phone</b><span>0326-0882200<br />0329-0882200</span></div>
         <div><b>Shopkeeper</b><span>{repair.shopkeeper || "-"}</span></div>
       </div>
-      <div className={styles.receivingFooterNote}>Thank you for choosing NEW ARIF MOBILE <span>·</span> “Your Phone Our Care”</div>
+      <div className={styles.receivingFooterNote}>Thank you for choosing NEW ARIF MOBILE <span>·</span> “Your Phone Our Care”<br />Helpline: 03290882200</div>
     </footer>
   </article>;
 }
