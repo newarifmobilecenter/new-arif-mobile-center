@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
           { session, returnDocument: "after" }
         );
         if (!updated) throw new Error(`Insufficient stock for ${item.name || "item"}.`);
+        item.costPrice = Number(updated.costPrice || 0); // snapshot so profit stays correct later
         await movements.insertOne({
           type: "OUT",
           productId: String(item.productId),
@@ -96,11 +97,13 @@ export async function POST(req: NextRequest) {
         if (!repair) throw new Error("Repair nahi mili.");
         if (repair.billedSaleId) throw new Error(`Repair ${repair.tokenNo} pehle hi bill ho chuki hai.`);
         if (!["READY", "DELIVERED"].includes(String(repair.status))) throw new Error(`Repair ${repair.tokenNo} abhi Ready nahi hai.`);
+        item.costPrice = 0; item.repairBill = Number(repair.totalBill || 0);
         for (const part of Array.isArray(repair.parts) ? repair.parts : []) {
           if (!ObjectId.isValid(String(part.productId))) continue;
           const q = Math.max(1, Number(part.qty || 1));
           const prod = await products.findOne({ _id: new ObjectId(String(part.productId)) }, { session });
           if (!prod) continue;
+          item.costPrice = Number(item.costPrice || 0) + Number(prod.costPrice || 0) * q;
           await products.updateOne({ _id: prod._id }, { $set: { stock: Math.max(0, Number(prod.stock || 0) - q), updatedAt: new Date() } }, { session });
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
         }

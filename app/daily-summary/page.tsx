@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { costMapOf, saleLines, returnProfitLoss } from "../../lib/profit";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 0 });
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [])).catch(() => []);
@@ -32,18 +33,21 @@ export default function DailySummary() {
     const on = (rows: any[], f = "createdAt") => rows.filter(r => localDay(r[f]) === day);
     const sales = on(data.sales), purchases = on(data.purchases), expenses = on(data.expenses), tx = on(data.tx), returns = on(data.returns);
     const repairsIn = data.repairs.filter((r: any) => localDay(r.receivedAt || r.createdAt) === day);
-    const cost = new Map<string, number>(data.products.map((p: any) => [String(p._id), Number(p.costPrice || 0)]));
+    const cost = costMapOf(data.products);
+    const catOf = (i: any) => String(i.category || data.products.find((p: any) => String(p._id) === String(i.productId))?.category || "");
     const names = new Map<string, string>(data.customers.map((c: any) => [String(c._id), String(c.name || "")]));
     const sum = (rows: any[], f: string) => rows.reduce((t, r) => t + Number(r[f] || 0), 0);
     const saleReturns = returns.filter((r: any) => r.type === "SALE_RETURN");
-    const profit = sales.reduce((t: number, x: any) => t + (x.items || []).reduce((a: number, i: any) => a + Number(i.total ?? i.qty * i.price) - Number(cost.get(String(i.productId)) || 0) * Number(i.qty || 0), 0), 0);
+    const lines = sales.flatMap((x: any) => saleLines(x, cost, catOf));
+    const costTotal = lines.reduce((t: number, l: any) => t + l.cost, 0);
+    const grossProfit = lines.reduce((t: number, l: any) => t + l.profit, 0) - saleReturns.reduce((t: number, r: any) => t + returnProfitLoss(r, cost), 0);
     const byAccount: Record<string, { in: number; out: number }> = {};
     for (const t of tx) { const a = String(t.account || "Cash"); (byAccount[a] ||= { in: 0, out: 0 })[t.type === "IN" ? "in" : "out"] += Number(t.amount || 0); }
     const cashIn = sum(tx.filter((t: any) => t.type === "IN"), "amount"), cashOut = sum(tx.filter((t: any) => t.type === "OUT"), "amount");
     return { sales, purchases, expenses, saleReturns, repairsIn, names, byAccount, cashIn, cashOut,
       salesTotal: sum(sales, "total"), salesPaid: sum(sales, "paid"), salesDue: sum(sales, "remaining"),
       purchaseTotal: sum(purchases, "total"), purchasePaid: sum(purchases, "paid"), expenseTotal: sum(expenses, "amount"),
-      returnTotal: sum(saleReturns, "amount"), profit, repairBill: sum(repairsIn, "totalBill"), repairPaid: sum(repairsIn, "paid") };
+      returnTotal: sum(saleReturns, "amount"), costTotal, grossProfit, netProfit: grossProfit - sum(expenses, "amount"), repairBill: sum(repairsIn, "totalBill"), repairPaid: sum(repairsIn, "paid") };
   }, [data, day]);
 
   const stat = (title: string, value: string, sub?: string, color = "#e5e7eb") => <div style={card}><div style={label}>{title}</div><div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>{sub && <div style={label}>{sub}</div>}</div>;
@@ -62,7 +66,9 @@ export default function DailySummary() {
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 8 }}>
       {stat("Sales", `Rs. ${money(s.salesTotal)}`, `${s.sales.length} invoice · received ${money(s.salesPaid)} · udhaar ${money(s.salesDue)}`, "#22d3ee")}
-      {stat("Estimated Profit", `Rs. ${money(s.profit)}`, "maujooda cost ke hisaab se", "#4ade80")}
+      {stat("Cost of Sold", `Rs. ${money(s.costTotal)}`, "bika hua maal ki cost", "#fbbf24")}
+      {stat("Gross Profit", `Rs. ${money(s.grossProfit)}`, `sale − cost − returns${s.salesTotal ? ` · ${Math.round((s.grossProfit / s.salesTotal) * 100)}%` : ""}`, "#4ade80")}
+      {stat("Net Profit", `Rs. ${money(s.netProfit)}`, "gross profit − expenses", s.netProfit < 0 ? "#f87171" : "#4ade80")}
       {stat("Sale Returns", `Rs. ${money(s.returnTotal)}`, `${s.saleReturns.length} return`, "#fbbf24")}
       {stat("Purchases", `Rs. ${money(s.purchaseTotal)}`, `${s.purchases.length} bill · paid ${money(s.purchasePaid)}`)}
       {stat("Expenses", `Rs. ${money(s.expenseTotal)}`, `${s.expenses.length} entry`, "#f87171")}
