@@ -327,8 +327,9 @@
     font: 10pt/1.3 Arial, Helvetica, sans-serif !important;
   }
   .receivingSlip * { color: #000 !important; box-shadow: none !important; }
-  .receivingSlip { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 2mm 5mm 2mm 6mm !important; font-weight: 700 !important; }
-  .receivingSlip .rsInfo dt, .receivingSlip .rsInfo dd, .receivingSlip .rsTypes, .receivingSlip .rsAcc *, .receivingSlip .rsConfirm p, .receivingSlip .rsShop *, .receivingSlip .rsFoot, .receivingSlip .rsDate, .receivingSlip .rsBrands span, .receivingSlip .rsServices { font-weight: 800 !important; }
+  .receivingSlip { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 2mm 5mm 2mm 6mm !important; font-weight: 900 !important; }
+  .receivingSlip, .receivingSlip * { -webkit-text-stroke: .25px #000; }
+  .receivingSlip .rsInfo dt, .receivingSlip .rsInfo dd, .receivingSlip .rsTypes, .receivingSlip .rsAcc *, .receivingSlip .rsConfirm p, .receivingSlip .rsShop *, .receivingSlip .rsFoot, .receivingSlip .rsDate, .receivingSlip .rsBrands span, .receivingSlip .rsServices { font-weight: 900 !important; font-size: 1.12em !important; }
   .receivingSlip .rsReady, .receivingSlip .rsConfirm { background: #fff !important; border: 1.2px solid #000; }
   .receivingSlip .rsDark, .receivingSlip .rsDark * { color: #fff !important; background-color: #000; }
   .receivingSlip .rsDark { background: #000 !important; }
