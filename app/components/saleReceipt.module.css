@@ -31,6 +31,13 @@
 .shop b { font-size: 13px; }
 .foot { margin-top: 6px; padding-top: 4px; border-top: 1px solid #000; text-align: center; font-size: 10px; font-style: italic; font-weight: 700; }
 @media print {
+  @page saleReceiptPage { size: auto; margin: 0; }
+  .rc { page: saleReceiptPage; margin: 0 !important; padding: 2mm 4mm !important; max-width: none !important; border-radius: 0 !important; }
   .rc, .rc * { font-weight: 800; }
   .cat td { background: #fff !important; }
+}
+
+@page saleReceiptPage { size: auto; margin: 0; }
+@media print {
+  .thermal { page: saleReceiptPage; max-width: none; margin: 0; padding: 3mm 4mm !important; border-radius: 0; }
 }

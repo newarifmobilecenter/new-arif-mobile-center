@@ -390,7 +390,7 @@ export default function POS() {
           <Link className="btn" href={`/invoice/${done._id}`}>Invoice Details</Link>
           <Link className="btn green" href="/pos">New Record</Link>
         </div>
-        <SaleReceipt sale={done} customerName={selectedCustomer?.name} customerPhone={selectedCustomer?.phone} />
+        <SaleReceipt sale={done} customerName={selectedCustomer?.name} customerPhone={selectedCustomer?.phone} thermal={printSize !== "a4" && printSize !== "a5"} />
       </main>
     );
   }

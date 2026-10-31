@@ -1,21 +1,10 @@
 import styles from "./saleReceipt.module.css";
 import { SHOP_PHONES } from "../../lib/shopOptions";
+import { BATTERY, PANEL, itemCategory } from "../../lib/saleReceiptUtil";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
-const BATTERY = /batter|batt\b|bttry/i;
-const PANEL = /panel|lcd|display|screen|touch|tft|incell|folder|oled|led org/i;
 
-export function itemCategory(i: any): string {
-  const c = String(i?.category || "").trim();
-  if (c) return c;
-  const n = String(i?.name || "");
-  if (/^repair\b/i.test(n)) return "Repair";
-  if (BATTERY.test(n)) return "Battery";
-  if (PANEL.test(n)) return "Display / Panel";
-  return "Other";
-}
-
-export default function SaleReceipt({ sale, customerName, customerPhone }: { sale: any; customerName?: string; customerPhone?: string }) {
+export default function SaleReceipt({ sale, customerName, customerPhone, thermal = true }: { sale: any; customerName?: string; customerPhone?: string; thermal?: boolean }) {
   const items: any[] = Array.isArray(sale?.items) ? sale.items : [];
   const groups = new Map<string, any[]>();
   for (const i of items) { const c = itemCategory(i); groups.set(c, [...(groups.get(c) || []), i]); }
@@ -26,7 +15,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone }: { sal
   const time = when.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" });
   const qtyTotal = items.reduce((n, i) => n + Number(i.qty || 0), 0);
 
-  return <div className={`receipt ${styles.rc}`}>
+  return <div className={`receipt ${styles.rc} ${thermal ? styles.thermal : ""}`}>
     <div className={styles.head}>
       <div className={styles.logo}><b>NEW<br />ARIF<br />MOBILE</b></div>
       <div className={styles.brand}>
@@ -70,8 +59,8 @@ export default function SaleReceipt({ sale, customerName, customerPhone }: { sal
 
     {(hasBattery || hasPanel) && <div className={styles.warr}>
       <b>WARRANTY</b>
-      {hasBattery && <p>🔋 Battery: <strong>7 days</strong> warranty — sirf battery timing (backup) ki. Physical damage / pani / ghalat istemal covered nahi.</p>}
-      {hasPanel && <p>🖥 Panel / Display: <strong>koi warranty ya guarantee nahi.</strong> Check karke lein.</p>}
+      {hasBattery && <p>Battery: <strong>7 days</strong> warranty — sirf battery timing (backup) ki. Physical damage / pani / ghalat istemal covered nahi.</p>}
+      {hasPanel && <p>Panel / Display: <strong>koi warranty ya guarantee nahi.</strong> Check karke lein.</p>}
     </div>}
 
     <div className={`${styles.copy} ${styles.dark}`}>--- CUSTOMER COPY ---</div>

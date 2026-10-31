@@ -2,50 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import SaleReceipt from "../../components/SaleReceipt";
-import { jsPDF } from "jspdf";
+import { makeSalePdf } from "../../../lib/saleReceiptPdf";
 
-function makePdf(invoice: any) {
-  const pdf = new jsPDF({ unit: "mm", format: "a4" });
-  const left = 15;
-  let y = 18;
-  const money = (v: any) => `Rs. ${Number(v || 0).toLocaleString("en-PK")}`;
-
-  pdf.setFontSize(18); pdf.setFont("helvetica", "bold");
-  pdf.text("NEW ARIF MOBILE CENTER", 105, y, { align: "center" }); y += 7;
-  pdf.setFontSize(10); pdf.setFont("helvetica", "normal");
-  pdf.text("Mobile Parts • Repairing • Better Service", 105, y, { align: "center" }); y += 8;
-  pdf.line(left, y, 195, y); y += 7;
-
-  pdf.setFont("helvetica", "bold"); pdf.text(`Invoice: ${invoice.invoiceNo || "-"}`, left, y);
-  pdf.setFont("helvetica", "normal"); pdf.text(`Date: ${new Date(invoice.createdAt).toLocaleString()}`, left, y + 6);
-  pdf.text(`Customer: ${invoice.customerName || "Cash Sale"}`, left, y + 12);
-  pdf.text(`Mobile: ${invoice.customerPhone || "-"}`, left, y + 18);
-  pdf.text(`Pickup By: ${invoice.pickupBy || "Customer"}`, left, y + 24); y += 32;
-
-  pdf.line(left, y, 195, y); y += 7;
-  pdf.setFont("helvetica", "bold"); pdf.text("Item", left, y); pdf.text("Qty", 125, y); pdf.text("Amount", 170, y);
-  y += 6; pdf.setFont("helvetica", "normal");
-  for (const item of invoice.items || []) {
-    const name = String(item.name || item.model || "Product").slice(0, 48);
-    pdf.text(name, left, y); pdf.text(String(item.qty || 0), 127, y);
-    pdf.text(money(Number(item.price || 0) * Number(item.qty || 0)), 170, y);
-    y += 6;
-    if (item.imei || item.serial) { pdf.setFontSize(8); pdf.text(`IMEI/Serial: ${item.imei || item.serial}`, left + 2, y); y += 5; pdf.setFontSize(10); }
-    if (y > 275) { pdf.addPage(); y = 18; }
-  }
-  pdf.line(left, y, 195, y); y += 7;
-  pdf.setFont("helvetica", "bold"); pdf.text(`TOTAL: ${money(invoice.total)}`, left, y); y += 6;
-  pdf.text(`PAID: ${money(invoice.paid)}`, left, y); y += 6;
-  pdf.text(`REMAINING: ${money(invoice.remaining)}`, left, y); y += 6;
-  pdf.setFont("helvetica", "normal"); pdf.text(`Payment: ${invoice.paymentMethod || "-"}`, left, y); y += 9;
-  pdf.line(left, y, 195, y); y += 7;
-  pdf.setFont("helvetica", "bold"); pdf.text(`Warranty: ${invoice.warrantyDays || 0} days`, left, y); y += 6;
-  pdf.setFont("helvetica", "normal"); pdf.text(`IMEI/Serial: ${invoice.imei || "-"}`, left, y); y += 7;
-  pdf.setFontSize(8);
-  const note = `Warranty starts on ${new Date(invoice.warrantyStart || invoice.createdAt).toLocaleDateString()}. Physical damage, water damage and broken seal are not covered. Receipt required.`;
-  pdf.text(pdf.splitTextToSize(note, 180), left, y);
-  return pdf;
-}
+const makePdf = (invoice: any) => makeSalePdf(invoice, invoice.customerName, invoice.customerPhone);
 
 export default function InvoiceActions({ invoice }: any) {
   const [busy, setBusy] = useState(false);
