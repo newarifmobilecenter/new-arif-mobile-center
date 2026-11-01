@@ -330,7 +330,10 @@ export default function POS() {
     ]);
   }
 
+  const [saving, setSaving] = useState(false);
+
   async function complete() {
+    if (saving) return;
     if (!items.length) return alert("Item select karein.");
     if (saleType === "RETURN") return alert("Process returns from the Sale Returns page.");
     if (saleType === "CREDIT" && !customer) return alert("Credit Sale ke liye Customer select karein.");
@@ -364,16 +367,23 @@ export default function POS() {
       createdAt: new Date().toISOString(),
     };
 
-    const response = await fetch(editId ? "/api/sales/modify" : "/api/sales/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editId ? { ...sale, saleId: editId } : sale),
-    });
-    const saved = await response.json();
-    if (!response.ok) return alert(saved.error || "Sale failed");
+    setSaving(true);
+    try {
+      const response = await fetch(editId ? "/api/sales/modify" : "/api/sales/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editId ? { ...sale, saleId: editId } : sale),
+      });
+      const saved = await response.json();
+      if (!response.ok) return alert(saved.error || "Sale failed");
 
-    setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : saved);
-    await load();
+      setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : saved);
+      await load();
+    } catch {
+      alert("Save fail ho gaya — internet check karke dobara try karein.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const completeRef = useRef(complete); completeRef.current = complete;
@@ -580,7 +590,7 @@ export default function POS() {
         </section>
 
         <footer className={styles.footerBar}>
-          <button onClick={complete} className={styles.saveBtn}>💾 Save Sale</button>
+          <button onClick={complete} className={styles.saveBtn} disabled={saving}>{saving ? "Saving…" : "💾 Save Sale"}</button>
           <select value={pay} onChange={(e) => setPay(e.target.value)}><option>Cash</option><option>JazzCash</option><option>Easypaisa</option><option>Raast</option><option>NayaPay</option><option>UBL</option><option>Other Bank</option></select>
           <button onClick={() => window.print()}>Thermal Print</button>
           <fieldset className={styles.printSel}><legend>Print after save</legend>{[["A4", "a4"], ["A5", "a5"], ["Thermal", "thermal"]].map(([label, v]) => <label key={v}><input type="checkbox" checked={printSize === v} onChange={e => setPrintSize(e.target.checked ? v : "")} /> {label}</label>)}</fieldset>
