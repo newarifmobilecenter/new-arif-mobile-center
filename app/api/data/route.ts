@@ -7,6 +7,9 @@ import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 const allowed = ["products","productOptions","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns","walkingCustomers","vouchers"];
 const oid = (id:string) => ObjectId.isValid(id) ? new ObjectId(id) : null;
 const adminOnly = new Set(["settings","employees","auditLogs","backupLogs","salaries"]);
+// Money/stock records are only ever changed by their own APIs; direct PATCH is admin-only.
+const patchAdminOnly = new Set(["sales","purchases","transactions","returns","stockMovements","expenses","invoices"]);
+const dbError = (e: unknown) => { console.error("api/data error:", e); return NextResponse.json({ error: "Database error. Dobara koshish karein." }, { status: 500 }); };
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -14,12 +17,13 @@ export async function GET(req: NextRequest) {
   try {
     const c = req.nextUrl.searchParams.get("collection") || "products";
     if (!allowed.includes(c)) return NextResponse.json({error:"Invalid collection"}, {status:400});
+    if (adminOnly.has(c) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
     const d = await db();
     const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 1000), 5000);
     const filter: Record<string, unknown> = c === "sales" && req.nextUrl.searchParams.get("includeCancelled") !== "1" ? { status: { $ne: "cancelled" } } : {};
     const rows = await d.collection(c).find(filter).sort({createdAt:-1}).limit(limit).toArray();
     return NextResponse.json(rows.map(x=>({...x,_id:x._id.toString()})));
-  } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
+  } catch(e:any) { return dbError(e); }
 }
 
 export async function POST(req: NextRequest) {
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
     const r = await d.collection(collection).insertOne(doc);
     if (collection === "products" && Number(doc.stock || doc.openingQty || 0) > 0) { try { await clearOrdersForPurchase(d, [{ productId: r.insertedId.toString(), name: String(doc.name || "") }], "New product"); } catch {} }
     return NextResponse.json({_id:r.insertedId.toString(), ...doc}, {status:201});
-  } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
+  } catch(e:any) { return dbError(e); }
 }
 
 export async function PATCH(req: NextRequest) {
@@ -47,13 +51,13 @@ export async function PATCH(req: NextRequest) {
     const {collection, id, ...changes} = body;
     const _id = oid(id);
     if (!allowed.includes(collection) || !_id) return NextResponse.json({error:"Invalid collection/id"}, {status:400});
-    if (adminOnly.has(collection) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
-    delete changes._id; changes.updatedAt = new Date();
+    if ((adminOnly.has(collection) || patchAdminOnly.has(collection)) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
+    delete changes._id; delete changes.createdAt; changes.updatedAt = new Date();
     const d = await db();
     const r = await d.collection(collection).findOneAndUpdate({_id}, {$set:changes}, {returnDocument:"after"});
     if (!r) return NextResponse.json({error:"Not found"}, {status:404});
     return NextResponse.json({...r,_id:r._id.toString()});
-  } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
+  } catch(e:any) { return dbError(e); }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -65,5 +69,5 @@ export async function DELETE(req: NextRequest) {
     if (!allowed.includes(collection) || !_id) return NextResponse.json({error:"Invalid collection/id"}, {status:400});
     const d=await db(); const r=await d.collection(collection).deleteOne({_id});
     return NextResponse.json({ok:r.deletedCount===1});
-  } catch(e:any) { return NextResponse.json({error:e?.message||"Database error"}, {status:500}); }
+  } catch(e:any) { return dbError(e); }
 }
