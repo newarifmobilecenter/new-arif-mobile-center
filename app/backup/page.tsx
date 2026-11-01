@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function Backup() {
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [role, setRole] = useState("");
+	useEffect(() => { fetch("/api/auth/session", { cache: "no-store" }).then(r => r.json()).then(x => setRole(x?.role || "")).catch(() => {}); }, []);
 
 	async function restore(event: React.ChangeEvent<HTMLInputElement>) {
 		const file = event.target.files?.[0];
@@ -70,7 +72,7 @@ export default function Backup() {
 		<h1>💾 Backup &amp; Restore</h1>
 		<div className="panel">
 			<p>MongoDB is the live database. Download a JSON backup regularly and keep a copy in Google Drive/OneDrive.</p>
-			<a className="btn" href="/api/backup">⬇ Download Backup Now</a>
+			{role === "ADMIN" ? <a className="btn" href="/api/backup">⬇ Download Backup Now</a> : <p className="muted">Backup download sirf Admin kar sakta hai.</p>}
 			<label className="btn" style={{ marginLeft: 10 }}>
 				↩ Restore JSON
 				<input hidden type="file" accept=".json" onChange={(event) => void restore(event)} disabled={busy} />

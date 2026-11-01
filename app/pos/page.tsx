@@ -330,7 +330,13 @@ export default function POS() {
     ]);
   }
 
+  const savingRef = useRef(false);
   async function complete() {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    try { await completeInner(); } finally { savingRef.current = false; }
+  }
+  async function completeInner() {
     if (!items.length) return alert("Item select karein.");
     if (saleType === "RETURN") return alert("Process returns from the Sale Returns page.");
     if (saleType === "CREDIT" && !customer) return alert("Credit Sale ke liye Customer select karein.");

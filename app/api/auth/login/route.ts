@@ -10,6 +10,7 @@ function users() {
 
   try {
     const staff = JSON.parse(process.env.STAFF_USERS_JSON || "[]");
+    if (!Array.isArray(staff)) console.error("STAFF_USERS_JSON must be an array like [{\"username\":\"x\",\"password\":\"y\"}]");
     if (Array.isArray(staff)) {
       for (const u of staff) {
         if (u?.username && u?.password) list.push({
@@ -19,7 +20,7 @@ function users() {
         });
       }
     }
-  } catch {}
+  } catch (e) { console.error("STAFF_USERS_JSON is not valid JSON:", e); }
   return list;
 }
 
