@@ -9,6 +9,8 @@ export const NUMBER_KINDS = {
   salary: "SL",
   oldBalance: "OB",
   localPurchase: "LP",
+  voucher: "V",
+  walking: "WC",
 } as const;
 export type NumberKind = keyof typeof NUMBER_KINDS;
 

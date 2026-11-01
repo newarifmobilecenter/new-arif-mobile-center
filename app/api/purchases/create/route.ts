@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       await session.withTransaction(async () => {
         for (const item of items) {
           const productId = String(item.productId);
-          const product = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(productId) }, { $inc: { stock: Number(item.qty) }, $set: { costPrice: Number(item.costPrice), ...(Number(item.retail) > 0 ? { price: Number(item.retail) } : {}), updatedAt: new Date() } }, { session, returnDocument: "after" });
+          const product = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(productId) }, { $inc: { stock: Number(item.qty) }, $set: { costPrice: Number(item.costPrice), ...(Number(item.retail) > 0 ? { price: Number(item.retail) } : {}), ...(Number(item.wholesale) > 0 ? { wholesale: Number(item.wholesale) } : {}), updatedAt: new Date() } }, { session, returnDocument: "after" });
           if (!product) throw new Error(`Product not found: ${item.name || productId}`);
           await d.collection("stockMovements").insertOne({ type: "IN", productId, qty: Number(item.qty), ref: invoiceNo, reason: "Purchase", costPrice: Number(item.costPrice), user: user.u, createdAt: new Date() }, { session });
         }

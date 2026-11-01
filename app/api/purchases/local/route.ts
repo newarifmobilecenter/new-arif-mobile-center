@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         adjusted = 0;
         for (const it of items) {
           const pid = String(it.productId);
-          const p = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(pid) }, { $inc: { stock: Number(it.qty) }, $set: { costPrice: Number(it.costPrice), ...(Number(it.retail) > 0 ? { price: Number(it.retail) } : {}), updatedAt: new Date() } }, { session: s, returnDocument: "after" });
+          const p = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(pid) }, { $inc: { stock: Number(it.qty) }, $set: { costPrice: Number(it.costPrice), ...(Number(it.retail) > 0 ? { price: Number(it.retail) } : {}), ...(Number(it.wholesale) > 0 ? { wholesale: Number(it.wholesale) } : {}), updatedAt: new Date() } }, { session: s, returnDocument: "after" });
           if (!p) throw new Error(`Product nahi mila: ${it.name || pid}`);
           await d.collection("stockMovements").insertOne({ type: "IN", productId: pid, qty: Number(it.qty), ref: invoiceNo, reason: "Local Purchase", costPrice: Number(it.costPrice), user: user.u, createdAt: new Date() }, { session: s });
         }

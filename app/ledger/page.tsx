@@ -1,50 +1,80 @@
 "use client";
-import {Suspense,useEffect,useMemo,useState} from "react";
-import {useSearchParams} from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import styles from "../components/formwin.module.css";
+import BrandBanner from "../components/BrandBanner";
 
-const money=(n:number)=>Number(n||0).toLocaleString("en-PK",{maximumFractionDigits:2});
-function LedgerContent(){
- const q=useSearchParams(), customerId=q.get("customer")||"";
- const [sales,setSales]=useState<any[]>([]),[customers,setCustomers]=useState<any[]>([]),[repairs,setRepairs]=useState<any[]>([]);
- const [amount,setAmount]=useState(""),[method,setMethod]=useState("Cash"),[busy,setBusy]=useState(false),[msg,setMsg]=useState("");
- const load=()=>Promise.all([
-   fetch("/api/data?collection=sales&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),
-   fetch("/api/data?collection=customers&limit=5000").then(r=>r.json()).then((d:any)=>Array.isArray(d)?d:[]),
-   fetch("/api/repairs").then(r=>r.json())
- ]).then(([s,c,r])=>{setSales(Array.isArray(s)?s:[]);setCustomers(Array.isArray(c)?c:[]);setRepairs(Array.isArray(r)?r:[])});
- useEffect(()=>{void load()},[]);
- const customer=customers.find(c=>String(c._id)===customerId);
- const rows=useMemo(()=>sales.filter(s=>!customerId||String(s.customerId||"")===customerId),[sales,customerId]);
- const repairRows=repairs.filter(r=>!customerId||String(r.customerId||"")===customerId); const balance=rows.reduce((a,s)=>a+Number(s.remaining||0),0)+repairRows.reduce((a,r)=>a+Number(r.remaining||0),0);
- async function receive(){
-   const n=Number(amount);
-   if(!customerId)return alert("Select a customer first.");
-   if(!Number.isFinite(n)||n<=0)return alert("Enter a valid payment.");
-   if(n>balance+0.000001)return alert(`Maximum outstanding balance is Rs. ${money(balance)}.`);
-   setBusy(true);setMsg("");
-   try{
-    const r=await fetch("/api/customers/payment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({customerId,amount:n,paymentMethod:method})});
-    const d=await r.json(); if(!r.ok)throw new Error(d.error||"Payment failed");
-    setAmount("");setMsg(`Payment received: Rs. ${money(d.applied)}. Remaining balance updated.`);
-    await load();
-   }catch(e:any){setMsg(e.message)}finally{setBusy(false)}
- }
- return <main className="shell">
-  <div className="nav"><Link href="/">← Dashboard</Link><Link href="/customers">Customers</Link><Link href="/pos">POS</Link><Link href="/repairs">Repairs</Link></div>
-  <h1>Customer Ledger</h1>
-  {customerId&&customer&&<div className="panel">
-   <h2>{customer.name}</h2><p className="muted">{customer.phone||"No phone"}</p>
-   <h2>Outstanding: <b>Rs. {money(balance)}</b></h2>
-   {balance>0&&<div className="grid">
-    <input className="input" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Payment amount"/>
-    <select className="input" value={method} onChange={e=>setMethod(e.target.value)}>{["Cash","JazzCash","Easypaisa","Raast","NayaPay","Bank","Other"].map(x=><option key={x}>{x}</option>)}</select>
-    <button className="btn green" disabled={busy} onClick={receive}>{busy?"Saving...":"Receive Payment"}</button>
-   </div>}
-   {msg&&<p>{msg}</p>}
-  </div>}
-  <div className="panel"><h2>Sales / Customer Ledger</h2><table className="table"><thead><tr><th>Date</th><th>Invoice</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
-   <tbody>{rows.map(x=><tr key={"s-"+x._id}><td>{x.createdAt?new Date(x.createdAt).toLocaleString():"-"}</td><td>{x.invoiceNo||"-"}</td><td>Rs. {money(x.total)}</td><td>Rs. {money(x.paid)}</td><td>Rs. {money(x.remaining)}</td><td>{Number(x.remaining)>0?"🔴 Due":"🟢 Paid"}</td></tr>)}{repairRows.map(x=><tr key={"r-"+x._id}><td>{x.createdAt?new Date(x.createdAt).toLocaleString():"-"}</td><td>{x.tokenNo} (Repair)</td><td>Rs. {money(x.agreedRate)}</td><td>Rs. {money(x.paid)}</td><td>Rs. {money(x.remaining)}</td><td>{Number(x.remaining)>0?"🔴 Due":"🟢 Paid"}</td></tr>)}</tbody></table></div>
- </main>
+const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
+const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [])).catch(() => []);
+const day = (v: unknown) => { const d = v ? new Date(v as string) : null; return d && !isNaN(+d) ? d.toLocaleDateString("en-PK", { dateStyle: "medium" }) : "-"; };
+const n = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+
+function LedgerContent() {
+  const [customerId, setCustomerId] = useState("");
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [sales, setSales] = useState<any[]>([]);
+  const [repairs, setRepairs] = useState<any[]>([]);
+  const [tx, setTx] = useState<any[]>([]);
+  const [q, setQ] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    try { setCustomerId(new URLSearchParams(window.location.search).get("customer") || ""); } catch {}
+    void Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr)])
+      .then(([c, s, r, t]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setLoading(false); });
+  }, []);
+
+  const summary = useMemo(() => customers.map((c) => {
+    const id = String(c._id);
+    const bal = sales.filter((s) => String(s.customerId || "") === id).reduce((a, s) => a + n(s.remaining), 0) + repairs.filter((r) => String(r.customerId || "") === id).reduce((a, r) => a + n(r.remaining), 0);
+    return { ...c, bal };
+  }), [customers, sales, repairs]);
+
+  const customer = summary.find((c) => String(c._id) === customerId);
+  const mySales = sales.filter((s) => String(s.customerId || "") === customerId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  const myRepairs = repairs.filter((r) => String(r.customerId || "") === customerId);
+  const myPay = tx.filter((t) => String(t.customerId || "") === customerId && t.type === "IN").sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  const billed = mySales.reduce((a, s) => a + n(s.total), 0) + myRepairs.reduce((a, r) => a + n(r.totalBill), 0);
+  const paid = mySales.reduce((a, s) => a + n(s.paid), 0) + myRepairs.reduce((a, r) => a + n(r.paid), 0);
+  const bal = customer?.bal || 0;
+
+  const list = useMemo(() => { const s = q.trim().toLowerCase(); return summary.filter((c) => !s || `${c.name} ${c.phone} ${c.phoneNo} ${c.code}`.toLowerCase().includes(s)).sort((a, b) => b.bal - a.bal); }, [summary, q]);
+
+  return <main className={styles.win}>
+    <div className={styles.titlebar}><span>▣ Customer Ledger — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/customers">Customers</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/vouchers?tab=due">Voucher</Link><Link href="/accounts">Bank Ledger</Link></span></div>
+    <BrandBanner title="Customer Ledger" subtitle={customer ? `${customer.name}${customer.phone || customer.phoneNo ? " · " + (customer.phoneNo || customer.phone) : ""}` : "Sab customers ka hisaab"} right={<div style={{ fontSize: 12, color: "#cbd5e1" }}>Date: {day(new Date())}</div>} />
+    <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
+      {!customer && <div className={styles.card}>
+        <h2>Customers ka Hisaab {loading && <small style={{ color: "#94a3b8" }}>load ho raha hai…</small>}</h2>
+        <div className={styles.stats}><div className={styles.stat}><small>Customers</small><b>{summary.length}</b></div><div className={styles.stat}><small>Udhaar wale</small><b>{summary.filter((c) => c.bal > 0).length}</b></div><div className={styles.stat}><small>Total baqi</small><b>Rs. {money(summary.reduce((a, c) => a + c.bal, 0))}</b></div></div>
+        <div className={styles.bar} style={{ marginTop: 0, marginBottom: 8 }}><input className={styles.in} style={{ maxWidth: 340 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 naam / phone / code" /><button className={styles.alt} onClick={() => window.print()}>🖨 Print</button></div>
+        <div className={styles.wrap} style={{ maxHeight: "60vh" }}><table className={styles.tbl}><thead><tr><th>Code</th><th>Customer</th><th>Phone</th><th className={styles.num}>Baqi</th><th></th></tr></thead><tbody>
+          {list.map((c) => <tr key={c._id}><td>{c.code || "-"}</td><td>{c.name}</td><td>{c.phoneNo || c.phone || "-"}</td><td className={styles.num}><span className={`${styles.pill} ${c.bal > 0 ? styles.pDue : styles.pPaid}`}>Rs. {money(c.bal)}</span></td><td><button className={styles.alt} onClick={() => { setCustomerId(String(c._id)); window.history.replaceState(null, "", `/ledger?customer=${c._id}`); }}>Ledger kholen</button></td></tr>)}
+          {!list.length && <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: 16 }}>Koi customer nahi.</td></tr>}</tbody></table></div>
+      </div>}
+      {customer && <>
+        <div className={styles.card}>
+          <div className={styles.stats}>
+            <div className={styles.stat}><small>Kul bill (sale + repair)</small><b>Rs. {money(billed)}</b></div>
+            <div className={styles.stat}><small>Wasool / Paid</small><b>Rs. {money(paid)}</b></div>
+            <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}</b></div>
+          </div>
+          <div className={styles.bar} style={{ marginTop: 0 }}>
+            <button className={styles.alt} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
+            {bal > 0 && <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
+            <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
+            <button className={styles.alt} onClick={() => window.print()}>🖨 Print Ledger</button>
+          </div>
+        </div>
+        <div className={styles.card}><h2>Sales / Bills</h2><div className={styles.wrap} style={{ maxHeight: "30vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>Invoice</th><th>Detail</th><th className={styles.num}>Total</th><th className={styles.num}>Paid</th><th className={styles.num}>Baqi</th><th>Status</th></tr></thead><tbody>
+          {mySales.map((s) => <tr key={s._id}><td>{day(s.createdAt)}</td><td><Link href={`/invoice/${s._id}`} style={{ color: "#22d3ee" }}>{s.invoiceNo || "-"}</Link></td><td>{s.isOpening ? "Purana baqi" : (s.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ").slice(0, 70)}</td><td className={styles.num}>{money(s.total)}</td><td className={styles.num}>{money(s.paid)}</td><td className={styles.num}>{money(s.remaining)}</td><td><span className={`${styles.pill} ${n(s.remaining) > 0 ? styles.pDue : styles.pPaid}`}>{n(s.remaining) > 0 ? "Baqi" : "Paid"}</span></td></tr>)}
+          {myRepairs.map((r) => <tr key={r._id}><td>{day(r.receivedAt)}</td><td>{r.tokenNo}</td><td>Repair · {r.model}</td><td className={styles.num}>{money(r.totalBill)}</td><td className={styles.num}>{money(r.paid)}</td><td className={styles.num}>{money(r.remaining)}</td><td><span className={`${styles.pill} ${n(r.remaining) > 0 ? styles.pDue : styles.pPaid}`}>{n(r.remaining) > 0 ? "Baqi" : "Paid"}</span></td></tr>)}
+          {!mySales.length && !myRepairs.length && <tr><td colSpan={7} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Koi bill nahi.</td></tr>}</tbody></table></div></div>
+        <div className={styles.card}><h2>Payments Received</h2><div className={styles.wrap} style={{ maxHeight: "26vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>Ref / Voucher</th><th>Account</th><th>Detail</th><th className={styles.num}>Amount</th></tr></thead><tbody>
+          {myPay.map((t) => <tr key={t._id}><td>{day(t.createdAt)}</td><td>{t.ref || "-"}</td><td>{t.account || "Cash"}</td><td>{t.note || "-"}</td><td className={styles.num}>{money(t.amount)}</td></tr>)}
+          {!myPay.length && <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Koi payment nahi.</td></tr>}</tbody></table></div></div>
+      </>}
+    </section>
+  </main>;
 }
-export default function Ledger(){return <Suspense fallback={<main className="shell"><h1>Loading Ledger...</h1></main>}><LedgerContent/></Suspense>}
+export default function Ledger() { return <Suspense fallback={<main className={styles.win}><p style={{ padding: 20 }}>Loading Ledger...</p></main>}><LedgerContent /></Suspense>; }

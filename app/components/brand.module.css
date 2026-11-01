@@ -1,0 +1,10 @@
+.banner { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 10px 16px; margin: 10px 14px 0; border-radius: 12px; border: 1px solid #22d3ee55; background: linear-gradient(90deg, #0b2a4d, #14307a 60%, #0f1a33); box-shadow: 0 0 24px #22d3ee22; }
+.logo { display: grid; place-items: center; height: 58px; border: 3px solid #fff; border-radius: 10px; color: #fff; font-size: 10px; line-height: 1.05; text-align: center; }
+.name { font-size: 24px; font-weight: 900; letter-spacing: .04em; color: #fff; }
+.sub { font-size: 12px; letter-spacing: .12em; color: #7dd3fc; font-weight: 700; }
+.addr { font-size: 12px; color: #cbd5e1; margin-top: 2px; }
+.doc { text-align: right; }
+.docTitle { font-size: 20px; font-weight: 800; color: #fbbf24; text-transform: uppercase; letter-spacing: .06em; }
+.docSub { font-size: 13px; color: #e5e7eb; }
+@media (max-width: 760px) { .banner { grid-template-columns: 54px minmax(0, 1fr); } .doc { grid-column: 1 / -1; text-align: left; } .name { font-size: 18px; } }
+@media print { .banner { background: #fff !important; border: 2px solid #000; box-shadow: none; margin: 0 0 8px; } .logo { border-color: #000; color: #000; } .name, .docTitle, .docSub, .sub, .addr { color: #000 !important; } }

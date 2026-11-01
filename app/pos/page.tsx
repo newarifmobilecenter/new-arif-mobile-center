@@ -204,6 +204,11 @@ export default function POS() {
 
   function changeCustomer(nextCustomer: string) {
     setCustomer(nextCustomer);
+    // Wholesale customers automatically get the wholesale rate (Level 1); anyone else goes back to retail.
+    const cust = customers.find((c) => String(c._id) === String(nextCustomer));
+    const wholesale = /wholesale/i.test(String(cust?.type || ""));
+    if (level === "0" && wholesale) changeLevel("1");
+    else if (level === "1" && !wholesale) changeLevel("0");
     if (level === "last") setItems(current => current.map(item => {
       const product = products.find(p => String(p._id) === String(item.productId));
       return product ? { ...item, price: priceForProduct(product, "last", nextCustomer) } : item;

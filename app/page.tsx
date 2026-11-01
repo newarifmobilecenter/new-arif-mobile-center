@@ -34,6 +34,18 @@ const categories = [
     ["Stock Dashboard","Current stock aur stock value dekhein","/stock"],
     ["Stock Report","Maujooda stock dekhein","/stock"],
   ]},
+  { id:"voucher", title:"Voucher", icon:"🧾", items:[
+    ["Customer se Wasooli","Saved customer ka baqi wasool karein (print ke saath)","/vouchers?tab=due"],
+    ["Walking Customer Voucher","Jin walking customers ka paisa baqi hai un se wasooli","/vouchers?tab=walk"],
+    ["Receive / Pay Voucher","Koi bhi paisa aaya ya gaya","/vouchers?tab=gen"],
+    ["Supplier / Party ko Payment","Supplier ya local purchase ka baqi ada karein","/vouchers?tab=pay"],
+    ["Purana Baqi (Old Pending)","Software se pehle ka purana hisaab darj karein","/vouchers?tab=old"],
+    ["Voucher History / Reprint","Purane vouchers dekhein aur dobara print karein","/vouchers"],
+  ]},
+  { id:"walking", title:"Walking Customers", icon:"🚶", items:[
+    ["Walking Customer List","Jin ka repair/sale ka paisa baqi hai (alag list)","/walking-customers"],
+    ["Walking Customer Voucher","Un se wasooli ka voucher","/vouchers?tab=walk"],
+  ]},
   { id:"customer", title:"Customer", icon:"👤", items:[
     ["Add / Find Customer","Customer record add ya search karein","/customers"],
     ["Customer Ledger","Customer ka hisaab aur baki dekhein","/ledger"],

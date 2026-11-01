@@ -3,6 +3,8 @@ import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession, hasRole } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
+import { createVoucher, customerBalance, walkingBalance } from "@/lib/vouchers";
+import { REPAIR_COLLECTION } from "@/lib/repairs";
 
 const ACCOUNTS = ["Cash", "JazzCash", "Easypaisa", "Raast", "NayaPay", "UBL", "Bank", "Other Bank", "Other"];
 const num = (v: unknown) => { const x = Number(v); return Number.isFinite(x) ? x : NaN; };
@@ -103,15 +105,20 @@ export async function POST(req: NextRequest) {
           const r = await d.collection("customers").insertOne({ name, phone: txt(b.phone, 30), phoneNo: txt(b.phone, 30), mobile: txt(b.phone, 30), createdAt: new Date(), updatedAt: new Date() });
           customerId = r.insertedId.toString();
         }
+        const prev = await customerBalance(d, customerId);
         await d.collection("sales").insertOne({ ...base, customerId, cashRef: name });
-        return NextResponse.json({ ok: true, invoiceNo, customerId, name });
+        const voucher = await createVoucher(d, { kind: "OLD_BALANCE_CUSTOMER", partyType: "customer", partyId: customerId, partyName: name, phone: txt(b.phone, 30), amount, note: base.note, prevBalance: prev, newBalance: prev + amount, user: user.u, createdAt: at });
+        return NextResponse.json({ ok: true, invoiceNo, customerId, name, voucher });
       }
       const supplierId = txt(b.id, 40);
       if (!ObjectId.isValid(supplierId)) return fail("Supplier select karein.");
       const sp = await d.collection("suppliers").findOne({ _id: new ObjectId(supplierId) });
       if (!sp) return fail("Supplier nahi mila.", 404);
+      const prevRows = await d.collection("purchases").find({ supplierId, remaining: { $gt: 0 } }).toArray();
+      const prev = prevRows.reduce((a: number, x: any) => a + Number(x.remaining || 0), 0);
       await d.collection("purchases").insertOne({ ...base, supplierId, supplierName: String(sp.name || "") });
-      return NextResponse.json({ ok: true, invoiceNo, name: sp.name });
+      const voucher = await createVoucher(d, { kind: "OLD_BALANCE_SUPPLIER", partyType: "supplier", partyId: supplierId, partyName: String(sp.name || ""), phone: String(sp.phone || ""), amount, note: base.note, prevBalance: prev, newBalance: prev + amount, user: user.u, createdAt: at });
+      return NextResponse.json({ ok: true, invoiceNo, name: sp.name, voucher });
     }
 
     if (kind === "supplierPayment") {
@@ -120,12 +127,13 @@ export async function POST(req: NextRequest) {
       if (!ObjectId.isValid(supplierId) || !(amount > 0)) return fail("Party aur amount sahi likhein.");
       const sp = await d.collection(byCustomer ? "customers" : "suppliers").findOne({ _id: new ObjectId(supplierId) });
       if (!sp) return fail("Supplier nahi mila.", 404);
-      let applied = 0, left = amount;
+      let applied = 0, left = amount, prev = 0; let voucher: any = null;
       const s = client.startSession();
       try {
         await s.withTransaction(async () => {
           applied = 0; left = amount;
           const rows = await d.collection("purchases").find(byCustomer ? { kind: "LOCAL", customerId: supplierId, remaining: { $gt: 0 } } : { supplierId, remaining: { $gt: 0 } }, { session: s }).sort({ createdAt: 1 }).toArray();
+          prev = rows.reduce((a: number, x: any) => a + Number(x.remaining || 0), 0);
           for (const p of rows) {
             if (left <= 0) break;
             const due = Number(p.remaining || 0), use = Math.min(due, left);
@@ -134,10 +142,62 @@ export async function POST(req: NextRequest) {
             applied += use; left -= use;
           }
           if (applied <= 0) throw new Error("Is supplier ka koi baqi nahi hai.");
+          voucher = await createVoucher(d, { kind: byCustomer ? "PARTY_PAY" : "SUPPLIER_PAY", partyType: byCustomer ? "customer" : "supplier", partyId: supplierId, partyName: String(sp.name || ""), phone: String(sp.phone || sp.phoneNo || ""), amount: applied, account, note: txt(b.ref, 60), prevBalance: prev, newBalance: prev - applied, user: user.u, createdAt: at }, s);
           await d.collection("transactions").insertOne({ type: "OUT", account, amount: applied, ...(byCustomer ? { customerId: supplierId } : { supplierId }), party: sp.name || "", ref: txt(b.ref, 60) || null, note: byCustomer ? "Local purchase payment" : "Supplier payment", voucherType: "PAY", user: user.u, createdAt: at }, { session: s });
         });
       } catch (e: any) { return fail(e?.message || "Payment save nahi hui."); } finally { await s.endSession(); }
-      return NextResponse.json({ ok: true, applied, unapplied: left });
+      return NextResponse.json({ ok: true, applied, unapplied: left, voucher });
+    }
+
+    if (kind === "walkingPayment") {
+      const walkingId = txt(b.walkingId, 40), amount = num(b.amount);
+      if (!ObjectId.isValid(walkingId) || !(amount > 0)) return fail("Walking customer aur amount sahi likhein.");
+      const w = await d.collection("walkingCustomers").findOne({ _id: new ObjectId(walkingId) });
+      if (!w) return fail("Walking customer nahi mila.", 404);
+      let applied = 0, left = amount, prev = 0; let voucher: any = null;
+      const s = client.startSession();
+      try {
+        await s.withTransaction(async () => {
+          applied = 0; left = amount;
+          prev = await walkingBalance(d, walkingId, s);
+          if (amount > prev + 0.0001) throw new Error(`Is walking customer ka baqi sirf Rs. ${prev} hai.`);
+          const sales = await d.collection("sales").find({ walkingId, status: { $ne: "cancelled" }, remaining: { $gt: 0 } }, { session: s }).sort({ createdAt: 1 }).toArray();
+          for (const sale of sales) {
+            if (left <= 0) break;
+            const due = Number(sale.remaining || 0), use = Math.min(due, left);
+            const r = await d.collection("sales").updateOne({ _id: sale._id, remaining: { $gte: use } }, { $inc: { paid: use }, $set: { remaining: Math.round((due - use) * 100) / 100, status: due - use > 0 ? "credit" : "paid", updatedAt: new Date() } }, { session: s });
+            if (r.modifiedCount !== 1) throw new Error("Payment conflict, dobara try karein.");
+            applied += use; left -= use;
+          }
+          const reps = await d.collection(REPAIR_COLLECTION).find({ recordType: "REPAIR", deletedAt: null, walkingId, remaining: { $gt: 0 } }, { session: s }).sort({ receivedAt: 1, createdAt: 1 }).toArray();
+          for (const rp of reps) {
+            if (left <= 0) break;
+            const due = Number(rp.remaining || 0), use = Math.min(due, left), remaining = Math.round((due - use) * 100) / 100;
+            const hist = [...(rp.paymentHistory || []), { amount: use, paymentMethod: account === "Bank" ? "Bank" : account, type: "CUSTOMER_PAYMENT", reference: txt(b.ref, 60) || null, at: new Date(), user: user.u }];
+            const r = await d.collection(REPAIR_COLLECTION).updateOne({ _id: rp._id, remaining: { $gte: use } }, { $inc: { paid: use }, $set: { remaining, paymentStatus: remaining > 0 ? "PAYMENT_DUE" : "PAID", paymentHistory: hist, updatedAt: new Date(), updatedBy: user.u } }, { session: s });
+            if (r.modifiedCount !== 1) throw new Error("Payment conflict, dobara try karein.");
+            applied += use; left -= use;
+          }
+          if (applied <= 0) throw new Error("Is walking customer ka koi baqi nahi hai.");
+          voucher = await createVoucher(d, { kind: "WALKING_RECEIVE", partyType: "walking", partyId: walkingId, partyName: String(w.name || ""), phone: String(w.phone || ""), amount: applied, account, note: txt(b.ref, 60), prevBalance: prev, newBalance: prev - applied, user: user.u, createdAt: at }, s);
+          await d.collection("transactions").insertOne({ type: "IN", account, amount: applied, walkingId, party: String(w.name || ""), ref: voucher.voucherNo, note: "Walking customer payment", voucherType: "WALKING_RECEIVE", user: user.u, createdAt: at }, { session: s });
+        });
+      } catch (e: any) { return fail(e?.message || "Payment save nahi hui."); } finally { await s.endSession(); }
+      return NextResponse.json({ ok: true, applied, voucher });
+    }
+
+    if (kind === "general") {
+      const type = txt(b.type, 3) === "OUT" ? "OUT" : "IN", amount = num(b.amount), party = txt(b.party, 100);
+      if (!(amount > 0)) return fail("Amount likhein.");
+      if (!party) return fail("Party ka naam likhein.");
+      const s = client.startSession(); let voucher: any = null;
+      try {
+        await s.withTransaction(async () => {
+          voucher = await createVoucher(d, { kind: type === "IN" ? "RECEIVE" : "PAY", partyType: "other", partyName: party, amount, account, note: txt(b.note, 300), user: user.u, createdAt: at }, s);
+          await d.collection("transactions").insertOne({ type, account, amount, party, ref: voucher.voucherNo, note: txt(b.note, 300), voucherType: type === "IN" ? "RECEIVE" : "PAY", user: user.u, createdAt: at }, { session: s });
+        });
+      } finally { await s.endSession(); }
+      return NextResponse.json({ ok: true, voucher });
     }
 
     return fail("Unknown request.");

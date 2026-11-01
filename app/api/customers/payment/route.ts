@@ -3,6 +3,7 @@ import {db,client} from "@/lib/mongodb";
 import {getSession} from "@/lib/auth";
 import {ObjectId} from "mongodb";
 import {REPAIR_COLLECTION,REPAIR_PAYMENT_METHODS} from "@/lib/repairs";
+import {createVoucher} from "@/lib/vouchers";
 
 export async function POST(req:NextRequest){
  const session=await getSession(); if(!session)return NextResponse.json({error:"Login required."},{status:401});
@@ -11,10 +12,12 @@ export async function POST(req:NextRequest){
   if(!ObjectId.isValid(customerId)||!Number.isFinite(amount)||amount<=0)return NextResponse.json({error:"Valid customer and payment amount are required."},{status:400});
   if(!(REPAIR_PAYMENT_METHODS as readonly string[]).includes(paymentMethod))return NextResponse.json({error:"Select a valid payment method."},{status:400});
   const d=await db(), sales=d.collection("sales"), repairs=d.collection(REPAIR_COLLECTION), tx=d.collection("transactions");
-  const s=client.startSession(); let applied=0, left=amount;
+  const s=client.startSession(); let applied=0, left=amount, prev=0; let voucher:any=null;
   try{
    await s.withTransaction(async()=>{
+    applied=0; left=amount;
     const credits=await sales.find({customerId,status:{$ne:"cancelled"},remaining:{$gt:0}}).sort({createdAt:1}).toArray();
+    prev=credits.reduce((a:number,x:any)=>a+Number(x.remaining||0),0);
     for(const sale of credits){
       if(left<=0)break; const due=Number(sale.remaining||0), use=Math.min(due,left); if(use<=0)continue;
       const r=await sales.updateOne({_id:sale._id,remaining:{$gte:use}},{$inc:{paid:use},$set:{remaining:due-use,status:due-use>0?"credit":"paid",updatedAt:new Date()}},{session:s});
@@ -22,6 +25,7 @@ export async function POST(req:NextRequest){
       applied+=use;left-=use;
     }
     const repairCredits=await repairs.find({recordType:"REPAIR",deletedAt:null,customerId,remaining:{$gt:0}}).sort({receivedAt:1,createdAt:1}).toArray();
+    prev+=repairCredits.reduce((a:number,x:any)=>a+Number(x.remaining||0),0);
     for(const repair of repairCredits){
       if(left<=0)break; const due=Number(repair.remaining||0),use=Math.min(due,left); if(use<=0)continue;
       const remaining=Math.round((due-use+Number.EPSILON)*100)/100,paidAt=new Date();
@@ -31,9 +35,11 @@ export async function POST(req:NextRequest){
       applied+=use;left-=use;
     }
     if(applied<=0)throw new Error("Customer has no outstanding balance.");
-    await tx.insertOne({type:"IN",account:paymentMethod,amount:applied,customerId,ref:b.ref||null,note:"Customer balance payment",user:session.u,createdAt:new Date()},{session:s});
+    const cust=await d.collection("customers").findOne({_id:new ObjectId(customerId)},{session:s});
+    voucher=await createVoucher(d,{kind:"CUSTOMER_RECEIVE",partyType:"customer",partyId:customerId,partyName:String(cust?.name||""),phone:String(cust?.phone||cust?.phoneNo||""),amount:applied,account:paymentMethod,note:String(b.ref||""),prevBalance:prev,newBalance:prev-applied,user:session.u},s);
+    await tx.insertOne({type:"IN",account:paymentMethod,amount:applied,customerId,party:String(cust?.name||""),ref:voucher.voucherNo,note:"Customer balance payment",voucherType:"RECEIVE",user:session.u,createdAt:new Date()},{session:s});
    });
   }finally{await s.endSession();}
-  return NextResponse.json({ok:true,applied,unapplied:left});
+  return NextResponse.json({ok:true,applied,unapplied:left,voucher});
  }catch(e:any){return NextResponse.json({error:e?.message||"Payment failed."},{status:400});}
 }

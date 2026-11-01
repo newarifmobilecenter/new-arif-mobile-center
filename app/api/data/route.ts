@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 import { getSession, hasRole } from "@/lib/auth";
 import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 
-const allowed = ["products","productOptions","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns"];
+const allowed = ["products","productOptions","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns","walkingCustomers","vouchers"];
 const oid = (id:string) => ObjectId.isValid(id) ? new ObjectId(id) : null;
 const adminOnly = new Set(["settings","employees","auditLogs","backupLogs","salaries"]);
 

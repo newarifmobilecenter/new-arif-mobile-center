@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./notebook.module.css";
+import RepairsPanel from "./RepairsPanel";
 
 type Entry = {
   _id: string;
@@ -30,6 +31,8 @@ export default function Notebook() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [section, setSection] = useState<"entries" | "repairs">("entries");
+  useEffect(() => { try { if (new URLSearchParams(window.location.search).get("tab") === "repairs") setSection("repairs"); } catch {} }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -69,18 +72,23 @@ export default function Notebook() {
   return <main className={`shell ${styles.page}`}>
     <nav className={`${styles.nav} ${styles.noPrint}`}><Link href="/">← Dashboard</Link><Link href="/repairs">Mobile Repairs</Link></nav>
     <header className={styles.header}>
-      <div><h1>Notebook</h1><p>Independent voucher entries</p></div>
-      <Link className={styles.button} href="/notebook/new">＋ Add Entry</Link>
+      <div><h1>Notebook</h1><p>{section === "entries" ? "Independent voucher entries" : "Mobile repairing list"}</p></div>
+      {section === "entries" && <Link className={styles.button} href="/notebook/new">＋ Add Entry</Link>}
     </header>
-    <section className={`${styles.panel} ${styles.noPrint}`}>
+    <div className={`${styles.tabs} ${styles.noPrint}`} role="tablist" aria-label="Notebook sections">
+      <button role="tab" aria-selected={section === "entries"} className={section === "entries" ? styles.activeTab : styles.tab} onClick={() => setSection("entries")}>📒 Notebook Entries</button>
+      <button role="tab" aria-selected={section === "repairs"} className={section === "repairs" ? styles.activeTab : styles.tab} onClick={() => setSection("repairs")}>📱 Repairing Mobiles</button>
+    </div>
+    {section === "repairs" && <RepairsPanel />}
+    {section === "entries" && <section className={`${styles.panel} ${styles.noPrint}`}>
       <div className={styles.filters}>
         <label className={`${styles.field} ${styles.search}`}>Search entry, name, phone, subject, or details<input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Search Notebook" /></label>
         <label className={styles.field}>From<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
         <label className={styles.field}>To<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
         <label className={styles.field}>Payment Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All statuses</option><option value="PAID">Paid</option><option value="PARTIAL">Partial</option><option value="UNPAID">Unpaid</option></select></label>
       </div>
-    </section>
-    <section className={styles.panel}>
+    </section>}
+    {section === "entries" && <section className={styles.panel}>
       {error && <p className={styles.notice} role="alert">{error}</p>}
       {loading ? <p className={styles.muted}>Loading Notebook entries...</p> : error ? null : entries.length === 0 ? <p className={styles.empty}>No Notebook entries match these filters.</p> : <div className={styles.tableWrap}><table className={styles.table}>
         <thead><tr><th>Entry No.</th><th>Date</th><th>Name / Phone</th><th>Subject / Title</th><th>Amount</th><th>Paid</th><th>Remaining</th><th>Status</th><th></th></tr></thead>
@@ -94,6 +102,6 @@ export default function Notebook() {
           <td className={styles.rowActions}><Link href={`/notebook/${encodeURIComponent(entry._id)}`}>View</Link>{canDelete && <button className={styles.textButton} onClick={() => void softDelete(entry)} aria-label={`Delete ${entry.entryNo}`}>Delete</button>}</td>
         </tr>)}</tbody>
       </table></div>}
-    </section>
+    </section>}
   </main>;
 }

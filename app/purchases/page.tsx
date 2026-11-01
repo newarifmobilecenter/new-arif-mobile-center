@@ -4,12 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./purchaseWin.module.css";
 
-type Line = { key: number; productId: string; name: string; code: string; barcode: string; qty: string; disc: string; cost: string; retail: string; stock: number; category: string };
+type Line = { key: number; productId: string; name: string; code: string; barcode: string; qty: string; disc: string; cost: string; retail: string; wholesale: string; stock: number; category: string };
 const money = (n: number) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 const n = (v: string) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
 let seq = 1;
-const emptyLine = (): Line => ({ key: seq++, productId: "", name: "", code: "", barcode: "", qty: "1", disc: "0", cost: "", retail: "", stock: 0, category: "" });
+const emptyLine = (): Line => ({ key: seq++, productId: "", name: "", code: "", barcode: "", qty: "1", disc: "0", cost: "", retail: "", wholesale: "", stock: 0, category: "" });
 const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
 
 export default function Purchases() {
@@ -61,7 +61,7 @@ export default function Purchases() {
 
   const setLine = (key: number, patch: Partial<Line>) => setLines(cur => cur.map(l => l.key === key ? { ...l, ...patch } : l));
   const pick = (key: number, p: any) => {
-    setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), cost: String(p.costPrice ?? 0), retail: String(p.price ?? ""), stock: Number(p.stock || 0), category: String(p.category || "") });
+    setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), cost: String(p.costPrice ?? 0), retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), stock: Number(p.stock || 0), category: String(p.category || "") });
     setActive(null); setHl(0); focusEl(`[data-ql="${key}"]`);
   };
   const focusEl = (sel: string) => window.setTimeout(() => (document.querySelector(sel) as HTMLElement | null)?.focus(), 30);
@@ -85,7 +85,7 @@ export default function Purchases() {
       const same = cur.find(l => l.productId === String(p._id));
       if (same) return cur.map(l => l.key === same.key ? { ...l, qty: String(n(l.qty) + 1) } : l);
       const free = cur.find(l => !l.productId);
-      const base = { productId: String(p._id), name: String(p.name || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), qty: "1", cost: String(p.costPrice ?? 0), retail: String(p.price ?? ""), stock: Number(p.stock || 0), category: String(p.category || "") };
+      const base = { productId: String(p._id), name: String(p.name || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), qty: "1", cost: String(p.costPrice ?? 0), retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), stock: Number(p.stock || 0), category: String(p.category || "") };
       return free ? cur.map(l => l.key === free.key ? { ...l, ...base } : l) : [...cur, { ...emptyLine(), ...base }];
     });
     setBarcode(""); setMsg(null);
@@ -103,7 +103,7 @@ export default function Purchases() {
     if (!used.length) { setMsg({ text: "Kam az kam aik product select karein.", ok: false }); return; }
     if (used.some(l => !Number.isInteger(n(l.qty)) || n(l.qty) <= 0 || n(l.cost) < 0 || l.cost.trim() === "")) { setMsg({ text: "Har product ki Qty (poora number) aur Cost likhein.", ok: false }); return; }
     const perUnit = onCost && totalQty > 0 ? shipment / totalQty : 0;
-    const items = used.map(l => ({ productId: l.productId, name: l.name, qty: n(l.qty), costPrice: Math.round((n(l.cost) * (1 - n(l.disc) / 100) + perUnit) * 10000) / 10000, retail: n(l.retail) }));
+    const items = used.map(l => ({ productId: l.productId, name: l.name, qty: n(l.qty), costPrice: Math.round((n(l.cost) * (1 - n(l.disc) / 100) + perUnit) * 10000) / 10000, retail: n(l.retail), wholesale: n(l.wholesale) }));
     setBusy(true); setMsg(null);
     try {
       const r = await fetch("/api/purchases/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ supplierId: supplier, suppRef, remarks, date, type, salesman, items, discount, freight: onCost ? 0 : n(freight), otherExpense: onCost ? 0 : n(other), paid: paidNow, paymentMethod: payMethod }) });
@@ -151,7 +151,7 @@ export default function Purchases() {
     <section className={`${styles.gridWrap} ${active !== null ? styles.split : ""}`}>
       <div className={styles.scroll}>
         <table className={styles.tbl}>
-          <thead><tr><th>S#</th><th>Product Name</th><th>Qty</th><th>Disc %</th><th>Cost</th><th>Total</th><th>G Retail</th><th>Del</th><th>New</th><th>Barcode</th></tr></thead>
+          <thead><tr><th>S#</th><th>Product Name</th><th>Qty</th><th>Disc %</th><th>Cost</th><th>Total</th><th>G Retail</th><th>W Rate</th><th>Del</th><th>New</th><th>Barcode</th></tr></thead>
           <tbody>{lines.map((l, i) => <tr key={l.key} className={active === l.key ? styles.rowOn : ""}>
             <td>{i + 1}</td>
             <td><input className={styles.pname} value={l.name} placeholder="product naam / code likhein ya yahan click karein" data-ln={l.key} onFocus={() => { setActive(l.key); setHl(0); }} onChange={e => { setLine(l.key, { name: e.target.value, productId: "" }); setActive(l.key); setHl(0); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (matches[hl] || matches[0]) pick(l.key, matches[hl] || matches[0]); else if (l.productId) focusEl(`[data-ql="${l.key}"]`); } else if (e.key === "ArrowDown") { e.preventDefault(); setHl(h => Math.min(matches.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHl(h => Math.max(0, h - 1)); } else if (e.key === "Escape") setActive(null); }} /></td>
@@ -159,7 +159,8 @@ export default function Purchases() {
             <td><input value={l.disc} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { disc: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td><input value={l.cost} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { cost: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td className={styles.tot}>{l.productId ? money(n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100)) : ""}</td>
-            <td><input value={l.retail} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const last = lines[lines.length - 1]; if (last && last.key === l.key) focusEl(`[data-ln="${addLineAfter(l.key)}"]`); else { const nx = lines[lines.findIndex(x => x.key === l.key) + 1]; if (nx) focusEl(`[data-ln="${nx.key}"]`); } } }} onFocus={selectAll} onChange={e => setLine(l.key, { retail: e.target.value.replace(/[^\d.]/g, "") })} /></td>
+            <td><input value={l.retail} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusEl(`[data-wh="${l.key}"]`); } }} onFocus={selectAll} onChange={e => setLine(l.key, { retail: e.target.value.replace(/[^\d.]/g, "") })} /></td>
+            <td><input value={l.wholesale} data-wh={l.key} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const last = lines[lines.length - 1]; if (last && last.key === l.key) focusEl(`[data-ln="${addLineAfter(l.key)}"]`); else { const nx = lines[lines.findIndex(x => x.key === l.key) + 1]; if (nx) focusEl(`[data-ln="${nx.key}"]`); } } }} onFocus={selectAll} onChange={e => setLine(l.key, { wholesale: e.target.value.replace(/[^\d.]/g, "") })} /></td>
             <td><button type="button" className={styles.ico} title="Line delete" onClick={() => removeLine(l.key)}>🗑</button></td>
             <td><button type="button" className={styles.ico} title="Is ke neeche nayi line" onClick={() => focusEl(`[data-ln="${addLineAfter(l.key)}"]`)}>＋</button></td>
             <td className={styles.dim}>{l.code}{l.barcode && l.barcode !== l.code ? ` / ${l.barcode}` : ""}</td>
