@@ -1,5 +1,6 @@
 "use client";
 
+import { ALT_ROUTES } from "@/lib/shortcuts";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -50,7 +51,7 @@ export default function AuthNavigation() {
   // Global shortcuts: Alt + letter.
   useEffect(() => {
     if (!session.authenticated) return;
-    const routes: Record<string, string> = { KeyG: "/pos", KeyR: "/sales/returns", KeyP: "/purchases", KeyC: "/customers", KeyV: "/vouchers", KeyA: "/repairs/new", KeyD: "/daily-summary", KeyO: "/orders" };
+    const routes: Record<string, string> = Object.fromEntries(ALT_ROUTES.map((r) => [r.code, r.to]));
     const onKey = (e: KeyboardEvent) => {
       if (!e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return;
       const to = routes[e.code];

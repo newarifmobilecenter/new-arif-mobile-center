@@ -1,5 +1,6 @@
 "use client";
 
+import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES } from "@/lib/autoRules";
@@ -55,6 +56,13 @@ export default function Settings() {
   return <main className="shell">
     <div className="nav"><Link href="/">← Dashboard</Link><Link href="/backup">Backup</Link></div>
     <h1>⚙️ Settings</h1>
+
+    <div className="panel"><h2>⌨️ Keyboard Shortcuts</h2>
+      <table style={{ width: "100%", maxWidth: 520 }}><tbody>
+        {ALT_ROUTES.map((r) => <tr key={r.code}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>Alt + {r.key}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
+        {OTHER_SHORTCUTS.map((r) => <tr key={r.keys}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>{r.keys}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
+      </tbody></table>
+    </div>
 
     <div className="panel"><h2>🎨 Theme</h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
