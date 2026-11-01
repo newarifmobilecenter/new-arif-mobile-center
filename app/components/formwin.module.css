@@ -1,0 +1,44 @@
+.win { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #05070f; border: 1px solid #26304a; color: #e5e7eb; font-family: "Segoe UI", Arial, sans-serif; }
+.titlebar { display: flex; justify-content: space-between; align-items: center; padding: 4px 10px; background: #090d18; border-bottom: 1px solid #26304a; font-size: 14px; }
+.titlebar a { color: #22d3ee; text-decoration: none; margin-left: 12px; font-size: 13px; }
+.tabs { display: flex; flex-wrap: wrap; background: #090d18; border-bottom: 1px solid #26304a; padding: 0 4px; }
+.tab { padding: 6px 13px; border: 1px solid transparent; background: transparent; color: #cbd5e1; font-size: 14px; cursor: pointer; }
+.tabOn { background: #0f1a33; color: #22d3ee; border-color: #26304a; border-bottom-color: #0f1a33; margin-bottom: -1px; }
+.body { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; grid-template-columns: minmax(340px, 520px) minmax(0, 1fr); gap: 10px; padding: 10px 14px; align-content: start; }
+.card { background: #0f1a33; border: 1px solid #26304a; border-radius: 10px; padding: 10px 14px; min-width: 0; }
+.card h2 { margin: 0 0 8px; font-size: 19px; color: #fff; }
+.row { display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 8px; margin-bottom: 6px; font-size: 15px; color: #cbd5e1; }
+.in { width: 100%; min-height: 32px; padding: 3px 6px; border: 1px solid #334155; background: #0f172a; color: #e5e7eb; font-size: 15px; color-scheme: dark; border-radius: 6px; }
+.in:focus { outline: 2px solid #22d3ee; }
+.ro { background: #1e3a5f; font-weight: 800; }
+.with { display: grid; grid-template-columns: minmax(0, 1fr) 34px; gap: 6px; }
+.nbtn { border: 1px solid #334155; background: #0f172a; color: #22d3ee; border-radius: 6px; cursor: pointer; }
+.bar { display: flex; gap: 10px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.save { padding: 8px 20px; border: 1px solid #60a5fa; border-radius: 8px; background: #2563eb; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; }
+.save:disabled { opacity: .6; cursor: wait; }
+.alt { padding: 6px 12px; border: 1px solid #22d3ee88; border-radius: 6px; background: #0e7490; color: #fff; font-weight: 700; cursor: pointer; }
+.msg { font-size: 14px; font-weight: 700; color: #f87171; }
+.ok { color: #4ade80; }
+.hint { margin: 4px 0 8px; color: #94a3b8; font-size: 13px; }
+.stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.stat { padding: 6px 12px; border-radius: 10px; background: #05070f99; border: 1px solid #26304a; min-width: 120px; }
+.stat small { display: block; color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.stat b { color: #22d3ee; font-size: 18px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tbl th { position: sticky; top: 0; padding: 5px 8px; background: #1e3a8a; color: #fff; text-align: left; white-space: nowrap; }
+.tbl td { padding: 4px 8px; border-bottom: 1px solid #26304a; vertical-align: top; }
+.tbl tbody tr:nth-child(even) { background: #0b1226; }
+.num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.wrap { max-height: 62vh; overflow: auto; border: 1px solid #26304a; border-radius: 8px; }
+.pill { padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pPaid { background: #14532d66; color: #86efac; }
+.pPart { background: #78350f66; color: #fcd34d; }
+.pDue { background: #7f1d1d66; color: #fca5a5; }
+.lines { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+.lines th { padding: 3px 4px; background: #1e3a8a; color: #fff; font-size: 12px; text-align: left; }
+.lines td { padding: 2px; }
+.pick { position: absolute; left: 0; right: 0; top: 100%; z-index: 6; max-height: 220px; overflow: auto; background: #0f172a; border: 1px solid #22d3ee; }
+.pick button { display: block; width: 100%; text-align: left; padding: 4px 8px; border: 0; background: #0f172a; color: #e5e7eb; cursor: pointer; }
+.pick button:hover { background: #12224a; }
+@media (max-width: 900px) { .body { grid-template-columns: minmax(0, 1fr); } .row { grid-template-columns: 100px minmax(0, 1fr); } }
+@media print { .titlebar, .tabs { display: none; } .win { background: #fff; color: #000; } }

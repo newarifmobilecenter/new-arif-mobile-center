@@ -27,6 +27,7 @@ const categories = [
     ["New Purchase","Supplier se aayi stock entry karein","/purchases"],
     ["Purchase History","Purani purchase aur payments dekhein","/purchases/history"],
     ["Purchase Return","Supplier ko stock wapas record karein","/purchases/returns"],
+    ["Local Purchase","Saved customer se maal lena (cash ya baqi mein adjust)","/local-purchase"],
   ]},
   { id:"inventory", title:"Inventory", icon:"📦", items:[
     ["Product List","Products, SKU aur prices manage karein","/admin?tab=list"],

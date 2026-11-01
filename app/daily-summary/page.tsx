@@ -31,7 +31,7 @@ export default function DailySummary() {
 
   const s = useMemo(() => {
     const on = (rows: any[], f = "createdAt") => rows.filter(r => localDay(r[f]) === day);
-    const sales = on(data.sales), purchases = on(data.purchases), expenses = on(data.expenses), tx = on(data.tx), returns = on(data.returns);
+    const sales = on(data.sales).filter((x: any) => !x.isOpening), purchases = on(data.purchases), expenses = on(data.expenses), tx = on(data.tx), returns = on(data.returns);
     const repairsIn = data.repairs.filter((r: any) => localDay(r.receivedAt || r.createdAt) === day);
     const cost = costMapOf(data.products);
     const catOf = (i: any) => String(i.category || data.products.find((p: any) => String(p._id) === String(i.productId))?.category || "");
@@ -43,11 +43,12 @@ export default function DailySummary() {
     const grossProfit = lines.reduce((t: number, l: any) => t + l.profit, 0) - saleReturns.reduce((t: number, r: any) => t + returnProfitLoss(r, cost), 0);
     const byAccount: Record<string, { in: number; out: number }> = {};
     for (const t of tx) { const a = String(t.account || "Cash"); (byAccount[a] ||= { in: 0, out: 0 })[t.type === "IN" ? "in" : "out"] += Number(t.amount || 0); }
+    const salaryPaid = sum(tx.filter((t: any) => t.voucherType === "SALARY" && t.type === "OUT"), "amount");
     const cashIn = sum(tx.filter((t: any) => t.type === "IN"), "amount"), cashOut = sum(tx.filter((t: any) => t.type === "OUT"), "amount");
     return { sales, purchases, expenses, saleReturns, repairsIn, names, byAccount, cashIn, cashOut,
       salesTotal: sum(sales, "total"), salesPaid: sum(sales, "paid"), salesDue: sum(sales, "remaining"),
-      purchaseTotal: sum(purchases, "total"), purchasePaid: sum(purchases, "paid"), expenseTotal: sum(expenses, "amount"),
-      returnTotal: sum(saleReturns, "amount"), costTotal, grossProfit, netProfit: grossProfit - sum(expenses, "amount"), repairBill: sum(repairsIn, "totalBill"), repairPaid: sum(repairsIn, "paid") };
+      purchaseTotal: sum(purchases, "total"), purchasePaid: sum(purchases, "paid"), expenseTotal: sum(expenses, "amount") + salaryPaid, salaryPaid,
+      returnTotal: sum(saleReturns, "amount"), costTotal, grossProfit, netProfit: grossProfit - sum(expenses, "amount") - salaryPaid, repairBill: sum(repairsIn, "totalBill"), repairPaid: sum(repairsIn, "paid") };
   }, [data, day]);
 
   const stat = (title: string, value: string, sub?: string, color = "#e5e7eb") => <div style={card}><div style={label}>{title}</div><div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>{sub && <div style={label}>{sub}</div>}</div>;
@@ -71,7 +72,7 @@ export default function DailySummary() {
       {stat("Net Profit", `Rs. ${money(s.netProfit)}`, "gross profit − expenses", s.netProfit < 0 ? "#f87171" : "#4ade80")}
       {stat("Sale Returns", `Rs. ${money(s.returnTotal)}`, `${s.saleReturns.length} return`, "#fbbf24")}
       {stat("Purchases", `Rs. ${money(s.purchaseTotal)}`, `${s.purchases.length} bill · paid ${money(s.purchasePaid)}`)}
-      {stat("Expenses", `Rs. ${money(s.expenseTotal)}`, `${s.expenses.length} entry`, "#f87171")}
+      {stat("Expenses", `Rs. ${money(s.expenseTotal)}`, `${s.expenses.length} entry${s.salaryPaid ? ` + salary ${money(s.salaryPaid)}` : ""}`, "#f87171")}
       {stat("Cash In / Out", `${money(s.cashIn)} / ${money(s.cashOut)}`, `net Rs. ${money(s.cashIn - s.cashOut)}`)}
       {stat("Repairs (received)", `${s.repairsIn.length}`, `bill ${money(s.repairBill)} · paid ${money(s.repairPaid)}`)}
     </div>

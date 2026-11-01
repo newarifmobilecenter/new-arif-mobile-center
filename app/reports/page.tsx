@@ -67,7 +67,7 @@ export default function Reports() {
     const custName = new Map<string, string>(data.customers.map((c: any) => [String(c._id), t(c.name)]));
     const catOf = (i: any) => t(i.category).trim() || t(prodById.get(String(i.productId || ""))?.category).trim() || itemCategory(i);
     const inR = (x: any, f = "createdAt") => { const d = localDay(x[f]); return d >= from && d <= to; };
-    const sales = data.sales.filter((x: any) => inR(x));
+    const sales = data.sales.filter((x: any) => inR(x) && !x.isOpening);
     const lines: any[] = [];
     const invoices: any[] = [];
     for (const s of sales) {
@@ -85,11 +85,12 @@ export default function Reports() {
     const saleTotal = sales.reduce((a: number, x: any) => a + n(x.total), 0);
     const costTotal = lines.reduce((a, l) => a + l.cost, 0);
     const gross = lines.reduce((a, l) => a + l.profit, 0) - retLoss;
-    const expTotal = expenses.reduce((a: number, x: any) => a + n(x.amount), 0);
+    const salaryPaid = tx.filter((x: any) => x.voucherType === "SALARY" && x.type === "OUT").reduce((a: number, x: any) => a + n(x.amount), 0);
+    const expTotal = expenses.reduce((a: number, x: any) => a + n(x.amount), 0) + salaryPaid;
     const lastSold = new Map<string, string>();
     for (const s of data.sales) for (const i of s.items || []) { const id = t(i.productId); const d = localDay(s.createdAt); if (id && d > (lastSold.get(id) || "")) lastSold.set(id, d); }
     return { costs, prodById, custName, sales, lines, invoices, returns, retLoss, purchases, expenses, tx, saleTotal, costTotal, gross, expTotal, net: gross - expTotal, lastSold,
-      receivable: sales.reduce((a: number, x: any) => a + n(x.remaining), 0), payable: purchases.reduce((a: number, x: any) => a + n(x.remaining), 0),
+      receivable: data.sales.reduce((a: number, x: any) => a + n(x.remaining), 0), payable: data.purchases.reduce((a: number, x: any) => a + n(x.remaining), 0),
       returnTotal: returns.reduce((a: number, r: any) => a + n(r.amount), 0), purchaseTotal: purchases.reduce((a: number, x: any) => a + n(x.total), 0) };
   }, [data, from, to]);
 
@@ -183,12 +184,12 @@ export default function Reports() {
             {card("Cost of Sold", `Rs. ${money(m.costTotal)}`, styles.warn)}
             {card("Gross Profit", `Rs. ${money(m.gross)}`, tone(m.gross))}
             {card("Margin", m.saleTotal ? `${Math.round((m.gross / m.saleTotal) * 100)}%` : "-", tone(m.gross))}
-            {card("Expenses", `Rs. ${money(m.expTotal)}`, styles.neg)}
+            {card("Expenses + Salary", `Rs. ${money(m.expTotal)}`, styles.neg)}
             {card("Net Profit / Loss", `Rs. ${money(m.net)}`, tone(m.net))}
             {card("Sale Returns", `Rs. ${money(m.returnTotal)}`, styles.warn)}
             {card("Purchases", `Rs. ${money(m.purchaseTotal)}`)}
-            {card("Receivable (udhaar)", `Rs. ${money(m.receivable)}`)}
-            {card("Payable", `Rs. ${money(m.payable)}`)}
+            {card("Receivable (sab udhaar)", `Rs. ${money(m.receivable)}`)}
+            {card("Payable (sab)", `Rs. ${money(m.payable)}`)}
           </div>
           <div className={styles.tblWrap}><table className={styles.tbl}><thead><tr><th>Payment Account</th><th className={styles.num}>In</th><th className={styles.num}>Out</th><th className={styles.num}>Net</th></tr></thead>
             <tbody>{Object.entries(m.tx.reduce((a: any, x: any) => { const k = t(x.account || "Cash"); (a[k] ||= { i: 0, o: 0 })[x.type === "IN" ? "i" : "o"] += n(x.amount); return a; }, {})).map(([k, v]: any) => <tr key={k}><td>{k}</td><td className={styles.num}>{money(v.i)}</td><td className={styles.num}>{money(v.o)}</td><td className={`${styles.num} ${tone(v.i - v.o)}`}>{money(v.i - v.o)}</td></tr>)}

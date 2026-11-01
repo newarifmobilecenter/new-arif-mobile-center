@@ -5,6 +5,10 @@ export const NUMBER_KINDS = {
   purchase: "P",
   saleReturn: "R",
   purchaseReturn: "PR",
+  expense: "E",
+  salary: "SL",
+  oldBalance: "OB",
+  localPurchase: "LP",
 } as const;
 export type NumberKind = keyof typeof NUMBER_KINDS;
 
