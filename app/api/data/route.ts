@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
   try {
     const c = req.nextUrl.searchParams.get("collection") || "products";
     if (!allowed.includes(c)) return NextResponse.json({error:"Invalid collection"}, {status:400});
+    if (adminOnly.has(c) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
     const d = await db();
     const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 1000), 5000);
     const filter: Record<string, unknown> = c === "sales" && req.nextUrl.searchParams.get("includeCancelled") !== "1" ? { status: { $ne: "cancelled" } } : {};

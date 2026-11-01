@@ -1,15 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function Backup() {
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
+	const [role, setRole] = useState<string | null>(null);
+
+	useEffect(() => {
+		fetch("/api/auth/session", { cache: "no-store" })
+			.then((r) => r.json())
+			.then((d: any) => setRole(d?.authenticated ? String(d.role || "STAFF") : null))
+			.catch(() => setRole(null));
+	}, []);
+
+	const isAdmin = role === "ADMIN";
 
 	async function restore(event: React.ChangeEvent<HTMLInputElement>) {
 		const file = event.target.files?.[0];
 		if (!file) return;
+		if (!isAdmin) {
+			setMessage("Restore sirf admin kar sakta hai.");
+			event.target.value = "";
+			return;
+		}
 		setBusy(true);
 		setMessage("");
 
@@ -69,13 +84,17 @@ export default function Backup() {
 		<div className="nav"><Link href="/">← Dashboard</Link></div>
 		<h1>💾 Backup &amp; Restore</h1>
 		<div className="panel">
-			<p>MongoDB is the live database. Download a JSON backup regularly and keep a copy in Google Drive/OneDrive.</p>
-			<a className="btn" href="/api/backup">⬇ Download Backup Now</a>
-			<label className="btn" style={{ marginLeft: 10 }}>
-				↩ Restore JSON
-				<input hidden type="file" accept=".json" onChange={(event) => void restore(event)} disabled={busy} />
-			</label>
-			<p className="muted">For automatic cloud backup, connect your own Google Drive/OneDrive account; free quotas and provider limits apply.</p>
+			{role === null && <p className="muted">Loading…</p>}
+			{role === "STAFF" && <p role="alert">Backup aur restore sirf <b>Admin</b> ke liye hai. Apne admin se backup file mangein.</p>}
+			{isAdmin && <>
+				<p>MongoDB is the live database. Download a JSON backup regularly and keep a copy in Google Drive/OneDrive.</p>
+				<a className="btn" href="/api/backup">⬇ Download Backup Now</a>
+				<label className="btn" style={{ marginLeft: 10 }}>
+					↩ Restore JSON
+					<input hidden type="file" accept=".json" onChange={(event) => void restore(event)} disabled={busy} />
+				</label>
+				<p className="muted">For automatic cloud backup, connect your own Google Drive/OneDrive account; free quotas and provider limits apply.</p>
+			</>}
 			{busy && <p>Restoring...</p>}
 			{message && <p role="status">{message}</p>}
 		</div>
