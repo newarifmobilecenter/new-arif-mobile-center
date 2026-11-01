@@ -8,6 +8,10 @@ import { THEME_BOOT_SCRIPT } from "@/lib/themes";
 export const metadata: Metadata = {
   title: "NEW ARIF MOBILE CENTER | Kamar Mushani",
   description: "Mobile parts, repairing and Universal Tool Finder — New Arif Mobile Center.",
+  icons: { icon: "/icon.svg" },
+  openGraph: { title: "NEW ARIF MOBILE CENTER", description: "Mobile parts, repairing and accessories — Kamar Mushani.", type: "website", siteName: "New Arif Mobile Center" },
+  twitter: { card: "summary", title: "NEW ARIF MOBILE CENTER" },
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

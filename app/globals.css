@@ -183,3 +183,4 @@ html[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
 body:has(.dashFoot) .helplineMark{display:none}
 @media (max-width:700px){.dashFoot{grid-template-columns:1fr 1fr}}
 @media print{.dashFoot{display:none}}
+@media (max-width:480px){.loginBrand{padding:10px 14px;top:3%}.loginBrand b{letter-spacing:.06em}.loginBrand span{letter-spacing:.12em}.loginCard{max-width:calc(100vw - 32px);padding:20px 18px;box-sizing:border-box}}
