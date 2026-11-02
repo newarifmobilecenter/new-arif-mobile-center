@@ -15,6 +15,29 @@ function group<T>(rows: T[], key: (r: T) => string) {
   return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0]));
 }
 
+// WhatsApp copy: "*Category*" then one short model per line (brand and part words removed).
+const COPY_TITLE: Record<string, string> = { "Displays / LCD": "Panel" };
+const DROP = new Set(["VIVO","OPPO","SAMSUNG","INFINIX","TECNO","REALME","XIAOMI","REDMI","POCO","HUAWEI","HONOR","ITEL","NOKIA","APPLE","IPHONE","LCD","LED","INCELL","TFT","ORG","ORIGINAL","DISPLAY","DISPLAYS","PANEL","CHB","STRIP","BACK","RING","BATTERY","CHARGING","PORT","BOARD","SPEAKER","MIC","CAMERA","FLEX","BUTTON","BODY","HOUSING","FOR","WITH","FRAME","TOUCH","SCREEN","AMOLED","OLED"]);
+const shortName = (name: string) => {
+  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const kept = parts.filter((w) => !DROP.has(w.toUpperCase()));
+  return (kept.length ? kept : parts).join(" ");
+};
+function copyText(blocks: [string, { name: string; qty?: number }[]][]) {
+  return blocks.map(([c, list]) => {
+    const seen = new Map<string, number>();
+    for (const o of list) { const k = shortName(o.name); seen.set(k, (seen.get(k) || 0) + Math.max(1, Number(o.qty || 1))); }
+    return `*${COPY_TITLE[c] || c}*\n` + Array.from(seen.entries()).map(([k, n]) => n > 1 ? `${k} x${n}` : k).join("\n");
+  }).join("\n\n");
+}
+async function copyToClipboard(text: string) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
+  try {
+    const t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select(); const ok = document.execCommand("copy"); t.remove(); return ok;
+  } catch { return false; }
+}
+
 export default function OrderBook() {
   const [tab, setTab] = useState<"urgent" | "stock">("urgent");
   const [orders, setOrders] = useState<any[]>([]);
@@ -57,6 +80,10 @@ export default function OrderBook() {
       await load();
     } catch (e: any) { notify(e?.message || "Update nahi hua.", { kind: "danger" }); } finally { setBusy(false); }
   }
+  const copyBlocks = async (blocks: [string, any[]][]) => {
+    const text = copyText(blocks);
+    notify(await copyToClipboard(text) ? "Copy ho gaya — ab WhatsApp mein paste karein." : "Copy nahi hua.", { kind: "success" });
+  };
   const addManual = () => { const n = name.trim(); if (!n) { notify("Cheez ka naam likhein (jaise VIVO Y100 BACK RING).", { kind: "warning" }); return; } void post([{ name: n.toUpperCase(), category: cat, qty: 1 }]).then(() => setName("")); };
 
   return <main className={styles.page}>
@@ -74,11 +101,16 @@ export default function OrderBook() {
         <select value={cat} onChange={(e) => setCat(e.target.value)}>{CATS.map((c) => <option key={c}>{c}</option>)}</select>
         <button type="button" disabled={busy} onClick={addManual}>＋ Order Book mein daalein</button>
       </>}
+      <button type="button" onClick={() => {
+        const src = tab === "urgent" ? group(urgent.filter((o: any) => o.status !== "ORDERED"), (o: any) => o.category) : group(outOfStock, (p: any) => categoryOf(String(p.name || ""), String(p.category || "").trim()));
+        if (!src.length) { notify("Copy karne ke liye kuch nahi.", { kind: "info" }); return; }
+        void copyBlocks(src as [string, any[]][]);
+      }}>📋 Copy All (WhatsApp)</button>
     </div>
 
     <div className={styles.body}>
       {tab === "urgent" && (urgent.length === 0 ? <div className={styles.empty}>Order Book khali hai. Repair mein jo cheez stock mein na ho wo yahan khud aa jati hai; purchase karte hi khud hat jati hai.</div>
-        : group(urgent, (o) => o.category).map(([c, list]) => <section key={c} className={styles.group}><h3><span>{c}</span><span>{list.length}</span></h3>
+        : group(urgent, (o) => o.category).map(([c, list]) => <section key={c} className={styles.group}><h3><span>{c}</span><span>{list.length} <button type="button" className={styles.btn} onClick={() => { const open = list.filter((o: any) => o.status !== "ORDERED"); if (open.length) void copyBlocks([[c, open]]); else notify("Is category mein sab Ordered hain.", { kind: "info" }); }}>📋 Copy</button></span></h3>
           {list.map((o) => <div key={o._id} className={styles.row}>
             <b>{o.name}{o.qty > 1 ? ` × ${o.qty}` : ""}<span className={styles.sub}>{o.token ? `${o.token} · ${o.customerName || o.model}` : "Manual order"}</span></b>
             <span className={`${styles.chip} ${o.status === "ORDERED" ? styles.ordered : styles.open}`}>{o.status === "ORDERED" ? "Ordered" : "Order karna hai"}</span>
@@ -88,7 +120,7 @@ export default function OrderBook() {
         </section>))}
 
       {tab === "stock" && (outOfStock.length === 0 ? <div className={styles.empty}>Koi item out of stock nahi. 👍</div>
-        : group(outOfStock, (p) => categoryOf(String(p.name || ""), String(p.category || "").trim())).map(([c, list]) => <section key={c} className={styles.group}><h3><span>{c}</span><span>{list.length}</span></h3>
+        : group(outOfStock, (p) => categoryOf(String(p.name || ""), String(p.category || "").trim())).map(([c, list]) => <section key={c} className={styles.group}><h3><span>{c}</span><span>{list.length} <button type="button" className={styles.btn} onClick={() => void copyBlocks([[c, list]])}>📋 Copy</button></span></h3>
           {list.map((p) => <div key={p._id} className={styles.row}>
             <b>{p.name}<span className={styles.sub}>{[p.code ?? p.sku, p.brand].filter(Boolean).join(" · ")}</span></b>
             <span className={`${styles.chip} ${styles.open}`}>Stock 0</span>
