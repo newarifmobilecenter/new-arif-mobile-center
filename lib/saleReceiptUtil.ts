@@ -23,3 +23,13 @@ export function warrantyFlags(items: any[]) {
     panel: items.some((i) => PANEL.test(itemCategory(i)) || PANEL.test(String(i.name || ""))),
   };
 }
+
+// Some products carry a very long "fits these models" list in their name. On a receipt keep it to ~2 lines:
+// first model, "+N models", and a hard cut.
+export function shortItemName(name: unknown, max = 42): string {
+  const full = String(name || "").trim();
+  const segs = full.split(/\s*\/\s*/).filter(Boolean);
+  let out = segs[0] || full;
+  if (segs.length > 1) out += ` +${segs.length - 1} models`;
+  return out.length > max ? out.slice(0, max - 1).trimEnd() + "…" : out;
+}

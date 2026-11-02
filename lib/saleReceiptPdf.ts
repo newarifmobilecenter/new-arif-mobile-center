@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import { SHOP_PHONES } from "./shopOptions";
-import { groupItems, warrantyFlags } from "./saleReceiptUtil";
+import { groupItems, warrantyFlags, shortItemName } from "./saleReceiptUtil";
 
 const W = 80, M = 4, CW = W - M * 2;
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
@@ -56,7 +56,7 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
     pdf.setFont("helvetica", "bold"); pdf.setFontSize(6.5); txt(cat.toUpperCase(), M + 1, y + 3); y += 4.2;
     list.forEach((i, k) => {
       pdf.setFont("helvetica", "bold"); pdf.setFontSize(7.5);
-      const lines: string[] = pdf.splitTextToSize(String(i.name || "Product"), 30);
+      const lines: string[] = pdf.splitTextToSize(shortItemName(i.name || "Product"), 30);
       txt(String(k + 1), M + 1, y + 3.3);
       lines.forEach((ln, li) => txt(ln, M + 6, y + 3.3 + li * 3.2));
       txt(String(i.qty), cQty, y + 3.3, { align: "right" }); txt(money(i.price), cRate + 3, y + 3.3, { align: "right" });

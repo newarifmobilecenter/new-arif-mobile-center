@@ -1,6 +1,6 @@
 import styles from "./saleReceipt.module.css";
 import { SHOP_PHONES } from "../../lib/shopOptions";
-import { BATTERY, PANEL, itemCategory } from "../../lib/saleReceiptUtil";
+import { BATTERY, PANEL, itemCategory, shortItemName } from "../../lib/saleReceiptUtil";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 
@@ -42,7 +42,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       {[...groups.entries()].map(([cat, list]) => <tbody key={cat}>
         <tr className={styles.cat}><td colSpan={5}>{cat.toUpperCase()}</td></tr>
         {list.map((i, k) => <tr key={`${cat}-${k}`}>
-          <td>{k + 1}</td><td className={styles.nm}>{i.name}{i.imei || i.serial ? <small>IMEI/Serial: {i.imei || i.serial}</small> : null}</td>
+          <td>{k + 1}</td><td className={styles.nm}>{shortItemName(i.name)}{i.imei || i.serial ? <small>IMEI/Serial: {i.imei || i.serial}</small> : null}</td>
           <td>{i.qty}</td><td>{money(i.price)}</td><td>{money(i.total ?? Number(i.price || 0) * Number(i.qty || 0))}</td>
         </tr>)}
       </tbody>)}
