@@ -184,3 +184,34 @@ body:has(.dashFoot) .helplineMark{display:none}
 @media (max-width:700px){.dashFoot{grid-template-columns:1fr 1fr}}
 @media print{.dashFoot{display:none}}
 @media (max-width:480px){.loginBrand{padding:10px 14px;top:3%}.loginBrand b{letter-spacing:.06em}.loginBrand span{letter-spacing:.12em}.loginCard{max-width:calc(100vw - 32px);padding:20px 18px;box-sizing:border-box}}
+
+/* Glass login (Liquid-Glass look) */
+.glassWall{position:relative;width:100%;max-width:none!important;margin:0!important;min-height:100vh;display:grid;place-items:center;padding:24px;overflow:hidden;background:linear-gradient(160deg,#1b2a6b 0%,#3a2a8c 35%,#8a3fa8 65%,#ff7a59 100%);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.glassOrb{position:absolute;border-radius:50%;filter:blur(60px);opacity:.85;pointer-events:none;animation:glassFloat 16s ease-in-out infinite}
+.gOrb1{width:46vmax;height:46vmax;left:-12vmax;top:-14vmax;background:radial-gradient(circle at 35% 35%,#38bdf8,#2563eb 60%,transparent 70%)}
+.gOrb2{width:38vmax;height:38vmax;right:-10vmax;top:6vmax;background:radial-gradient(circle at 40% 40%,#f0abfc,#c026d3 60%,transparent 70%);animation-delay:-5s}
+.gOrb3{width:42vmax;height:42vmax;left:12vmax;bottom:-20vmax;background:radial-gradient(circle at 50% 50%,#fdba74,#f97316 60%,transparent 70%);animation-delay:-9s}
+.gOrb4{width:26vmax;height:26vmax;right:14vmax;bottom:-6vmax;background:radial-gradient(circle at 50% 50%,#5eead4,#06b6d4 60%,transparent 70%);animation-delay:-3s}
+@keyframes glassFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3vmax,2vmax) scale(1.08)}}
+.glassBrand{position:absolute;top:5%;left:50%;transform:translateX(-50%);width:max-content;max-width:92%;padding:10px 26px;border-radius:999px;text-align:center;display:grid;gap:2px;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.4);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 8px 30px rgba(0,0,0,.18)}
+.glassBrand b{font-size:clamp(15px,2.4vw,26px);letter-spacing:.12em;font-weight:800}
+.glassBrand span{font-size:clamp(10px,1.2vw,13px);letter-spacing:.22em;text-transform:uppercase;opacity:.85}
+.glassCard{position:relative;width:100%;max-width:390px;padding:30px 28px 26px;border-radius:32px;color:#fff;background:linear-gradient(145deg,rgba(255,255,255,.28),rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.45);backdrop-filter:blur(30px) saturate(190%);-webkit-backdrop-filter:blur(30px) saturate(190%);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.15),0 30px 70px rgba(10,10,50,.35)}
+.glassCard::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 38%)}
+.glassLogo{position:relative;width:58px;height:58px;margin:0 auto 12px;border-radius:18px;display:grid;place-items:center;font-weight:800;font-size:22px;letter-spacing:.04em;color:#fff;background:linear-gradient(145deg,rgba(255,255,255,.45),rgba(255,255,255,.12));border:1px solid rgba(255,255,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 8px 20px rgba(0,0,0,.2)}
+.glassCard h1{position:relative;margin:0 0 2px;text-align:center;font-size:26px;font-weight:800;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.2)}
+.glassCard p{position:relative;margin:0 0 18px;text-align:center;color:rgba(255,255,255,.85);font-size:14px}
+.glassCard label{position:relative;display:block;margin:0 0 6px 4px;font-weight:600;font-size:13px;color:rgba(255,255,255,.92)}
+.glassCard input{position:relative;width:100%;box-sizing:border-box;padding:13px 16px;margin-bottom:14px;border-radius:16px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);color:#fff;font-size:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:inset 0 1px 2px rgba(0,0,0,.12)}
+.glassCard input::placeholder{color:rgba(255,255,255,.6)}
+.glassCard input:focus{outline:none;border-color:#fff;background:rgba(255,255,255,.26);box-shadow:0 0 0 3px rgba(255,255,255,.3)}
+.glassPass{position:relative}
+.glassPass input{padding-right:64px}
+.glassPass button{position:absolute;right:8px;top:6px;height:34px;padding:0 12px;border-radius:12px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.glassError{position:relative;margin:0 0 12px!important;padding:9px 12px;border-radius:12px;background:rgba(220,38,38,.35);border:1px solid rgba(254,202,202,.7);color:#fff!important;font-size:13px!important;text-align:left!important}
+.glassBtn{position:relative;width:100%;padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.6);background:linear-gradient(145deg,rgba(255,255,255,.55),rgba(255,255,255,.22));color:#10215a;font-size:16px;font-weight:800;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 10px 24px rgba(0,0,0,.2);transition:transform .15s,background .15s}
+.glassBtn:hover{background:linear-gradient(145deg,rgba(255,255,255,.7),rgba(255,255,255,.32))}
+.glassBtn:active{transform:scale(.98)}
+.glassBtn:disabled{opacity:.7;cursor:wait}
+@media (prefers-reduced-motion:reduce){.glassOrb{animation:none}}
+@media (max-width:480px){.glassBrand{padding:8px 16px;top:3%}.glassBrand b{letter-spacing:.05em}.glassBrand span{letter-spacing:.1em}.glassCard{max-width:calc(100vw - 32px);padding:24px 20px 22px;border-radius:28px}}
