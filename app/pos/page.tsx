@@ -85,6 +85,7 @@ export default function POS() {
   const [showHeld, setShowHeld] = useState(false);
   const [heldBills, setHeldBills] = useState<HeldBill[]>([]);
   const [done, setDone] = useState<any>(null);
+  const [preview, setPreview] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -330,6 +331,14 @@ export default function POS() {
     ]);
   }
 
+  function showTemporaryBill() {
+    if (!items.length) return alert("Pehle item select karein.");
+    setPreview({
+      saleType: customer ? "customer" : "cash", type: saleType, cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"), date,
+      items: items.map((i) => ({ ...i, total: Number(i.qty || 0) * Number(i.price || 0) * (1 - Number(i.discountPct || 0) / 100) })),
+      subtotal, discountAmount, salesTaxValue, grandTotal: subtotal, total: netTotal, netTotal, paid: paidAmount, remaining, paymentMethod: pay, createdAt: new Date().toISOString(),
+    });
+  }
   const savingRef = useRef(false);
   async function complete() {
     if (savingRef.current) return;
@@ -406,6 +415,19 @@ export default function POS() {
     );
   }
 
+  if (preview) {
+    return (
+      <main className="shell">
+        <div className="nav no-print">
+          <button className="btn" onClick={() => setPreview(null)}>← Wapis Sale</button>
+          <button className="btn" onClick={() => window.print()}>🖨 Thermal Print</button>
+          <button className="btn green" onClick={() => { setPreview(null); void complete(); }}>✅ Confirm &amp; Save Sale</button>
+        </div>
+        <SaleReceipt sale={preview} customerName={selectedCustomer?.name} customerPhone={selectedCustomer?.phone} thermal temporary />
+      </main>
+    );
+  }
+
   const visibleProducts = products.filter((p) => {
     const text = `${p.name || ""} ${p.model || ""} ${p.sku || ""} ${p.barcode || ""} ${p.code || ""} ${p.brand || ""}`.toLowerCase();
     return text.includes(search.toLowerCase()) && (!categoryFilter || p.category === categoryFilter) && (!brandTypeFilter || p.brandType === brandTypeFilter);
@@ -451,7 +473,7 @@ export default function POS() {
           <Link href="/" className={styles.toolLink}>← Dashboard</Link>
           <button onClick={() => { setSearch(""); setSearchOpen(true); setShowAllProducts(true); searchRef.current?.focus(); }}>Show All</button>
           <button onClick={resetSale}>New Record</button>
-          <button onClick={() => window.print()}>Print Record</button>
+          <button onClick={showTemporaryBill}>Print Record</button>
           <button onClick={() => { setSaleType("CREDIT"); setTimeout(() => document.getElementById("customer")?.focus(), 50); }}>Credit Customer</button>
           <button onClick={() => { setSaleType("CASH"); setCustomer(""); setCashRef("WALKING CUSTOMER"); }}>Walking Customer</button>
           <Link href="/admin" className={styles.toolLink}>New Item</Link>
@@ -588,7 +610,7 @@ export default function POS() {
         <footer className={styles.footerBar}>
           <button onClick={complete} className={styles.saveBtn}>💾 Save Sale</button>
           <select value={pay} onChange={(e) => setPay(e.target.value)}><option>Cash</option><option>JazzCash</option><option>Easypaisa</option><option>Raast</option><option>NayaPay</option><option>UBL</option><option>Other Bank</option></select>
-          <button onClick={() => window.print()}>Thermal Print</button>
+          <button onClick={showTemporaryBill}>🧾 Temporary Bill (Thermal)</button>
           <fieldset className={styles.printSel}><legend>Print after save</legend>{[["A4", "a4"], ["A5", "a5"], ["Thermal", "thermal"]].map(([label, v]) => <label key={v}><input type="checkbox" checked={printSize === v} onChange={e => setPrintSize(e.target.checked ? v : "")} /> {label}</label>)}</fieldset>
           <span className={styles.hint}>Ctrl+S = Save · Enter = agla field · ↑↓ = product chunein</span>
         </footer>

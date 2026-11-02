@@ -4,7 +4,7 @@ import { BATTERY, PANEL, itemCategory } from "../../lib/saleReceiptUtil";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 
-export default function SaleReceipt({ sale, customerName, customerPhone, thermal = true }: { sale: any; customerName?: string; customerPhone?: string; thermal?: boolean }) {
+export default function SaleReceipt({ sale, customerName, customerPhone, thermal = true, temporary = false }: { sale: any; customerName?: string; customerPhone?: string; thermal?: boolean; temporary?: boolean }) {
   const items: any[] = Array.isArray(sale?.items) ? sale.items : [];
   const groups = new Map<string, any[]>();
   for (const i of items) { const c = itemCategory(i); groups.set(c, [...(groups.get(c) || []), i]); }
@@ -25,10 +25,11 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       </div>
     </div>
     <div className={styles.tag}>Your Phone Our Care</div>
-    <div className={`${styles.title} ${styles.dark}`}>SALE INVOICE</div>
+    <div className={`${styles.title} ${styles.dark}`}>{temporary ? "TEMPORARY BILL" : "SALE INVOICE"}</div>
+    {temporary && <div style={{ textAlign: "center", fontWeight: 800, fontSize: 11, margin: "2px 0" }}>Ye invoice nahi hai — sirf check karne ke liye</div>}
 
     <div className={styles.meta}>
-      <div><span>Invoice No</span><b className={styles.inv}>{sale?.invoiceNo || "-"}</b></div>
+      {!temporary && <div><span>Invoice No</span><b className={styles.inv}>{sale?.invoiceNo || "-"}</b></div>}
       <div><span>Date</span><b>{date}</b></div>
       <div><span>Time</span><b>{time}</b></div>
       <div><span>Customer</span><b>{customerName || sale?.cashRef || "WALKING CUSTOMER"}</b></div>
@@ -63,7 +64,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       {hasPanel && <p>Panel / Display: <strong>koi warranty ya guarantee nahi.</strong> Check karke lein.</p>}
     </div>}
 
-    <div className={`${styles.copy} ${styles.dark}`}>--- CUSTOMER COPY ---</div>
+    <div className={`${styles.copy} ${styles.dark}`}>{temporary ? "--- TEMPORARY / NOT SAVED ---" : "--- CUSTOMER COPY ---"}</div>
     <div className={styles.shop}>
       <b>New Arif Mobile</b>
       <span>Al saif plaza kamar mushani, mianwali</span>
