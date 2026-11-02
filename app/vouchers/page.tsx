@@ -9,9 +9,9 @@ const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFr
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [])).catch(() => []);
 const localDay = (v: unknown) => { const d = v ? new Date(v as string) : null; if (!d || isNaN(+d)) return ""; return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 const today = () => localDay(new Date());
-const TABS = [["due", "Customer se Wasooli"], ["walk", "Walking Customer"], ["gen", "Receive / Pay"], ["pay", "Supplier / Party ko Payment"], ["old", "Purana Baqi (Old Pending)"]] as const;
+const TABS = [["due", "Customer se Wasooli"], ["walk", "Walking Customer"], ["gen", "Receive / Pay"], ["owner", "Owner Cash Out"], ["pay", "Supplier / Party ko Payment"], ["old", "Purana Baqi (Old Pending)"]] as const;
 type Tab = (typeof TABS)[number][0];
-const KIND_NAME: Record<string, string> = { CUSTOMER_RECEIVE: "Customer Wasooli", WALKING_RECEIVE: "Walking Customer", RECEIVE: "Receive", PAY: "Pay", SUPPLIER_PAY: "Supplier Payment", PARTY_PAY: "Party Payment", OLD_BALANCE_CUSTOMER: "Purana Baqi (Customer)", OLD_BALANCE_SUPPLIER: "Purana Baqi (Supplier)" };
+const KIND_NAME: Record<string, string> = { CUSTOMER_RECEIVE: "Customer Wasooli", WALKING_RECEIVE: "Walking Customer", RECEIVE: "Receive", PAY: "Pay", OWNER_PAY: "Owner Cash Out", SUPPLIER_PAY: "Supplier Payment", PARTY_PAY: "Party Payment", OLD_BALANCE_CUSTOMER: "Purana Baqi (Customer)", OLD_BALANCE_SUPPLIER: "Purana Baqi (Supplier)" };
 
 export default function Vouchers() {
   const [tab, setTab] = useState<Tab>("due");
@@ -99,6 +99,7 @@ export default function Vouchers() {
       if (amt > selWalk.balance + 0.00001) return bad(`Is walking customer ka baqi Rs. ${money(selWalk.balance)} hai.`);
       return void post("/api/finance", { kind: "walkingPayment", walkingId: walkId, amount: amt, account, ref: note, date });
     }
+    if (tab === "owner") return void post("/api/finance", { kind: "ownerCashOut", party: name.trim() || "Owner", amount: amt, account, note, date });
     if (tab === "gen") {
       if (!name.trim()) return bad("Party ka naam likhein.");
       return void post("/api/finance", { kind: "general", type: genType, party: name, amount: amt, account, note, date });
@@ -129,6 +130,9 @@ export default function Vouchers() {
           <label className={styles.row}><span>Customer:</span>{sel(walkId, setWalkId, "Baqi wala walking customer", walkDue, (w) => `${w.code} · ${w.name}${w.phone ? " · " + w.phone : ""} · Rs. ${money(w.balance)}`)}</label>
           {selWalk && <p className={styles.hint}>Pichla baqi: <b>Rs. {money(selWalk.balance)}</b> ({selWalk.rows.filter((r: any) => r.remaining > 0).map((r: any) => r.ref).join(", ")})</p>}
           {!walkDue.length && <p className={styles.hint}>Abhi koi walking customer baqi nahi hai.</p>}</>}
+        {tab === "owner" && <><h2>Owner Cash Out</h2>
+          <p className={styles.hint}>Dukaan se owner ne jo paisa nikala wo yahan likhein. Ye kharcha nahi hai, profit kam nahi hota; sirf us account ka paisa ghatta hai.</p>
+          <label className={styles.row}><span>Owner ka naam:</span><input className={styles.in} value={name} onChange={(e) => setName(e.target.value)} placeholder="Owner" /></label></>}
         {tab === "gen" && <><h2>Receive / Pay Voucher</h2>
           <div className={styles.row}><span>Type:</span><select className={styles.in} value={genType} onChange={(e) => setGenType(e.target.value as any)}><option value="IN">Receive (paisa aaya)</option><option value="OUT">Pay (paisa gaya)</option></select></div>
           <label className={styles.row}><span>Party:</span><input className={styles.in} value={name} onChange={(e) => setName(e.target.value)} placeholder="kis se / kis ko" /></label></>}
@@ -141,7 +145,7 @@ export default function Vouchers() {
           <div className={styles.row}><span>Kis ka:</span><select className={styles.in} value={oldKind} onChange={(e) => { setOldKind(e.target.value as any); setOldId(""); }}><option value="customer">Customer ne dene hain (hume milne hain)</option><option value="supplier">Supplier ko dene hain</option></select></div>
           <label className={styles.row}><span>{oldKind === "customer" ? "Customer:" : "Supplier:"}</span>{sel(oldId, setOldId, oldKind === "customer" ? "— naya customer (neeche naam likhein) —" : "Supplier chunein", oldKind === "customer" ? customers : suppliers, (x) => `${x.name}${x.phone ? " · " + x.phone : ""}`)}</label>
           {oldKind === "customer" && !oldId && <><label className={styles.row}><span>Naya naam:</span><input className={styles.in} value={name} onChange={(e) => setName(e.target.value)} /></label><label className={styles.row}><span>Phone:</span><input className={styles.in} value={phone} onChange={(e) => setPhone(e.target.value)} /></label></>}</>}
-        {(tab === "old" || tab === "pay" || tab === "walk" || tab === "gen") && <label className={styles.row}><span>Date:</span><input className={styles.in} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>}
+        {(tab === "old" || tab === "pay" || tab === "walk" || tab === "gen" || tab === "owner") && <label className={styles.row}><span>Date:</span><input className={styles.in} type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>}
         <label className={styles.row}><span>Amount:</span><input className={styles.in} type="number" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
         {showAccount && <label className={styles.row}><span>Account:</span><select className={styles.in} value={account} onChange={(e) => setAccount(e.target.value)}>{ACCOUNTS.map((a) => <option key={a}>{a}</option>)}</select></label>}
         <label className={styles.row}><span>Detail:</span><input className={styles.in} value={note} onChange={(e) => setNote(e.target.value)} placeholder="reference / narration" /></label>

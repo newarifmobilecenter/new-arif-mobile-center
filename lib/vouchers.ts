@@ -2,7 +2,7 @@ import type { ClientSession, Db } from "mongodb";
 import { nextNumber } from "./counters";
 import { REPAIR_COLLECTION } from "./repairs";
 
-export type VoucherKind = "CUSTOMER_RECEIVE" | "WALKING_RECEIVE" | "SUPPLIER_PAY" | "PARTY_PAY" | "RECEIVE" | "PAY" | "OLD_BALANCE_CUSTOMER" | "OLD_BALANCE_SUPPLIER";
+export type VoucherKind = "CUSTOMER_RECEIVE" | "WALKING_RECEIVE" | "SUPPLIER_PAY" | "PARTY_PAY" | "RECEIVE" | "PAY" | "OWNER_PAY" | "OLD_BALANCE_CUSTOMER" | "OLD_BALANCE_SUPPLIER";
 
 export async function createVoucher(d: Db, v: { kind: VoucherKind; partyType: string; partyId?: string; partyName: string; phone?: string; amount: number; account?: string; note?: string; prevBalance?: number | null; newBalance?: number | null; user: string; createdAt?: Date }, session?: ClientSession) {
   const voucherNo = await nextNumber(d, "voucher", session);

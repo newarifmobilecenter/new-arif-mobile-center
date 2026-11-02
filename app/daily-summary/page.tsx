@@ -44,8 +44,9 @@ export default function DailySummary() {
     const byAccount: Record<string, { in: number; out: number }> = {};
     for (const t of tx) { const a = String(t.account || "Cash"); (byAccount[a] ||= { in: 0, out: 0 })[t.type === "IN" ? "in" : "out"] += Number(t.amount || 0); }
     const salaryPaid = sum(tx.filter((t: any) => t.voucherType === "SALARY" && t.type === "OUT"), "amount");
+    const ownerOut = sum(tx.filter((t: any) => t.voucherType === "OWNER_WITHDRAWAL"), "amount");
     const cashIn = sum(tx.filter((t: any) => t.type === "IN"), "amount"), cashOut = sum(tx.filter((t: any) => t.type === "OUT"), "amount");
-    return { sales, purchases, expenses, saleReturns, repairsIn, names, byAccount, cashIn, cashOut,
+    return { sales, purchases, expenses, saleReturns, repairsIn, names, byAccount, cashIn, cashOut, ownerOut,
       salesTotal: sum(sales, "total"), salesPaid: sum(sales, "paid"), salesDue: sum(sales, "remaining"),
       purchaseTotal: sum(purchases, "total"), purchasePaid: sum(purchases, "paid"), expenseTotal: sum(expenses, "amount") + salaryPaid, salaryPaid,
       returnTotal: sum(saleReturns, "amount"), costTotal, grossProfit, netProfit: grossProfit - sum(expenses, "amount") - salaryPaid, repairBill: sum(repairsIn, "totalBill"), repairPaid: sum(repairsIn, "paid") };
@@ -73,7 +74,7 @@ export default function DailySummary() {
       {stat("Sale Returns", `Rs. ${money(s.returnTotal)}`, `${s.saleReturns.length} return`, "#fbbf24")}
       {stat("Purchases", `Rs. ${money(s.purchaseTotal)}`, `${s.purchases.length} bill · paid ${money(s.purchasePaid)}`)}
       {stat("Expenses", `Rs. ${money(s.expenseTotal)}`, `${s.expenses.length} entry${s.salaryPaid ? ` + salary ${money(s.salaryPaid)}` : ""}`, "#f87171")}
-      {stat("Cash In / Out", `${money(s.cashIn)} / ${money(s.cashOut)}`, `net Rs. ${money(s.cashIn - s.cashOut)}`)}
+      {stat("Cash In / Out", `${money(s.cashIn)} / ${money(s.cashOut)}`, `net Rs. ${money(s.cashIn - s.cashOut)}${s.ownerOut ? ` · Owner cash out ${money(s.ownerOut)}` : ""}`)}
       {stat("Repairs (received)", `${s.repairsIn.length}`, `bill ${money(s.repairBill)} · paid ${money(s.repairPaid)}`)}
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))", gap: 8, marginTop: 8 }}>

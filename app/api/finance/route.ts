@@ -186,6 +186,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, applied, voucher });
     }
 
+    if (kind === "ownerCashOut") {
+      const amount = num(b.amount), party = txt(b.party, 100) || "Owner";
+      if (!(amount > 0)) return fail("Amount likhein.");
+      const s = client.startSession(); let voucher: any = null;
+      try {
+        await s.withTransaction(async () => {
+          voucher = await createVoucher(d, { kind: "OWNER_PAY", partyType: "owner", partyName: party, amount, account, note: txt(b.note, 300), user: user.u, createdAt: at }, s);
+          await d.collection("transactions").insertOne({ type: "OUT", account, amount, party, ref: voucher.voucherNo, note: txt(b.note, 300), voucherType: "OWNER_WITHDRAWAL", user: user.u, createdAt: at }, { session: s });
+        });
+      } finally { await s.endSession(); }
+      return NextResponse.json({ ok: true, voucher });
+    }
+
     if (kind === "general") {
       const type = txt(b.type, 3) === "OUT" ? "OUT" : "IN", amount = num(b.amount), party = txt(b.party, 100);
       if (!(amount > 0)) return fail("Amount likhein.");

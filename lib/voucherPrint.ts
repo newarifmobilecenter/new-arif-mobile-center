@@ -9,6 +9,7 @@ const KIND: Record<string, { title: string; label: string; incoming: boolean; ba
   RECEIVE: { title: "RECEIVE VOUCHER", label: "Wasool hui raqam", incoming: true, balanceLabel: "Baqi" },
   SUPPLIER_PAY: { title: "PAYMENT PAID", label: "Ada ki gayi raqam", incoming: false, balanceLabel: "Supplier ko dene baqi" },
   PARTY_PAY: { title: "PAYMENT PAID", label: "Ada ki gayi raqam", incoming: false, balanceLabel: "Party ko dene baqi" },
+  OWNER_PAY: { title: "OWNER CASH OUT", label: "Owner ne nikali raqam", incoming: false, balanceLabel: "Baqi" },
   PAY: { title: "PAY VOUCHER", label: "Ada ki gayi raqam", incoming: false, balanceLabel: "Baqi" },
   OLD_BALANCE_CUSTOMER: { title: "OLD BALANCE ENTRY", label: "Purana baqi darj", incoming: false, balanceLabel: "Customer ka baqi" },
   OLD_BALANCE_SUPPLIER: { title: "OLD BALANCE ENTRY", label: "Purana baqi darj", incoming: false, balanceLabel: "Supplier ko dene baqi" },
