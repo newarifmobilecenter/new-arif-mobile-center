@@ -38,6 +38,8 @@ export default function Vouchers() {
   const [busy, setBusy] = useState(false);
   const [autoPrint, setAutoPrint] = useState(true);
   const [last, setLast] = useState<any>(null);
+  const [bal, setBal] = useState<{ balances: Record<string, number>; total: number } | null>(null);
+  const loadBal = () => fetch("/api/accounts/balances", { cache: "no-store" }).then((r) => r.json()).then((x) => { if (x && x.balances) setBal(x); }).catch(() => {});
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
 
   const load = async () => {
@@ -49,7 +51,7 @@ export default function Vouchers() {
     setVouchers(v); setCustomers(c); setSales(s); setPurchases(p); setRepairs(r); setSuppliers(sp); setWalking(w);
   };
   useEffect(() => {
-    void load();
+    void load(); void loadBal();
     try {
       const q = new URLSearchParams(window.location.search);
       const t = q.get("tab") as Tab; if (TABS.some(([k]) => k === t)) setTab(t);
@@ -80,7 +82,7 @@ export default function Vouchers() {
       if (!r.ok) throw new Error(d.error || "Save nahi hua.");
       const v = d.voucher; setLast(v);
       setMsg({ t: `Voucher ${v?.voucherNo || ""} save ho gaya.`, ok: true });
-      setAmount(""); setNote(""); setName(""); setPhone("");
+      void loadBal(); setAmount(""); setNote(""); setName(""); setPhone("");
       await load();
       if (v && autoPrint) printVoucher(v);
     } catch (e: any) { setMsg({ t: e.message, ok: false }); } finally { setBusy(false); }
@@ -132,6 +134,11 @@ export default function Vouchers() {
           {!walkDue.length && <p className={styles.hint}>Abhi koi walking customer baqi nahi hai.</p>}</>}
         {tab === "owner" && <><h2>Owner Cash Out</h2>
           <p className={styles.hint}>Dukaan se owner ne jo paisa nikala wo yahan likhein. Ye kharcha nahi hai, profit kam nahi hota; sirf us account ka paisa ghatta hai.</p>
+          {bal && <div className={styles.hint} style={{ lineHeight: 1.7 }}>
+            <b>Dukaan mein total jama: Rs. {money(bal.total)}</b><br />
+            {ACCOUNTS.filter((a) => bal.balances[a]).map((a) => <span key={a} style={{ marginRight: 12, whiteSpace: "nowrap" }}>{a}: <b>{money(bal.balances[a])}</b></span>)}
+            <br />Is account (<b>{account}</b>) mein: <b>Rs. {money(bal.balances[account] || 0)}</b>{amt > 0 && <> → nikalne ke baad <b style={{ color: (bal.balances[account] || 0) - amt < 0 ? "#dc2626" : undefined }}>Rs. {money((bal.balances[account] || 0) - amt)}</b></>}
+          </div>}
           <label className={styles.row}><span>Owner ka naam:</span><input className={styles.in} value={name} onChange={(e) => setName(e.target.value)} placeholder="Owner" /></label></>}
         {tab === "gen" && <><h2>Receive / Pay Voucher</h2>
           <div className={styles.row}><span>Type:</span><select className={styles.in} value={genType} onChange={(e) => setGenType(e.target.value as any)}><option value="IN">Receive (paisa aaya)</option><option value="OUT">Pay (paisa gaya)</option></select></div>
