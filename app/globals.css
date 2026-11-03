@@ -227,3 +227,15 @@ body:has(.dashFoot) .helplineMark{display:none}
 .glassCard h1{font-size:23px}
 @media (max-width:900px){.glassTile{display:none}}
 @media (prefers-reduced-motion:reduce){.glassTile{animation:none}}
+
+/* Workshop wallpaper login */
+.shopArt{position:absolute;inset:0;width:100%;height:100%}
+.glassWall{justify-items:end}
+.glassWall .glassCard{margin-right:6vw}
+.shopBrands{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;max-width:94%;padding:10px 20px;border-radius:999px;color:#fff;background:rgba(10,25,70,.45);border:1px solid rgba(180,210,255,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+.shopBrands span{font-weight:700;letter-spacing:.14em;font-size:13px}
+.shopBrands .sbMain{font-size:20px;font-weight:900;letter-spacing:.2em;color:#e0f2fe}
+.shopBrands .sbLine{font-size:11px;letter-spacing:.12em;opacity:.8;text-transform:uppercase}
+.shopBrands .sbSep{width:1px;height:20px;background:rgba(255,255,255,.4)}
+@media (max-width:900px){.glassWall{justify-items:center}.glassWall .glassCard{margin-right:0}.shopArt{opacity:.55}.shopBrands{bottom:2%;padding:8px 14px}.shopBrands .sbMain{font-size:15px}}
+@media (max-width:480px){.shopBrands{border-radius:18px;gap:6px 10px;width:calc(100vw - 32px);box-sizing:border-box}.shopBrands .sbLine{display:none}.shopBrands .sbSep{display:none}.shopBrands .sbMain{flex-basis:100%;text-align:center}}
