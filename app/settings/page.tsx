@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES } from "@/lib/autoRules";
+import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
@@ -19,6 +19,8 @@ export default function Settings() {
   const [ruleMsg, setRuleMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cats, setCats] = useState<string[]>([]);
   const [newCat, setNewCat] = useState<string[]>([]);
+  const [testName, setTestName] = useState("");
+  const hitIdx = testName.trim() ? rules.findIndex(r => ruleMatches(r, testName)) : -1;
 
   useEffect(() => {
     setThemeState(getTheme());
@@ -77,6 +79,12 @@ export default function Settings() {
 
     <div className="panel"><h2>🏷️ Auto Select Rules (Add Product)</h2>
       <p style={{ color: "#94a3b8", fontSize: 13 }}>Product Name mein jo lafz likhein, us se Category waghera khud select hon. Keywords comma (,) se alag karein. Do lafz ek saath chahiye hon to + lagayein, jaise <b>panel+org</b>. Upar wali rule pehle check hoti hai. Khali (blank) field ko chhua nahi jata. Brand khali ho to naam se (Samsung, Vivo…) khud pehchana jata hai.</p>
+      <p style={{ color: "#fbbf24", fontSize: 13 }}>Nayi rule <b>sab se upar</b> lagti hai, kyunke upar wali rule pehle check hoti hai. Agar kisi naam par galat category aaye (jaise "panel frame" par Displays), to apni rule ko ↑ se upar kar dein.</p>
+      <div style={{ display: "grid", gap: 6, margin: "8px 0 12px" }}>
+        <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likh kar dekhein kaun si rule lagegi
+          <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={testName} onChange={e => setTestName(e.target.value)} placeholder="jaise: Samsung A50 panel frame" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+        {testName.trim() && <div style={{ fontWeight: 700, color: hitIdx >= 0 ? "#4ade80" : "#f87171" }}>{hitIdx >= 0 ? `Rule ${hitIdx + 1} lagegi → Category: ${rules[hitIdx].category || "(khali)"}${rules[hitIdx].keywords ? `  (keywords: ${rules[hitIdx].keywords})` : ""}` : "Koi rule match nahi hui — category khud chunni paregi."}</div>}
+      </div>
       <div className="ruleList">
         {rules.map((r, i) => {
           const catOptions = Array.from(new Set([...DEFAULT_RULES.map(x => x.category), ...rules.map(x => x.category), ...cats])).filter(Boolean);
@@ -104,7 +112,7 @@ export default function Settings() {
         })}
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-        <button className="btn" type="button" onClick={() => setRules(cur => [...cur, blankRule()])}>＋ Nayi Rule</button>
+        <button className="btn" type="button" onClick={() => { setRules(cur => [blankRule(), ...cur]); window.scrollTo?.({ top: 0 }); setTimeout(() => document.querySelector<HTMLElement>(".ruleCard input")?.focus(), 50); }}>＋ Nayi Rule (sab se upar)</button>
         <button className="btn green" type="button" onClick={() => void saveRules(rules)}>Save Rules</button>
         <button className="btn" type="button" onClick={() => { if (window.confirm("Sab rules default par wapas ho jayengi. Save Rules dabane tak change nahi hota. Theek hai?")) setRules(DEFAULT_RULES.map(r => ({ ...r }))); }}>Default par wapas</button>
       </div>
