@@ -40,6 +40,10 @@ export default function Purchases() {
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [printed, setPrinted] = useState<any>(null);
   const [saved, setSaved] = useState<any>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editNo, setEditNo] = useState("");
+  const [findNo, setFindNo] = useState("");
+  const [laterPaid, setLaterPaid] = useState(0);
   const printNow = (size: string) => { if (!saved) return; setPrinted({ ...saved, size }); setTimeout(() => window.print(), 150); };
   const barcodeRef = useRef<HTMLInputElement>(null);
 
@@ -94,6 +98,39 @@ export default function Purchases() {
     setBarcode(""); setMsg(null);
   }
 
+  async function loadOld(raw?: string) {
+    const no = (raw ?? findNo).trim();
+    if (!no || busy) { if (!no) setMsg({ text: "Purchase number likhein, jaise P009.", ok: false }); return; }
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/purchases/find?no=${encodeURIComponent(no)}`, { cache: "no-store" });
+      const p = await r.json();
+      if (!r.ok) throw new Error(p.error || "Purchase load nahi hui.");
+      if (p.returned) throw new Error(`${p.invoiceNo} par Purchase Return ho chuka hai, isay modify nahi kar sakte.`);
+      const ls: Line[] = (p.items || []).map((it: any) => {
+        const pr = products.find(x => String(x._id) === String(it.productId));
+        return { ...emptyLine(), productId: String(it.productId), name: String(it.name || pr?.name || ""), code: String(pr?.code ?? pr?.sku ?? ""), barcode: String(pr?.barcode ?? ""), qty: String(it.qty), disc: "0", cost: String(it.costPrice ?? 0), retail: it.retail ? String(it.retail) : String(pr?.price ?? ""), wholesale: it.wholesale ? String(it.wholesale) : String(pr?.wholesale ?? ""), stock: Number(pr?.stock || 0), category: String(pr?.category || "") };
+      });
+      const total = Number(p.total || 0), ip = Number(p.initialPaid || 0);
+      setLines(ls.length ? ls : [emptyLine()]);
+      setSupplier(String(p.supplierId || "")); setSuppRef(String(p.suppRef || "")); setRemarks(String(p.remarks || ""));
+      setDate(String(p.date || "").slice(0, 10) || new Date().toISOString().slice(0, 10)); setSalesman(String(p.salesman || "admin"));
+      setDiscPct("0"); setDiscAmt(String(p.discount || 0)); setFreight(String(p.freight || 0)); setOther(String(p.otherExpense || 0)); setOnCost(false);
+      setPayMethod(String(p.paymentAccount || "Cash"));
+      if (ip <= 0) { setType("CREDIT"); setPaid(""); } else if (ip >= total) { setType("CASH"); setPaid(String(ip)); } else { setType("CASH & CREDIT"); setPaid(String(ip)); }
+      setLaterPaid(Number(p.laterPaid || 0));
+      setEditId(String(p._id)); setEditNo(String(p.invoiceNo)); setPurchaseNo(String(p.invoiceNo)); setFindNo("");
+      setMsg({ text: `${p.invoiceNo} load ho gayi. Galti theek karein aur "Update Purchase" dabayen.`, ok: true });
+    } catch (e: any) { setMsg({ text: e?.message || "Purchase load nahi hui.", ok: false }); } finally { setBusy(false); }
+  }
+  function cancelEdit() { setEditId(null); setEditNo(""); setLaterPaid(0); reset(); setMsg(null); }
+  useEffect(() => {
+    if (!products.length) return;
+    const q = new URLSearchParams(window.location.search).get("edit");
+    if (q && !editId) { window.history.replaceState(null, "", window.location.pathname); void loadOld(q); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products.length]);
+
   function reset() {
     setLines([emptyLine()]); setSupplier(""); setSuppRef(""); setRemarks(""); setBarcode(""); setDiscPct("0"); setDiscAmt("0"); setFreight("0"); setOther("0"); setPaid(""); setActive(null);
     void loadNo(); barcodeRef.current?.focus();
@@ -109,13 +146,14 @@ export default function Purchases() {
     const items = used.map(l => ({ productId: l.productId, name: l.name, qty: n(l.qty), costPrice: Math.round((n(l.cost) * (1 - n(l.disc) / 100) + perUnit) * 10000) / 10000, retail: n(l.retail), wholesale: n(l.wholesale) }));
     setBusy(true); setMsg(null);
     try {
-      const r = await fetch("/api/purchases/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ supplierId: supplier, suppRef, remarks, date, type, salesman, items, discount, freight: onCost ? 0 : n(freight), otherExpense: onCost ? 0 : n(other), paid: paidNow, paymentMethod: payMethod }) });
+      const r = await fetch(editId ? "/api/purchases/update" : "/api/purchases/create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(editId ? { id: editId } : {}), supplierId: supplier, suppRef, remarks, date, type, salesman, items, discount, freight: onCost ? 0 : n(freight), otherExpense: onCost ? 0 : n(other), paid: paidNow, paymentMethod: payMethod }) });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Purchase save nahi hui.");
-      setMsg({ text: `Purchase ${d.invoiceNo} save ho gayi; stock bhi update hua.`, ok: true });
+      setMsg({ text: editId ? `Purchase ${d.invoiceNo} update ho gayi; stock aur hisab theek ho gaya.` : `Purchase ${d.invoiceNo} save ho gayi; stock bhi update hua.`, ok: true });
       const snap = { ...d, date, lines: used, supplierName: suppliers.find(s => String(s._id) === supplier)?.name || "" };
       setSaved(snap);
       if (printSize) { setPrinted({ ...snap, size: printSize }); setTimeout(() => window.print(), 150); }
+      setEditId(null); setEditNo(""); setLaterPaid(0);
       reset(); await loadAll();
     } catch (e: any) { setMsg({ text: e?.message || "Purchase save nahi hui.", ok: false }); } finally { setBusy(false); }
   }
@@ -133,6 +171,8 @@ export default function Purchases() {
       <Link href="/">← Dashboard</Link><Link href="/suppliers">👤 Supplier List</Link><Link href="/admin">📦 New Item</Link><Link href="/suppliers">＋ New Supplier</Link>
       <button type="button" onClick={() => barcodeRef.current?.focus()}>🔍 Item Search</button><Link href="/purchases/history">🧾 Purchase History</Link><Link href="/purchases/returns">↩ Purchase Return</Link>
     </nav>
+    {editId ? <div className={styles.editBar}><b>✏ EDIT MODE — Purchase {editNo}</b>{laterPaid > 0 && <span>Baad ki supplier payment Rs. {money(laterPaid)} wese hi rahegi</span>}<button type="button" onClick={cancelEdit}>Cancel Edit</button></div>
+      : <div className={styles.editBar}><b>✏ Modify Purchase:</b><input value={findNo} placeholder="Old Purchase No (P009)" onChange={e => setFindNo(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void loadOld(); } }} /><button type="button" disabled={busy} onClick={() => void loadOld()}>Load</button></div>}
 
     <section className={styles.head}>
       <div className={styles.headBox}>
@@ -202,7 +242,7 @@ export default function Purchases() {
     </section>
 
     <footer className={styles.foot}>
-      <button type="button" className={styles.saveBtn} disabled={busy} onClick={() => void save()} title="Save (Ctrl+S)">💾 {busy ? "Saving…" : "Save (Ctrl+S)"}</button>
+      <button type="button" className={styles.saveBtn} disabled={busy} onClick={() => void save()} title="Save (Ctrl+S)">💾 {busy ? "Saving…" : editId ? "Update Purchase (Ctrl+S)" : "Save (Ctrl+S)"}</button>
       <label className={styles.chk}><input type="checkbox" checked={onCost} onChange={e => setOnCost(e.target.checked)} /> Shipment Expense On Cost</label>
       <div className={styles.sum}>T.Qty: <b>{totalQty}</b> &nbsp; T.Freight: <b>{money(n(freight))}</b> &nbsp; Other Exp: <b>{money(n(other))}</b></div>
       {msg && <span role="status" className={msg.ok ? styles.ok : styles.bad}>{msg.text}</span>}
