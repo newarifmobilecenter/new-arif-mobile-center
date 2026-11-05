@@ -8,7 +8,6 @@ import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
 const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", category: "", brand: "", brandType: "Parts", productGroup: "Mobile Parts", itemType: "Part" });
-const box = { width: "100%", padding: "6px 8px" } as const;
 
 export default function Settings() {
   const [s, setS] = useState<any>({ shopName: "NEW ARIF MOBILE CENTER", address: "", phone: "", defaultWarranty: 7, currency: "PKR" });
@@ -18,11 +17,12 @@ export default function Settings() {
   const [ruleId, setRuleId] = useState("");
   const [ruleMsg, setRuleMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cats, setCats] = useState<string[]>([]);
+  const [newCat, setNewCat] = useState<string[]>([]);
 
   useEffect(() => {
     setThemeState(getTheme());
     fetch("/api/data?collection=settings&limit=10").then(arr).then(x => { if (x[0]) setS(x[0]); }).catch(() => {});
-    fetch("/api/data?collection=productOptions&limit=5000").then(arr).then(o => {
+    fetch("/api/data?collection=productOptions&limit=5000", { cache: "no-store" }).then(arr).then(o => {
       const saved = o.find((x: any) => x.type === AUTO_RULES_TYPE);
       if (saved) { setRuleId(String(saved._id)); if (Array.isArray(saved.rules) && saved.rules.length) setRules(saved.rules); }
       setCats(Array.from(new Set(o.filter((x: any) => x.type === "category").map((x: any) => String(x.name || "")))).filter(Boolean) as string[]);
@@ -76,20 +76,32 @@ export default function Settings() {
 
     <div className="panel"><h2>🏷️ Auto Select Rules (Add Product)</h2>
       <p style={{ color: "#94a3b8", fontSize: 13 }}>Product Name mein jo lafz likhein, us se Category waghera khud select hon. Keywords comma (,) se alag karein. Do lafz ek saath chahiye hon to + lagayein, jaise <b>panel+org</b>. Upar wali rule pehle check hoti hai. Khali (blank) field ko chhua nahi jata. Brand khali ho to naam se (Samsung, Vivo…) khud pehchana jata hai.</p>
-      <div style={{ overflow: "auto" }}>
-        <table className="table"><thead><tr><th>#</th><th>Keywords</th><th>Category</th><th>Brand (optional)</th><th>Brand Type</th><th>Product Group</th><th>Item Type</th><th></th></tr></thead>
-          <tbody>{rules.map((r, i) => <tr key={r.id}>
-            <td>{i + 1}</td>
-            <td><input className="input" style={box} value={r.keywords} onChange={e => upd(r.id, { keywords: e.target.value })} placeholder="incell,tft" /></td>
-            <td><input className="input" style={box} list="catlist" value={r.category} onChange={e => upd(r.id, { category: e.target.value })} /></td>
-            <td><input className="input" style={box} value={r.brand} onChange={e => upd(r.id, { brand: e.target.value })} /></td>
-            <td><input className="input" style={box} value={r.brandType} onChange={e => upd(r.id, { brandType: e.target.value })} /></td>
-            <td><input className="input" style={box} value={r.productGroup} onChange={e => upd(r.id, { productGroup: e.target.value })} /></td>
-            <td><input className="input" style={box} value={r.itemType} onChange={e => upd(r.id, { itemType: e.target.value })} /></td>
-            <td style={{ whiteSpace: "nowrap" }}><button type="button" onClick={() => move(i, -1)}>↑</button><button type="button" onClick={() => move(i, 1)}>↓</button><button type="button" onClick={() => setRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button></td>
-          </tr>)}</tbody></table>
+      <div className="ruleList">
+        {rules.map((r, i) => {
+          const catOptions = Array.from(new Set([...DEFAULT_RULES.map(x => x.category), ...rules.map(x => x.category), ...cats])).filter(Boolean);
+          const custom = !!r.category && !catOptions.includes(r.category) || newCat.includes(r.id);
+          return <div className="ruleCard" key={r.id}>
+            <div className="ruleHead"><b>Rule {i + 1}</b>
+              <span><button type="button" aria-label="Upar" onClick={() => move(i, -1)}>↑</button><button type="button" aria-label="Neeche" onClick={() => move(i, 1)}>↓</button><button type="button" aria-label="Delete" onClick={() => setRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button></span></div>
+            <label>Keywords<input className="input" value={r.keywords} onChange={e => upd(r.id, { keywords: e.target.value })} placeholder="jaise: incell,tft" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+            <label>Category
+              <select className="input" value={custom ? "__new__" : r.category} onChange={e => {
+                if (e.target.value === "__new__") { setNewCat(c => [...c, r.id]); upd(r.id, { category: "" }); }
+                else { setNewCat(c => c.filter(x => x !== r.id)); upd(r.id, { category: e.target.value }); }
+              }}>
+                <option value="">— Category chunein —</option>
+                {catOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="__new__">➕ Nayi category likhein…</option>
+              </select>
+              {custom && <input className="input" style={{ marginTop: 6 }} value={r.category} onChange={e => upd(r.id, { category: e.target.value })} placeholder="Nayi category ka naam" />}
+            </label>
+            <label>Brand (optional)<input className="input" value={r.brand} onChange={e => upd(r.id, { brand: e.target.value })} /></label>
+            <label>Brand Type<input className="input" value={r.brandType} onChange={e => upd(r.id, { brandType: e.target.value })} /></label>
+            <label>Product Group<input className="input" value={r.productGroup} onChange={e => upd(r.id, { productGroup: e.target.value })} /></label>
+            <label>Item Type<input className="input" value={r.itemType} onChange={e => upd(r.id, { itemType: e.target.value })} /></label>
+          </div>;
+        })}
       </div>
-      <datalist id="catlist">{Array.from(new Set([...rules.map(r => r.category), ...cats])).filter(Boolean).map(c => <option key={c} value={c} />)}</datalist>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
         <button className="btn" type="button" onClick={() => setRules(cur => [...cur, blankRule()])}>＋ Nayi Rule</button>
         <button className="btn green" type="button" onClick={() => void saveRules(rules)}>Save Rules</button>

@@ -239,3 +239,12 @@ body:has(.dashFoot) .helplineMark{display:none}
 .shopBrands .sbSep{width:1px;height:20px;background:rgba(255,255,255,.4)}
 @media (max-width:900px){.glassWall{justify-items:center}.glassWall .glassCard{margin-right:0}.shopArt{opacity:.55}.shopBrands{bottom:2%;padding:8px 14px}.shopBrands .sbMain{font-size:15px}}
 @media (max-width:480px){.shopBrands{border-radius:18px;gap:6px 10px;width:calc(100vw - 32px);box-sizing:border-box}.shopBrands .sbLine{display:none}.shopBrands .sbSep{display:none}.shopBrands .sbMain{flex-basis:100%;text-align:center}}
+
+/* Settings: auto-select rules as cards (works on phones) */
+.ruleList{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ruleCard{display:grid;gap:8px;padding:12px;border-radius:12px;border:1px solid #334155;background:rgba(15,23,42,.6)}
+.ruleHead{display:flex;justify-content:space-between;align-items:center}
+.ruleHead span{display:flex;gap:6px}
+.ruleHead button{min-width:40px;height:36px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e5e7eb;cursor:pointer;font-size:16px}
+.ruleCard label{display:grid;gap:4px;font-size:13px;color:#94a3b8;font-weight:600}
+.ruleCard .input,.ruleCard select{width:100%;box-sizing:border-box;min-height:42px;font-size:16px}

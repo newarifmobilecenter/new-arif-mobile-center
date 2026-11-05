@@ -61,8 +61,8 @@ export default function Admin() {
 
   const load = async () => {
     const [p, o] = await Promise.all([
-      fetch("/api/data?collection=products").then(r => r.json()),
-      fetch("/api/data?collection=productOptions").then(r => r.ok ? r.json() : []),
+      fetch("/api/data?collection=products", { cache: "no-store" }).then(r => r.json()),
+      fetch("/api/data?collection=productOptions&limit=5000", { cache: "no-store" }).then(r => r.ok ? r.json() : []),
     ]);
     setProducts(Array.isArray(p) ? p : []);
     setOptions(Array.isArray(o) ? o : []);
