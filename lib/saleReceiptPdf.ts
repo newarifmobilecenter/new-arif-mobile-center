@@ -1,3 +1,4 @@
+import { SHOP } from "./shop";
 import { jsPDF } from "jspdf";
 import { SHOP_PHONES } from "./shopOptions";
 import { groupItems, warrantyFlags, shortItemName } from "./saleReceiptUtil";
@@ -23,9 +24,9 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
   // header
   pdf.setLineWidth(0.7); pdf.roundedRect(M, y, 13, 14, 2, 2, "S");
   pdf.setFont("helvetica", "bold"); pdf.setFontSize(6);
-  txt("NEW", M + 6.5, y + 4.6, { align: "center" }); txt("ARIF", M + 6.5, y + 7.6, { align: "center" }); txt("MOBILE", M + 6.5, y + 10.6, { align: "center" });
+  SHOP.logoLines.forEach((l, i) => txt(l, M + 6.5, y + 4.6 + 3 * i, { align: "center" }));
   const cx = M + 13 + (CW - 13) / 2;
-  pdf.setFontSize(14); txt("NEW ARIF MOBILE", cx, y + 5.5, { align: "center" });
+  pdf.setFontSize(14); txt(SHOP.shortUpper, cx, y + 5.5, { align: "center" });
   pdf.setFontSize(8); txt("MOBILE & REPAIRING", cx, y + 9.5, { align: "center" });
   pdf.setFontSize(4.8); txt("SALES | REPAIRING | ACCESSORIES | SOFTWARE", cx, y + 12.4, { align: "center" });
   y += 17;
@@ -95,8 +96,8 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
 
   // footer
   y += 2; bar("--- CUSTOMER COPY ---", 9.5, 6.2); y += 4.5;
-  pdf.setFont("helvetica", "bold"); pdf.setFontSize(9); txt("New Arif Mobile", W / 2, y, { align: "center" }); y += 3.8;
-  pdf.setFontSize(7); txt("Al saif plaza kamar mushani, mianwali", W / 2, y, { align: "center" }); y += 3.4;
+  pdf.setFont("helvetica", "bold"); pdf.setFontSize(9); txt(SHOP.short, W / 2, y, { align: "center" }); y += 3.8;
+  pdf.setFontSize(7); txt(SHOP.address, W / 2, y, { align: "center" }); y += 3.4;
   pdf.setFontSize(6.2); txt(SHOP_PHONES.join(" | "), W / 2, y, { align: "center" }); y += 3.6;
   pdf.setLineWidth(0.25); pdf.line(M, y, W - M, y); y += 3.4;
   pdf.setFont("helvetica", "bolditalic"); pdf.setFontSize(6.2);

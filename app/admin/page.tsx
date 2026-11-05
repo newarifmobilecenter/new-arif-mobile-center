@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
@@ -207,7 +208,7 @@ export default function Admin() {
 
 
   return <main className={styles.page}>
-    <header className={styles.titlebar}><div>▣ <b>New Item - New Arif Mobile Center</b></div><div className={styles.user}>Product Management</div></header>
+    <header className={styles.titlebar}><div>▣ <b>New Item - {SHOP.name}</b></div><div className={styles.user}>Product Management</div></header>
     <nav className={styles.tabs}>{tabs.map(t => <button key={t} className={tab === t ? styles.activeTab : ""} onClick={() => setTab(t)}>{t}</button>)}</nav>
 
     {tab === "New Product" && <>

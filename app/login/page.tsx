@@ -1,5 +1,6 @@
  "use client";
 
+import { SHOP } from "@/lib/shop";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -62,10 +63,10 @@ export default function LoginPage() {
         </g>
         <line x1="0" y1="790" x2="1600" y2="790" stroke="#60a5fa" strokeOpacity=".45" strokeWidth="2"/>
       </svg>
-      <div className="glassBrand"><b>NEW ARIF MOBILE CENTER</b><span>Mobile Repairing POS • Mobile Parts</span></div>
+      <div className="glassBrand"><b>{SHOP.nameUpper}</b><span>Mobile Repairing POS • Mobile Parts</span></div>
       <div className="shopBrands" aria-label="Brands we repair and supply"><span className="sbMain">SAMSUNG</span><span className="sbLine">Specialist Repair &amp; Parts</span><span className="sbSep" /><span>OPPO</span><span>VIVO</span><span>XIAOMI</span></div>
       <form id="login-form" className="glassCard" onSubmit={submit}>
-        <div className="glassLogo" aria-hidden="true">NA</div>
+        <div className="glassLogo" aria-hidden="true">{SHOP.initials}</div>
         <h1>Mobile Repairing POS</h1>
         <p>Mobile parts • Repairing • Sale — staff login</p>
         <label htmlFor="lg-user">Username</label>

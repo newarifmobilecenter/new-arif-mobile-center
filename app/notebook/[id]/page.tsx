@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -110,9 +111,9 @@ function RepairDetailPage() {
   function beginReminder(type: string) {
     const greeting = `Assalam-o-Alaikum ${repair.customerName},`;
     const messages: Record<string, string> = {
-      PAYMENT_DUE: `${greeting}\nNew Arif Mobile ki taraf se aapka outstanding balance Rs. ${money(customerBalance)} hai.\nToken: ${repair.tokenNo}\nShukriya.`,
-      REPAIR_READY: `Assalam-o-Alaikum ${repair.customerName},\nآپ کا موبائل تیار ہے۔\nToken: ${repair.tokenNo}\nNew Arif Mobile`,
-      MOBILE_DELIVERY: `Assalam-o-Alaikum ${repair.customerName},\nآپ کے موبائل کی ڈلیوری کے لیے رابطہ کریں۔\nToken: ${repair.tokenNo}\nNew Arif Mobile`,
+      PAYMENT_DUE: `${greeting}\n${SHOP.short} ki taraf se aapka outstanding balance Rs. ${money(customerBalance)} hai.\nToken: ${repair.tokenNo}\nShukriya.`,
+      REPAIR_READY: `Assalam-o-Alaikum ${repair.customerName},\nآپ کا موبائل تیار ہے۔\nToken: ${repair.tokenNo}\n${SHOP.short}`,
+      MOBILE_DELIVERY: `Assalam-o-Alaikum ${repair.customerName},\nآپ کے موبائل کی ڈلیوری کے لیے رابطہ کریں۔\nToken: ${repair.tokenNo}\n${SHOP.short}`,
     };
     setReminderType(type);
     setReminderMessage(messages[type] || messages.REPAIR_READY);

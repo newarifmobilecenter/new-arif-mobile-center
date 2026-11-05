@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useState } from "react";
 import Link from "next/link";
 import SaleReceipt from "../../components/SaleReceipt";
@@ -19,7 +20,7 @@ export default function InvoiceActions({ invoice }: any) {
       const pdf = makePdf(invoice);
       const blob = pdf.output("blob");
       const file = new File([blob], `${invoice.invoiceNo || "invoice"}.pdf`, { type: "application/pdf" });
-      const text = `NEW ARIF MOBILE CENTER\nInvoice ${invoice.invoiceNo || "-"}\nTotal Rs. ${invoice.total}`;
+      const text = `${SHOP.nameUpper}\nInvoice ${invoice.invoiceNo || "-"}\nTotal Rs. ${invoice.total}`;
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: invoice.invoiceNo || "Invoice", text, files: [file] });
       } else {

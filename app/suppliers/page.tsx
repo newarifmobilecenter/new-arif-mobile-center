@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../customers/customers.module.css";
@@ -119,7 +120,7 @@ export default function Suppliers() {
   </div>;
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Supplier — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/purchases">Purchases</Link><Link href="/ledger">Ledger</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Supplier — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/purchases">Purchases</Link><Link href="/ledger">Ledger</Link></span></div>
     <nav className={styles.tabs}>
       <button className={`${styles.tab} ${tab === "new" ? styles.tabActive : ""}`} onClick={() => setTab("new")}>New Supplier</button>
       <button className={`${styles.tab} ${tab === "list" ? styles.tabActive : ""}`} onClick={() => setTab("list")}>Supplier List ({sup.length})</button>
@@ -166,7 +167,7 @@ export default function Suppliers() {
 
     {tab === "list" && <section className={styles.list}>
       <div className={styles.banner}>
-        <div><div className={styles.bannerTitle}>🚚 Supplier List</div><div className={styles.bannerSub}>NEW ARIF MOBILE CENTER · Kamar Mushani</div></div>
+        <div><div className={styles.bannerTitle}>🚚 Supplier List</div><div className={styles.bannerSub}>{SHOP.nameUpper} · {SHOP.city}</div></div>
         <div className={styles.chips}>
           <span className={styles.chip}><small>Suppliers</small><b>{sup.length}</b></span>
           <span className={styles.chip}><small>Dene wale</small><b>{sup.filter(c => payable(String(c._id)) > 0).length}</b></span>

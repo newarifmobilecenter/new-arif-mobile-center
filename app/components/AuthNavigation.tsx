@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES } from "@/lib/shortcuts";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -113,7 +114,7 @@ export default function AuthNavigation() {
 
   return <header className="appAuthBar no-print">
     <div className="appAuthInner">
-      <Link className="appAuthBrand" href={session.authenticated ? "/" : "/login"}>NEW ARIF MOBILE CENTER</Link>
+      <Link className="appAuthBrand" href={session.authenticated ? "/" : "/login"}>{SHOP.nameUpper}</Link>
       <div className="appAuthActions">
         {session.authenticated && session.username && <span className="appAuthUser">{session.username}</span>}
         {session.authenticated

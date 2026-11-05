@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -32,7 +33,7 @@ export default function WalkingCustomers() {
   const due = list.filter((w) => w.balance > 0);
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Walking Customers — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/vouchers?tab=walk">Walking Voucher</Link><Link href="/customers">Saved Customers</Link><Link href="/repairs">Repairs</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Walking Customers — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/vouchers?tab=walk">Walking Voucher</Link><Link href="/customers">Saved Customers</Link><Link href="/repairs">Repairs</Link></span></div>
     <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       <div className={styles.card}>
         <h2>🚶 Walking Customer List <small style={{ color: "#94a3b8", fontSize: 13 }}>(jin ka paisa baqi hai — saved customers se alag)</small></h2>

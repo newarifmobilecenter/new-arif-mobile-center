@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -120,7 +121,7 @@ export default function Vouchers() {
   const sel = (v: string, set: (x: string) => void, ph: string, opts: any[], fmt: (x: any) => string, key = "_id") => <select className={styles.in} value={v} onChange={(e) => set(e.target.value)}><option value="">{ph}</option>{opts.map((x) => <option key={x[key]} value={x[key]}>{fmt(x)}</option>)}</select>;
   return <main className={styles.win}>
     <style>{`.vprev{background:#fff;border-radius:8px;padding:6px;overflow:auto;max-height:60vh}${VOUCHER_CSS}`}</style>
-    <div className={styles.titlebar}><span>▣ Voucher — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/ledger">Customer Ledger</Link><Link href="/accounts">Bank Ledger</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Voucher — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/ledger">Customer Ledger</Link><Link href="/accounts">Bank Ledger</Link></span></div>
     <nav className={styles.tabs}>{TABS.map(([k, l]) => <button key={k} className={`${styles.tab} ${tab === k ? styles.tabOn : ""}`} onClick={() => setTab(k)}>{l}</button>)}</nav>
     <section className={styles.body}>
       <div className={styles.card}>

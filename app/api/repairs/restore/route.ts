@@ -1,3 +1,4 @@
+import { SHOP } from "@/lib/shop";
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getSession, hasRole } from "@/lib/auth";
@@ -61,9 +62,9 @@ export async function POST(request: NextRequest) {
           paymentHistory,
           statusHistory: Array.isArray(source.statusHistory) ? source.statusHistory.slice(-100) : [{ status: normalized.status, at: normalized.receivedAt, user: "backup" }],
           shopkeeper: String(source.shopkeeper || source.createdBy || "").slice(0, 120),
-          shopName: String(source.shopName || "NEW ARIF MOBILE").slice(0, 120),
+          shopName: String(source.shopName || SHOP.shortUpper).slice(0, 120),
           shopPhone: String(source.shopPhone || "").slice(0, 40),
-          shopAddress: String(source.shopAddress || "Al saif plaza kamar mushani, mianwali").slice(0, 240),
+          shopAddress: String(source.shopAddress || SHOP.address).slice(0, 240),
           createdAt,
           updatedAt,
           createdBy: String(source.createdBy || "backup").slice(0, 120),

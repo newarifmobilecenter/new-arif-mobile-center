@@ -1,3 +1,4 @@
+import { SHOP } from "@/lib/shop";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/lib/mongodb";
@@ -14,8 +15,8 @@ export async function GET() {
     return NextResponse.json({
       shopkeeper: session.u,
       nextToken,
-      shopName: String(settings?.shopName || "NEW ARIF MOBILE"),
-      address: String(settings?.address || "Al saif plaza kamar mushani, mianwali"),
+      shopName: String(settings?.shopName || SHOP.shortUpper),
+      address: String(settings?.address || SHOP.address),
       phone: String(settings?.phone || ""),
       shopkeepers: getRepairShopkeepers(),
     });

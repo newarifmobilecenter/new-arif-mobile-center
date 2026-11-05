@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -10,7 +11,7 @@ const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [
 const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", category: "", brand: "", brandType: "Parts", productGroup: "Mobile Parts", itemType: "Part" });
 
 export default function Settings() {
-  const [s, setS] = useState<any>({ shopName: "NEW ARIF MOBILE CENTER", address: "", phone: "", defaultWarranty: 7, currency: "PKR" });
+  const [s, setS] = useState<any>({ shopName: SHOP.nameUpper, address: "", phone: "", defaultWarranty: 7, currency: "PKR" });
   const [msg, setMsg] = useState("");
   const [theme, setThemeState] = useState("blue");
   const [rules, setRules] = useState<AutoRule[]>(DEFAULT_RULES);

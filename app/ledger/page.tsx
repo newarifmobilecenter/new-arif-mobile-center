@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -41,7 +42,7 @@ function LedgerContent() {
   const list = useMemo(() => { const s = q.trim().toLowerCase(); return summary.filter((c) => !s || `${c.name} ${c.phone} ${c.phoneNo} ${c.code}`.toLowerCase().includes(s)).sort((a, b) => b.bal - a.bal); }, [summary, q]);
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Customer Ledger — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/customers">Customers</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/vouchers?tab=due">Voucher</Link><Link href="/accounts">Bank Ledger</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Customer Ledger — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/customers">Customers</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/vouchers?tab=due">Voucher</Link><Link href="/accounts">Bank Ledger</Link></span></div>
     <BrandBanner title="Customer Ledger" subtitle={customer ? `${customer.name}${customer.phone || customer.phoneNo ? " · " + (customer.phoneNo || customer.phone) : ""}` : "Sab customers ka hisaab"} right={<div style={{ fontSize: 12, color: "#cbd5e1" }}>Date: {day(new Date())}</div>} />
     <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       {!customer && <div className={styles.card}>

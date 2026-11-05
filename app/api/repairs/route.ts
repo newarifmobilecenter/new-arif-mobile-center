@@ -1,3 +1,4 @@
+import { SHOP } from "@/lib/shop";
 import { NextRequest, NextResponse } from "next/server";
 import { db, client } from "@/lib/mongodb";
 import { getSession, hasRole } from "@/lib/auth";
@@ -71,9 +72,9 @@ export async function POST(req: NextRequest){
     const doc={
       ...normalized,
       shopkeeper,
-      shopName:String(settings?.shopName||"NEW ARIF MOBILE"),
-      shopPhone:normalized.shopPhone||"03060882200",
-      shopAddress:String(settings?.address||"Al saif plaza kamar mushani, mianwali"),
+      shopName:String(settings?.shopName||SHOP.shortUpper),
+      shopPhone:normalized.shopPhone||SHOP.phones[0],
+      shopAddress:String(settings?.address||SHOP.address),
       tokenNo:token,
       entryNo:token,
       expectedHours:Math.max(0,(normalized.expectedReadyAt.getTime()-normalized.receivedAt.getTime())/3600000),

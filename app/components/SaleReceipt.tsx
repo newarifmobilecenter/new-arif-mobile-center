@@ -1,3 +1,5 @@
+import ShopLogoText from "@/app/components/ShopLogoText";
+import { SHOP } from "@/lib/shop";
 import styles from "./saleReceipt.module.css";
 import { SHOP_PHONES } from "../../lib/shopOptions";
 import { BATTERY, PANEL, itemCategory, shortItemName } from "../../lib/saleReceiptUtil";
@@ -17,9 +19,9 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
 
   return <div className={`receipt ${styles.rc} ${thermal ? styles.thermal : ""}`}>
     <div className={styles.head}>
-      <div className={styles.logo}><b>NEW<br />ARIF<br />MOBILE</b></div>
+      <div className={styles.logo}><b><ShopLogoText /></b></div>
       <div className={styles.brand}>
-        <div className={styles.name}>NEW ARIF MOBILE</div>
+        <div className={styles.name}>{SHOP.shortUpper}</div>
         <div className={styles.sub}>MOBILE &amp; REPAIRING</div>
         <div className={styles.svc}>SALES | REPAIRING | ACCESSORIES | SOFTWARE</div>
       </div>
@@ -66,8 +68,8 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
 
     <div className={`${styles.copy} ${styles.dark}`}>{temporary ? "--- TEMPORARY / NOT SAVED ---" : "--- CUSTOMER COPY ---"}</div>
     <div className={styles.shop}>
-      <b>New Arif Mobile</b>
-      <span>Al saif plaza kamar mushani, mianwali</span>
+      <b>{SHOP.short}</b>
+      <span>{SHOP.address}</span>
       <span>{SHOP_PHONES.join(" | ")}</span>
     </div>
     <div className={styles.foot}>Bill dikhaye baghair warranty nahi. Shukriya! | Quality Service | Happy Customers</div>

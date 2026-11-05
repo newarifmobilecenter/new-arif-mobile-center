@@ -1,3 +1,4 @@
+import { SHOP } from "@/lib/shop";
 import styles from "./notebook.module.css";
 import type { NotebookEntry } from "./NotebookEntryForm";
 
@@ -13,7 +14,7 @@ function money(value: number) {
 export default function NotebookVoucher({ entry }: { entry: NotebookEntry }) {
   return <article className={styles.notebookVoucher} aria-label="Notebook entry voucher">
     <header className={styles.voucherHeader}>
-      <div className={styles.voucherBrand}>NEW ARIF MOBILE CENTER</div>
+      <div className={styles.voucherBrand}>{SHOP.nameUpper}</div>
       <div className={styles.voucherSubtitle}>NOTEBOOK ENTRY / VOUCHER</div>
     </header>
 
@@ -52,7 +53,7 @@ export default function NotebookVoucher({ entry }: { entry: NotebookEntry }) {
     </section>
 
     <footer className={styles.voucherFooter}>
-      <span>NEW ARIF MOBILE CENTER</span>
+      <span>{SHOP.nameUpper}</span>
       <span>Thank you for your business</span>
     </footer>
   </article>;

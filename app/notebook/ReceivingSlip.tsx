@@ -1,3 +1,5 @@
+import ShopLogoText from "@/app/components/ShopLogoText";
+import { SHOP } from "@/lib/shop";
 import { QRCodeSVG } from "qrcode.react";
 import styles from "./notebook.module.css";
 import { SHOPKEEPER_OPTIONS, SHOP_PHONES } from "../../lib/shopOptions";
@@ -48,9 +50,9 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
 
   return <article className={styles.receivingSlip} aria-label="Customer copy mobile receiving slip">
     <header className={styles.rsHead}>
-      <div className={styles.rsLogo}><b>NEW<br />ARIF<br />MOBILE</b></div>
+      <div className={styles.rsLogo}><b><ShopLogoText /></b></div>
       <div className={styles.rsBrand}>
-        <div className={styles.rsName}>NEW ARIF MOBILE</div>
+        <div className={styles.rsName}>{SHOP.shortUpper}</div>
         <div className={styles.rsSub}>MOBILE &amp; REPAIRING</div>
         <div className={styles.rsServices}>SALES | REPAIRING | ACCESSORIES | SOFTWARE</div>
         <div className={styles.rsTag}>Your Phone Our Care</div>
@@ -93,7 +95,7 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
         <strong className={styles.rsDark}>{dateTime(repair.expectedReadyAt)}</strong>
       </div>
       <div className={styles.rsConfirm}>
-        <p>This slip confirms that the above mobile has been received by New Arif Mobile for repair.</p>
+        <p>This slip confirms that the above mobile has been received by {SHOP.short} for repair.</p>
         <em>Thank You!</em>
       </div>
     </div>
@@ -103,8 +105,8 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
     <div className={styles.rsShop}>
       <div className={styles.rsAddr}>
         <b>Shop Address:</b>
-        <strong>New Arif Mobile</strong>
-        <span>{repair.shopAddress || "Al saif plaza kamar mushani, mianwali"}</span>
+        <strong>{SHOP.short}</strong>
+        <span>{repair.shopAddress || SHOP.address}</span>
         <div className={styles.rsPhoneRow}><b>Shop Phone:</b><strong>{phone}</strong></div>
       </div>
       <div className={styles.rsKeeper}>

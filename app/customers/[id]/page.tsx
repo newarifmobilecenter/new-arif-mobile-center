@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -25,7 +26,7 @@ export default function CustomerProfile() {
   }, [id]);
 
   function beginReminder() {
-    setMessage(`Assalam-o-Alaikum ${data.customer.name},\nNew Arif Mobile ki taraf se aapka outstanding balance Rs. ${money(data.balance)} hai.\nShukriya.`);
+    setMessage(`Assalam-o-Alaikum ${data.customer.name},\n${SHOP.short} ki taraf se aapka outstanding balance Rs. ${money(data.balance)} hai.\nShukriya.`);
     setReminderOpen(true);
   }
 

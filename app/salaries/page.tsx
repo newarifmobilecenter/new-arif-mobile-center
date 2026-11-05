@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -74,7 +75,7 @@ export default function Salaries() {
   if (denied) return <main className={styles.win}><div className={styles.titlebar}><span>▣ Salary Payments</span><Link href="/">← Dashboard</Link></div><p style={{ padding: 20 }}>Salary page sirf admin dekh sakta hai.</p></main>;
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Salary Payments — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/expenses">Expenses</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/reports">Reports</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Salary Payments — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/expenses">Expenses</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/reports">Reports</Link></span></div>
     <section className={styles.body}>
       <div className={styles.card}>
         <h2>👷 Salary Entry</h2>

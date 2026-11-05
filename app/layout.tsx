@@ -1,3 +1,4 @@
+import { SHOP } from "@/lib/shop";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
@@ -6,11 +7,11 @@ import "./globals.css";
 import { THEME_BOOT_SCRIPT } from "@/lib/themes";
 
 export const metadata: Metadata = {
-  title: "NEW ARIF MOBILE CENTER | Kamar Mushani",
-  description: "Mobile parts, repairing and Universal Tool Finder — New Arif Mobile Center.",
+  title: `${SHOP.nameUpper} | ${SHOP.city}`,
+  description: `Mobile parts, repairing and Universal Tool Finder — ${SHOP.name}.`,
   icons: { icon: "/icon.svg" },
-  openGraph: { title: "NEW ARIF MOBILE CENTER", description: "Mobile parts, repairing and accessories — Kamar Mushani.", type: "website", siteName: "New Arif Mobile Center" },
-  twitter: { card: "summary", title: "NEW ARIF MOBILE CENTER" },
+  openGraph: { title: SHOP.nameUpper, description: `Mobile parts, repairing and accessories — ${SHOP.city}.`, type: "website", siteName: SHOP.name },
+  twitter: { card: "summary", title: SHOP.nameUpper },
   robots: { index: false, follow: false },
 };
 
@@ -21,7 +22,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <AuthNavigation />
         {children}
-        <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: 03290882200</span></div>
+        <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: {SHOP.helpline}</span></div>
         <Toaster />
         <Analytics />
       </body>

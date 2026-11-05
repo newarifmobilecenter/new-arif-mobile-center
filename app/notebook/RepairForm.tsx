@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { SHOPKEEPER_OPTIONS, SHOP_PHONES } from "@/lib/shopOptions";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   const router = useRouter();
   const now = new Date();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [shop, setShop] = useState<ShopInfo>({ shopkeeper: "", shopName: "NEW ARIF MOBILE", address: "Al saif plaza kamar mushani, mianwali", phone: "", shopkeepers: [] });
+  const [shop, setShop] = useState<ShopInfo>({ shopkeeper: "", shopName: SHOP.shortUpper, address: SHOP.address, phone: "", shopkeepers: [] });
   const [customerId, setCustomerId] = useState(initialCustomerId);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -139,7 +140,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
           expectedReadyAt: new Date(readyValue).toISOString(), totalBill: Number(totalBill), paid: Number(paid),
           paymentMethod, paymentReminderDate: remaining > 0 ? reminderDate() : "", deliveryMode,
           parts: chosen.map((p) => ({ productId: String(p._id), name: String(p.name || ""), qty: 1 })),
-          remarks, shopkeeper: shop.shopkeeper.trim() || "Imran", shopPhone: shop.phone || SHOP_PHONES[0], shopAddress: shop.address,
+          remarks, shopkeeper: shop.shopkeeper.trim() || SHOP.shopkeepers[0], shopPhone: shop.phone || SHOP_PHONES[0], shopAddress: shop.address,
         }),
       });
       const data = await response.json();
@@ -253,7 +254,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
         <label className={styles.field}>Shop phone<select value={shop.phone} onChange={(event) => setShop((current) => ({ ...current, phone: event.target.value }))}>{SHOP_PHONES.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
         <label className={`${styles.field} ${styles.wide}`}>Remarks<textarea value={remarks} onChange={(event) => setRemarks(event.target.value)} maxLength={1500} /></label>
       </div>
-      <p className={styles.muted}>Shop details: {shop.address || "Al saif plaza kamar mushani, mianwali"}</p>
+      <p className={styles.muted}>Shop details: {shop.address || SHOP.address}</p>
     </section>
 
     {error && <p className={styles.notice} role="alert">{error}</p>}

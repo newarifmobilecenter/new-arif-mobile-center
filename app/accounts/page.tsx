@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -48,7 +49,7 @@ export default function Accounts() {
   }
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Bank / Account Ledger — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/vouchers">Voucher</Link><Link href="/expenses">Expenses</Link><Link href="/reports">Reports</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Bank / Account Ledger — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/vouchers">Voucher</Link><Link href="/expenses">Expenses</Link><Link href="/reports">Reports</Link></span></div>
     <BrandBanner title="Account Ledger" subtitle={`${account} · ${from} se ${to}`} />
     <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       <div className={styles.card}>

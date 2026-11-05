@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -67,7 +68,7 @@ export default function LocalPurchase() {
   useEffect(() => { const k = (e: KeyboardEvent) => { if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "s") { e.preventDefault(); void saveRef.current(); } }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Local Purchase (Customer se khareed) — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/purchases">Purchase</Link><Link href="/vouchers">Vouchers</Link><Link href="/customers">Customers</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Local Purchase (Customer se khareed) — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/purchases">Purchase</Link><Link href="/vouchers">Vouchers</Link><Link href="/customers">Customers</Link></span></div>
     <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       <div className={styles.card}>
         <h2>🤝 Saved Customer se Maal Lena</h2>

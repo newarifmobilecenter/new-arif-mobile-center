@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./reports.module.css";
@@ -155,7 +156,7 @@ export default function Reports() {
   const card = (label: string, value: string, cls = "") => <div className={styles.cardx} key={label}><small>{label}</small><b className={cls}>{value}</b></div>;
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Reports — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/sales">Sales</Link><Link href="/stock">Stock</Link><Link href="/accounts">Accounts</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Reports — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/sales">Sales</Link><Link href="/stock">Stock</Link><Link href="/accounts">Accounts</Link></span></div>
     <div className={styles.main}>
       <nav className={styles.menu}>
         {["Overview", "Sales", "Stock"].map((g) => <div key={g} style={{ display: "contents" }}><h3>{g}</h3>{REPORTS.filter((r) => r.group === g).map((r) => <button key={r.id} className={`${styles.mbtn} ${rep === r.id ? styles.mon : ""}`} onClick={() => setRep(r.id)}>{r.title}</button>)}</div>)}

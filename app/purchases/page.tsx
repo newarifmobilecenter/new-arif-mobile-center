@@ -1,5 +1,6 @@
 "use client";
 
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./purchaseWin.module.css";
@@ -204,7 +205,7 @@ export default function Purchases() {
     </footer>
 
     {printed && <div className={`${styles.printSheet} ${styles["p_" + printed.size]}`}>
-      <h2>NEW ARIF MOBILE CENTER</h2><h3>PURCHASE INVOICE</h3>
+      <h2>{SHOP.nameUpper}</h2><h3>PURCHASE INVOICE</h3>
       <p>No: <b>{printed.invoiceNo}</b> &nbsp; Date: {date} &nbsp; Supplier: {printed.supplierName}</p>
       <table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead>
         <tbody>{printed.lines.map((l: Line, i: number) => <tr key={l.key}><td>{i + 1}</td><td>{l.name}</td><td>{l.qty}</td><td>{money(n(l.cost))}</td><td>{money(n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100))}</td></tr>)}</tbody></table>

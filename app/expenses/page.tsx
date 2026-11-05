@@ -1,4 +1,5 @@
 "use client";
+import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -59,7 +60,7 @@ export default function Expenses() {
   const todayTotal = rows.filter((r) => localDay(r.createdAt) === today()).reduce((a, r) => a + Number(r.amount || 0), 0);
 
   return <main className={styles.win}>
-    <div className={styles.titlebar}><span>▣ Add Expense — New Arif Mobile Center</span><span><Link href="/">← Dashboard</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/reports">Reports</Link><Link href="/vouchers">Vouchers</Link></span></div>
+    <div className={styles.titlebar}><span>▣ Add Expense — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/daily-summary">Daily Summary</Link><Link href="/reports">Reports</Link><Link href="/vouchers">Vouchers</Link></span></div>
     <section className={styles.body}>
       <div className={styles.card}>
         <h2>💸 Naya Kharcha</h2>
