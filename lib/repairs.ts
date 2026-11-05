@@ -7,7 +7,7 @@ export const REPAIR_COUNTER_COLLECTION = "repairCounters";
 export const REPAIR_REMINDER_COLLECTION = "repairReminders";
 export const REPAIR_TOKEN_COUNTER_ID = "mobile-repair-token-c";
 
-export const REPAIR_STATES = ["RECEIVED", "IN_REPAIR", "READY", "DELIVERED", "CANCELLED"] as const;
+export const REPAIR_STATES = ["RECEIVED", "IN_REPAIR", "READY", "DELIVERED", "CANCELLED", "RETURNED"] as const;
 export const MOBILE_TYPES = ["Android", "iPhone", "Keypad", "Other"] as const;
 export const REPAIR_ACCESSORIES = ["SIM", "Memory Card", "Simtray", "Battery", "Other"] as const;
 export const REPAIR_PAYMENT_METHODS = ["Cash", "JazzCash", "Easypaisa", "Raast", "NayaPay", "Bank", "Other"] as const;

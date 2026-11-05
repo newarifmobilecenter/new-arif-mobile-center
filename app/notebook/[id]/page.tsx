@@ -27,6 +27,7 @@ function RepairDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [edit, setEdit] = useState<any>({});
+  const [ret, setRet] = useState<any>(null);
   const [deliveryRecipientType, setDeliveryRecipientType] = useState("CUSTOMER");
   const [deliveryRecipientName, setDeliveryRecipientName] = useState("");
   const [deliveryCnic, setDeliveryCnic] = useState("");
@@ -92,6 +93,18 @@ function RepairDetailPage() {
       setEditing(false);
       await load();
     } catch (caught: any) { setError(caught.message || "Repair could not be updated."); }
+    finally { setBusy(false); }
+  }
+
+  async function submitReturn() {
+    if (!ret) return;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/repairs/return", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, charge: Number(ret.charge || 0), reason: ret.reason, account: ret.account, collectNow: ret.collectNow, recipientType: ret.recipientType, recipientName: ret.name, cnic: ret.cnic, phone: ret.phone }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Wapsi save nahi hui.");
+      setRepair(data); setRet(null); await load();
+    } catch (caught: any) { setError(caught.message || "Wapsi save nahi hui."); }
     finally { setBusy(false); }
   }
 
@@ -170,6 +183,7 @@ function RepairDetailPage() {
           {repair.status === "RECEIVED" && <button className={styles.button} disabled={busy} onClick={() => void changeStatus("IN_REPAIR")}>Start Repair</button>}
           {repair.status === "IN_REPAIR" && <button className={styles.button} disabled={busy} onClick={() => void changeStatus("READY")}>Mark Ready</button>}
           {["RECEIVED", "IN_REPAIR", "READY"].includes(repair.status) && Number(repair.totalBill || 0) === 0 && Number(repair.paid || 0) === 0 && <button className={styles.buttonDanger} disabled={busy} onClick={() => void changeStatus("CANCELLED")}>Cancel Unbilled Repair</button>}
+          {["RECEIVED", "IN_REPAIR", "READY"].includes(repair.status) && <button className={styles.buttonDanger} disabled={busy} onClick={() => setRet({ charge: "0", reason: "", account: "Cash", collectNow: true, recipientType: "CUSTOMER", name: "", cnic: "", phone: "" })}>↩ Mobile Wapas (Repair nahi hua)</button>}
           {repair.status === "READY" && <button className={styles.buttonSecondary} onClick={() => beginReminder("REPAIR_READY")}>WhatsApp Reminder</button>}
           {repair.remaining > 0 && <button className={styles.buttonSecondary} onClick={() => beginReminder("PAYMENT_DUE")}>WhatsApp Payment Due</button>}
           {repair.status === "READY" && repair.deliveryMode === "DELIVERY" && <button className={styles.buttonSecondary} onClick={() => beginReminder("MOBILE_DELIVERY")}>WhatsApp Delivery</button>}
@@ -200,6 +214,25 @@ function RepairDetailPage() {
         </div>}
       </section>
 
+      {ret && (() => {
+        const paid = Number(repair.paid || 0), charge = Math.max(0, Number(ret.charge || 0)), refund = Math.max(0, paid - charge), extra = Math.max(0, charge - paid);
+        return <section className={`${styles.panel} ${styles.noPrint}`}>
+          <h2>↩ Mobile Wapas — Repair nahi ho saki</h2>
+          <label className={styles.field}>Wajah<input value={ret.reason} placeholder="jaise: board dead, part nahi mila" onChange={(event) => setRet({ ...ret, reason: event.target.value })} /></label>
+          <label className={styles.field}>Shop ka charge (checking / part / mehnat) Rs.<input inputMode="decimal" value={ret.charge} onFocus={(event) => event.target.select()} onChange={(event) => setRet({ ...ret, charge: event.target.value.replace(/[^\d.]/g, "") })} /></label>
+          <div className={styles.balanceSummary}>
+            <div><span className={styles.muted}>Advance liya tha</span><div className={styles.balanceValue}>Rs. {money(paid)}</div></div>
+            <div><span className={styles.muted}>Shop ka charge</span><div className={styles.balanceValue}>Rs. {money(charge)}</div></div>
+            <div><span className={styles.muted}>{extra > 0 ? "Customer se lena hai" : "Customer ko wapas dena hai"}</span><div className={styles.balanceValue}>Rs. {money(extra > 0 ? extra : refund)}</div></div>
+          </div>
+          {(refund > 0 || (extra > 0 && ret.collectNow)) && <label className={styles.field}>Account<select value={ret.account} onChange={(event) => setRet({ ...ret, account: event.target.value })}><option>Cash</option><option>Bank</option><option>JazzCash</option><option>Easypaisa</option></select></label>}
+          {extra > 0 && <label className={styles.field}><span><input type="checkbox" checked={ret.collectNow} onChange={(event) => setRet({ ...ret, collectNow: event.target.checked })} /> Baqi Rs. {money(extra)} abhi cash liya{repair.customerId ? " (nahi to customer ke hisab mein baqi rahega)" : ""}</span></label>}
+          <label className={styles.field}>Mobile kis ko diya<select value={ret.recipientType} onChange={(event) => setRet({ ...ret, recipientType: event.target.value })}><option value="CUSTOMER">Customer</option><option value="OTHER_PERSON">Dusra bandha</option></select></label>
+          {ret.recipientType === "OTHER_PERSON" && <><label className={styles.field}>Naam<input value={ret.name} onChange={(event) => setRet({ ...ret, name: event.target.value })} /></label><label className={styles.field}>CNIC<input value={ret.cnic} onChange={(event) => setRet({ ...ret, cnic: event.target.value })} /></label><label className={styles.field}>Phone<input value={ret.phone} onChange={(event) => setRet({ ...ret, phone: event.target.value })} /></label></>}
+          <div className={styles.actions}><button type="button" className={styles.buttonSecondary} onClick={() => setRet(null)}>Cancel</button><button type="button" className={styles.buttonDanger} disabled={busy} onClick={() => { if (window.confirm(`Mobile wapas kar dein?${refund > 0 ? ` Rs. ${money(refund)} refund hoga.` : ""}`)) void submitReturn(); }}>Confirm — Mobile Wapas</button></div>
+        </section>;
+      })()}
+      {repair.status === "RETURNED" && repair.returnInfo && <section className={`${styles.panel} ${styles.noPrint}`}><h2>↩ Mobile Wapas Kiya Gaya</h2><p>Wajah: {repair.returnInfo.reason} · Advance Rs. {money(repair.returnInfo.advancePaid)} · Charge Rs. {money(repair.returnInfo.charge)}{repair.returnInfo.refund > 0 ? ` · Refund Rs. ${money(repair.returnInfo.refund)}` : ""}{repair.returnInfo.extraCharged > 0 ? ` · Baqi charge Rs. ${money(repair.returnInfo.extraCharged)}` : ""}{Number(repair.remaining || 0) > 0 ? ` · Customer ke zimme Rs. ${money(repair.remaining)}` : ""}</p></section>}
       <section className={`${styles.panel} ${styles.noPrint}`}><h2>Status History</h2><div className={styles.historyList}>{(repair.statusHistory || []).map((item: any, index: number) => <div className={styles.historyItem} key={`${item.status}-${index}`}><b>{item.status}</b> · {new Date(item.at).toLocaleString("en-PK")} · {item.user}</div>)}</div></section>
       <section className={`${styles.panel} ${styles.noPrint}`}><h2>Payment History</h2>{repair.paymentHistory?.length ? <div className={styles.historyList}>{repair.paymentHistory.map((item: any, index: number) => <div className={styles.historyItem} key={`${item.reference}-${index}`}><b>Rs. {money(item.amount)}</b> · {item.paymentMethod} · {item.type} · {new Date(item.at).toLocaleString("en-PK")}<br /><small>Reference: {item.reference || repair.tokenNo}</small></div>)}</div> : <p className={styles.muted}>No repair payments recorded.</p>}</section>
       <section className={`${styles.panel} ${styles.noPrint}`}><h2>Reminder History</h2>{reminders.length ? <div className={styles.historyList}>{reminders.map((item: any) => <div className={styles.historyItem} key={item._id}><b>{item.type}</b> · {item.method} · {item.action} · {new Date(item.createdAt).toLocaleString("en-PK")}<br /><small>Draft preparation recorded only. Sending is not verified.</small></div>)}</div> : <p className={styles.muted}>No reminders prepared.</p>}</section>

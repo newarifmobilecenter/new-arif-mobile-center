@@ -54,10 +54,10 @@ export default function Repairs() {
       .catch(() => setCustomers([]));
   }, []);
 
-  const current = repairs.filter((repair) => !["DELIVERED", "CANCELLED"].includes(repair.status));
+  const current = repairs.filter((repair) => !["DELIVERED", "CANCELLED", "RETURNED"].includes(repair.status));
   const ready = repairs.filter((repair) => repair.status === "READY");
   const due = repairs.filter((repair) => Number(repair.remaining || 0) > 0);
-  const history = repairs.filter((repair) => ["DELIVERED", "CANCELLED"].includes(repair.status));
+  const history = repairs.filter((repair) => ["DELIVERED", "CANCELLED", "RETURNED"].includes(repair.status));
   const visible = view === "READY" ? ready : view === "DUE" ? due : view === "HISTORY" ? history : current;
 
   return <main className={`shell ${styles.page}`}>
@@ -72,7 +72,7 @@ export default function Repairs() {
         <label className={styles.field}>From<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
         <label className={styles.field}>To<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
         <label className={styles.field}>Customer<select value={customerId} onChange={(event) => setCustomerId(event.target.value)}><option value="">All customers</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
-        <label className={styles.field}>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All statuses</option><option>RECEIVED</option><option>IN_REPAIR</option><option>READY</option><option>DELIVERED</option><option>CANCELLED</option><option value="PAYMENT_DUE">PAYMENT DUE</option></select></label>
+        <label className={styles.field}>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All statuses</option><option>RECEIVED</option><option>IN_REPAIR</option><option>READY</option><option>DELIVERED</option><option>CANCELLED</option><option value="RETURNED">RETURNED (wapas)</option><option value="PAYMENT_DUE">PAYMENT DUE</option></select></label>
       </div>
       <div className={styles.tabs} role="tablist" aria-label="Repair worklist">
         {[["CURRENT", `Current (${current.length})`], ["READY", `Ready (${ready.length})`], ["DUE", `Payment Due (${due.length})`], ["HISTORY", `Delivered / History (${history.length})`]].map(([key, label]) => <button key={key} role="tab" aria-selected={view === key} className={view === key ? styles.activeTab : styles.tab} onClick={() => setView(key)}>{label}</button>)}

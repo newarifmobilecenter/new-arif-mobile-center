@@ -21,8 +21,8 @@ export async function GET(_request: NextRequest, context: Context) {
       d.collection("transactions").find({ customerId: id }).sort({ createdAt: -1 }).limit(500).toArray(),
       d.collection(REPAIR_REMINDER_COLLECTION).find({ customerId: id }).sort({ createdAt: -1 }).limit(100).toArray(),
     ]);
-    const currentRepairs = repairs.filter((repair) => !["DELIVERED", "CANCELLED"].includes(repair.status));
-    const oldRepairs = repairs.filter((repair) => ["DELIVERED", "CANCELLED"].includes(repair.status));
+    const currentRepairs = repairs.filter((repair) => !["DELIVERED", "CANCELLED", "RETURNED"].includes(repair.status));
+    const oldRepairs = repairs.filter((repair) => ["DELIVERED", "CANCELLED", "RETURNED"].includes(repair.status));
     const balance = sales.reduce((sum, sale) => sum + Number(sale.remaining || 0), 0) + repairs.reduce((sum, repair) => sum + Number(repair.remaining || 0), 0);
     return NextResponse.json({
       customer: { ...customer, _id: customer._id.toString() },
