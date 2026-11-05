@@ -39,6 +39,8 @@ export default function Purchases() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [printed, setPrinted] = useState<any>(null);
+  const [saved, setSaved] = useState<any>(null);
+  const printNow = (size: string) => { if (!saved) return; setPrinted({ ...saved, size }); setTimeout(() => window.print(), 150); };
   const barcodeRef = useRef<HTMLInputElement>(null);
 
   const loadNo = () => fetch("/api/counters?type=purchase", { cache: "no-store" }).then(r => r.json()).then(d => setPurchaseNo(d.next || "")).catch(() => {});
@@ -111,7 +113,9 @@ export default function Purchases() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Purchase save nahi hui.");
       setMsg({ text: `Purchase ${d.invoiceNo} save ho gayi; stock bhi update hua.`, ok: true });
-      if (printSize) { setPrinted({ ...d, lines: used, supplierName: suppliers.find(s => String(s._id) === supplier)?.name || "", size: printSize }); setTimeout(() => window.print(), 150); }
+      const snap = { ...d, date, lines: used, supplierName: suppliers.find(s => String(s._id) === supplier)?.name || "" };
+      setSaved(snap);
+      if (printSize) { setPrinted({ ...snap, size: printSize }); setTimeout(() => window.print(), 150); }
       reset(); await loadAll();
     } catch (e: any) { setMsg({ text: e?.message || "Purchase save nahi hui.", ok: false }); } finally { setBusy(false); }
   }
@@ -204,9 +208,19 @@ export default function Purchases() {
       {msg && <span role="status" className={msg.ok ? styles.ok : styles.bad}>{msg.text}</span>}
     </footer>
 
+    {saved && <div className={styles.savedBar} role="dialog" aria-label="Purchase save ho gayi">
+      <div><b>✅ Purchase {saved.invoiceNo} save ho gayi</b><br /><span>Total Rs. {money(saved.total)} · Print nikalni hai?</span></div>
+      <div className={styles.savedBtns}>
+        <button type="button" autoFocus onClick={() => printNow("thermal")}>🖨 Thermal</button>
+        <button type="button" onClick={() => printNow("a4")}>🖨 A4</button>
+        <button type="button" onClick={() => printNow("a5")}>🖨 A5</button>
+        <button type="button" className={styles.savedClose} onClick={() => setSaved(null)}>Band</button>
+      </div>
+    </div>}
+
     {printed && <div className={`${styles.printSheet} ${styles["p_" + printed.size]}`}>
       <h2>{SHOP.nameUpper}</h2><h3>PURCHASE INVOICE</h3>
-      <p>No: <b>{printed.invoiceNo}</b> &nbsp; Date: {date} &nbsp; Supplier: {printed.supplierName}</p>
+      <p>No: <b>{printed.invoiceNo}</b> &nbsp; Date: {printed.date || date} &nbsp; Supplier: {printed.supplierName}</p>
       <table><thead><tr><th>#</th><th>Product</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead>
         <tbody>{printed.lines.map((l: Line, i: number) => <tr key={l.key}><td>{i + 1}</td><td>{l.name}</td><td>{l.qty}</td><td>{money(n(l.cost))}</td><td>{money(n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100))}</td></tr>)}</tbody></table>
       <p>Total: <b>Rs. {money(printed.total)}</b> &nbsp; Paid: Rs. {money(printed.paid)} &nbsp; Due: Rs. {money(printed.remaining)}</p>

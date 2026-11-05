@@ -62,3 +62,10 @@
 
 .zeroRow td { background: #5b1620; color: #ffd1d6; font-weight: 700; }
 .pickOn td { background: #1d4ed8 !important; color: #fff !important; }
+
+/* After-save print prompt */
+.savedBar { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 50; width: min(560px, calc(100vw - 24px)); box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #0f172a; color: #e5e7eb; border: 1px solid #22d3ee; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
+.savedBar span { color: #94a3b8; font-size: 13px; }
+.savedBtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.savedBtns button { min-height: 42px; padding: 0 14px; border-radius: 10px; border: 1px solid #22d3ee; background: #0e7490; color: #fff; font-weight: 700; cursor: pointer; font-size: 15px; }
+.savedBtns .savedClose { background: transparent; border-color: #475569; color: #cbd5e1; }
