@@ -337,6 +337,7 @@ export default function POS() {
       saleType: customer ? "customer" : "cash", type: saleType, cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"), date,
       items: items.map((i) => ({ ...i, total: Number(i.qty || 0) * Number(i.price || 0) * (1 - Number(i.discountPct || 0) / 100) })),
       subtotal, discountAmount, salesTaxValue, grandTotal: subtotal, total: netTotal, netTotal, paid: paidAmount, remaining, paymentMethod: pay, createdAt: new Date().toISOString(),
+      ...(customer ? { prevBalance: currentBalance } : {}),
     });
   }
   const savingRef = useRef(false);

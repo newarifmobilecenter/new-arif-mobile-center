@@ -58,6 +58,11 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       <div className={styles.net}><span>NET TOTAL</span><b>Rs. {money(sale?.total)}</b></div>
       <div><span>Paid</span><b>Rs. {money(sale?.paid)}</b></div>
       <div className={Number(sale?.remaining) > 0 ? styles.due : ""}><span>Remaining</span><b>Rs. {money(sale?.remaining)}</b></div>
+      {sale?.prevBalance != null && <>
+        <div><span>Previous Balance</span><b>Rs. {money(sale.prevBalance)}</b></div>
+        <div><span>Cash Received</span><b>Rs. {money(sale?.paid)}</b></div>
+        <div className={styles.net}><span>CURRENT BALANCE</span><b>Rs. {money(Number(sale.prevBalance) + Number(sale?.remaining || 0))}</b></div>
+      </>}
     </div>
 
     {(hasBattery || hasPanel) && <div className={styles.warr}>

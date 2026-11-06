@@ -4,6 +4,7 @@ import { db, client } from "@/lib/mongodb";
 import { getSession } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
 import { REPAIR_COLLECTION } from "@/lib/repairs";
+import { customerBalance } from "@/lib/vouchers";
 
 export async function POST(req: NextRequest) {
   const sessionUser = await getSession();
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
   const session = client.startSession();
   try {
     let saved:any;
+    let balances: { prevBalance: number | null; newBalance: number | null } = { prevBalance: null, newBalance: null };
     await session.withTransaction(async () => {
       for (const item of normalizedItems) {
         if (!item.productId) continue;
@@ -110,8 +112,14 @@ export async function POST(req: NextRequest) {
         billedRepairs.push(repair._id);
       }
 
+      // Bill se pehle customer ka baqaya (pichla hisab), taake bill par Previous / Current Balance chhap sake.
+      let prevBalance: number | null = null;
+      if (body.customerId && ObjectId.isValid(String(body.customerId))) prevBalance = Math.round((await customerBalance(d, String(body.customerId), session)) * 100) / 100;
+      const newBalance = prevBalance === null ? null : Math.round((prevBalance + remaining) * 100) / 100;
+      balances = { prevBalance, newBalance };
       const sale = {
         ...body,
+        ...balances,
         items: normalizedItems,
         subtotal,
         discountAmount,
@@ -152,6 +160,7 @@ export async function POST(req: NextRequest) {
       ok: true,
       _id: saved.insertedId.toString(),
       ...body,
+      ...balances,
       items: normalizedItems,
       subtotal,
       discountAmount,

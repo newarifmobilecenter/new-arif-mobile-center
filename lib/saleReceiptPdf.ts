@@ -79,6 +79,11 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
   pdf.setLineWidth(0.6); pdf.roundedRect(M, y - 3.4, CW, 6.2, 1, 1, "S");
   pdf.setFontSize(10.5); txt("NET TOTAL", M + 1.5, y + 0.9); txt(`Rs. ${money(sale?.total)}`, W - M - 1.5, y + 0.9, { align: "right" }); y += 7;
   tr("Paid", `Rs. ${money(sale?.paid)}`); tr("Remaining", `Rs. ${money(sale?.remaining)}`);
+  if (sale?.prevBalance != null) {
+    tr("Previous Balance", `Rs. ${money(sale.prevBalance)}`); tr("Cash Received", `Rs. ${money(sale?.paid)}`);
+    pdf.setLineWidth(0.6); pdf.roundedRect(M, y - 3.4, CW, 6.2, 1, 1, "S");
+    pdf.setFontSize(10); txt("CURRENT BALANCE", M + 1.5, y + 0.9); txt(`Rs. ${money(Number(sale.prevBalance) + Number(sale?.remaining || 0))}`, W - M - 1.5, y + 0.9, { align: "right" }); y += 7;
+  }
 
   // warranty
   const wf = warrantyFlags(items);
