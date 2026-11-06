@@ -29,6 +29,10 @@ export default function LocalPurchase() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
+  const [saved, setSaved] = useState<any>(null);
+  const [slip, setSlip] = useState<any>(null);
+  const printSlip = (rec: any, size: string) => { setSlip({ rec, size }); setTimeout(() => window.print(), 150); };
+  const slipOf = (h: any) => ({ invoiceNo: h.invoiceNo, date: h.createdAt || new Date().toISOString(), customerName: h.supplierName || customers.find((c) => String(c._id) === String(h.customerId))?.name || "", phone: (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phone || (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phoneNo || "", items: h.items || [], total: h.total, paid: h.paid, adjusted: h.adjusted, remaining: h.remaining, account: h.paymentMethod || "Cash", note: h.note || "" });
 
   const load = async () => {
     const [c, p, s, r, h] = await Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=products&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=purchases&limit=5000").then(arr)]);
@@ -61,6 +65,7 @@ export default function LocalPurchase() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Save nahi hua.");
       setMsg({ t: `Local purchase ${d.invoiceNo} save ho gayi. Stock barh gaya.${d.adjusted ? ` Rs. ${money(d.adjusted)} customer ke baqi mein adjust.` : ""}${d.remaining > 0 ? ` Customer ko dene baqi: Rs. ${money(d.remaining)}.` : ""}`, ok: true });
+      setSaved(slipOf({ invoiceNo: d.invoiceNo, createdAt: new Date().toISOString(), supplierName: customer?.name, customerId, items: used.map((l) => ({ name: l.name, qty: n(l.qty), costPrice: n(l.cost) })), total: d.total, paid: cash, adjusted: d.adjusted, remaining: d.remaining, paymentMethod: account, note }));
       setLines([blank()]); setPaid(""); setAdjust(""); setNote(""); await load();
     } catch (e: any) { setMsg({ t: e.message, ok: false }); } finally { setBusy(false); }
   }
@@ -100,10 +105,35 @@ export default function LocalPurchase() {
       </div>
       <div className={styles.card}>
         <h2>Pichli Local Purchases</h2>
-        <div className={styles.wrap} style={{ maxHeight: "30vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Customer</th><th>Items</th><th className={styles.num}>Bill</th><th className={styles.num}>Cash</th><th className={styles.num}>Adjust</th><th className={styles.num}>Baqi</th></tr></thead><tbody>
-          {history.map((h) => <tr key={h._id}><td>{localDay(h.createdAt)}</td><td>{h.invoiceNo}</td><td>{h.supplierName}</td><td>{(h.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ")}</td><td className={styles.num}>{money(h.total)}</td><td className={styles.num}>{money(h.paid)}</td><td className={styles.num}>{money(h.adjusted)}</td><td className={styles.num}>{money(h.remaining)}</td></tr>)}
-          {!history.length && <tr><td colSpan={8} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Abhi koi local purchase nahi.</td></tr>}</tbody></table></div>
+        <div className={styles.wrap} style={{ maxHeight: "30vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Customer</th><th>Items</th><th className={styles.num}>Bill</th><th className={styles.num}>Cash</th><th className={styles.num}>Adjust</th><th className={styles.num}>Baqi</th><th></th></tr></thead><tbody>
+          {history.map((h) => <tr key={h._id}><td>{localDay(h.createdAt)}</td><td>{h.invoiceNo}</td><td>{h.supplierName}</td><td>{(h.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ")}</td><td className={styles.num}>{money(h.total)}</td><td className={styles.num}>{money(h.paid)}</td><td className={styles.num}>{money(h.adjusted)}</td><td className={styles.num}>{money(h.remaining)}</td><td><button type="button" className={styles.nbtn} style={{ padding: "2px 8px" }} onClick={() => printSlip(slipOf(h), "thermal")}>🖨 Slip</button></td></tr>)}
+          {!history.length && <tr><td colSpan={9} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Abhi koi local purchase nahi.</td></tr>}</tbody></table></div>
       </div>
     </section>
+    {saved && <div role="dialog" aria-label="Local purchase save ho gayi" style={{ position: "fixed", left: "50%", bottom: 14, transform: "translateX(-50%)", zIndex: 50, width: "min(560px, calc(100vw - 24px))", boxSizing: "border-box", background: "#0b1220", border: "1px solid #22d3ee", borderRadius: 12, padding: 12, display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
+      <div><b>✅ {saved.invoiceNo} save ho gayi</b><br /><span style={{ color: "#94a3b8", fontSize: 13 }}>Kul Rs. {money(saved.total)} · Slip nikalni hai?</span></div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {[["Thermal", "thermal"], ["A5", "a5"], ["A4", "a4"]].map(([l, v]) => <button key={v} type="button" className={styles.save} onClick={() => printSlip(saved, v)}>🖨 {l}</button>)}
+        <button type="button" className={styles.alt} onClick={() => setSaved(null)}>Band</button>
+      </div>
+    </div>}
+    {slip && <div className="lpSlip" style={{ width: slip.size === "thermal" ? "72mm" : slip.size === "a5" ? "148mm" : "190mm" }}>
+      <style>{`.lpSlip{display:none}@media print{@page{size:${slip.size === "a4" ? "A4" : slip.size === "a5" ? "A5" : "auto"};margin:${slip.size === "thermal" ? "0" : "10mm"}}html,body{height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important}main:has(.lpSlip)>:not(.lpSlip){display:none!important}main:has(.lpSlip){height:auto!important;min-height:0!important;display:block!important;border:0!important;background:#fff!important}.lpSlip{display:block;color:#000;background:#fff;font:${slip.size === "thermal" ? "11px" : "13px"} Arial,sans-serif;padding:${slip.size === "thermal" ? "2mm 3mm" : "0"};box-sizing:content-box}.lpSlip h2,.lpSlip h3,.lpSlip p{margin:2px 0;text-align:center}.lpSlip table{width:100%;border-collapse:collapse}.lpSlip th,.lpSlip td{border-bottom:1px solid #999;padding:2px 3px;text-align:left}.lpSlip td.r,.lpSlip th.r{text-align:right}.lpSlip .tot div{display:flex;justify-content:space-between;padding:1px 0}.lpSlip .sig{display:flex;justify-content:space-between;margin-top:22px}}`}</style>
+      <h2>{SHOP.nameUpper}</h2><h3>LOCAL PURCHASE SLIP</h3>
+      <p>{SHOP.address}</p>
+      <p style={{ textAlign: "left" }}>No: <b>{slip.rec.invoiceNo}</b> &nbsp; Date: {localDay(slip.rec.date)}</p>
+      <p style={{ textAlign: "left" }}>Customer: <b>{slip.rec.customerName}</b>{slip.rec.phone ? ` · ${slip.rec.phone}` : ""}</p>
+      <table><thead><tr><th>#</th><th>Item</th><th className="r">Qty</th><th className="r">Rate</th><th className="r">Amount</th></tr></thead>
+        <tbody>{slip.rec.items.map((i: any, k: number) => <tr key={k}><td>{k + 1}</td><td>{String(i.name || "")}</td><td className="r">{i.qty}</td><td className="r">{money(i.costPrice)}</td><td className="r">{money(n(i.qty) * n(i.costPrice))}</td></tr>)}</tbody></table>
+      <div className="tot">
+        <div><b>Kul Bill</b><b>Rs. {money(slip.rec.total)}</b></div>
+        <div><span>Cash / {slip.rec.account} se ada</span><span>Rs. {money(slip.rec.paid)}</span></div>
+        {n(slip.rec.adjusted) > 0 && <div><span>Customer ke baqi mein adjust</span><span>Rs. {money(slip.rec.adjusted)}</span></div>}
+        <div><b>Customer ko dene baqi</b><b>Rs. {money(slip.rec.remaining)}</b></div>
+      </div>
+      {slip.rec.note ? <p style={{ textAlign: "left" }}>Note: {slip.rec.note}</p> : null}
+      <div className="sig"><span>Customer: ________</span><span>Shop: ________</span></div>
+      <p>Shukriya!</p>
+    </div>}
   </main>;
 }
