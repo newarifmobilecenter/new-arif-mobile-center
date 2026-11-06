@@ -127,7 +127,7 @@ export default function Vouchers() {
       <div className={styles.card}>
         {tab === "due" && <><h2>Saved Customer se Wasooli</h2>
           <label className={styles.row}><span>Customer:</span>{sel(customerId, setCustomerId, "Baqi wala customer chunein", dues, (c) => `${c.name} · Rs. ${money(c.due)}`)}</label>
-          {selDue && <p className={styles.hint}>Pichla baqi (sale + repair + purana): <b>Rs. {money(selDue.due)}</b>. Raqam sab se purane baqi par adjust hoti hai.</p>}</>}
+          {selDue && (() => { const lp = custPayable.find((x) => String(x._id) === String(selDue._id))?.due || 0; return <p className={styles.hint}>Pichla baqi (sale + repair + purana): <b>Rs. {money(selDue.due)}</b>.{lp > 0 && <> Local purchase ke humein dene: <b>− Rs. {money(lp)}</b> → net baqi <b>Rs. {money(selDue.due - lp)}</b>.</>}{Number(amount) > 0 && <> Wasooli ke baad naya baqi: <b>Rs. {money(selDue.due - lp - Number(amount))}</b>.</>} Raqam sab se purane baqi par adjust hoti hai.</p>; })()}</>}
         {tab === "walk" && <><h2>Walking Customer Voucher</h2>
           <p className={styles.hint}>Sirf wohi walking customer yahan aate hain jin ka paisa baqi hai (jo repair ya sale ka paisa de kar nahi gaye). Pura record <Link href="/walking-customers" style={{ color: "#22d3ee" }}>Walking Customers</Link> list mein hai.</p>
           <label className={styles.row}><span>Customer:</span>{sel(walkId, setWalkId, "Baqi wala walking customer", walkDue, (w) => `${w.code} · ${w.name}${w.phone ? " · " + w.phone : ""} · Rs. ${money(w.balance)}`)}</label>

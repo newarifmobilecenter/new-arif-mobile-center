@@ -36,7 +36,9 @@ export async function POST(req:NextRequest){
     }
     if(applied<=0)throw new Error("Customer has no outstanding balance.");
     const cust=await d.collection("customers").findOne({_id:new ObjectId(customerId)},{session:s});
-    voucher=await createVoucher(d,{kind:"CUSTOMER_RECEIVE",partyType:"customer",partyId:customerId,partyName:String(cust?.name||""),phone:String(cust?.phone||cust?.phoneNo||""),amount:applied,account:paymentMethod,note:String(b.ref||""),prevBalance:prev,newBalance:prev-applied,user:session.u},s);
+    // Local purchase mein jo paisa humein is customer ko dena baqi hai, wo net balance se minus hota hai.
+    const localDue=(await d.collection("purchases").find({kind:"LOCAL",customerId,remaining:{$gt:0}},{session:s}).toArray()).reduce((a:number,x:any)=>a+Number(x.remaining||0),0);
+    voucher=await createVoucher(d,{kind:"CUSTOMER_RECEIVE",partyType:"customer",partyId:customerId,partyName:String(cust?.name||""),phone:String(cust?.phone||cust?.phoneNo||""),amount:applied,account:paymentMethod,note:String(b.ref||""),prevBalance:Math.round((prev-localDue)*100)/100,newBalance:Math.round((prev-applied-localDue)*100)/100,user:session.u},s);
     await tx.insertOne({type:"IN",account:paymentMethod,amount:applied,customerId,party:String(cust?.name||""),ref:voucher.voucherNo,note:"Customer balance payment",voucherType:"RECEIVE",user:session.u,createdAt:new Date()},{session:s});
    });
   }finally{await s.endSession();}
