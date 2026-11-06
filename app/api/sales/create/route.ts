@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return Number.isFinite(n) ? n : 0;
   };
 
-  const [freight, discountPct, salesTaxPct, paid] = [
+  let [freight, discountPct, salesTaxPct, paid] = [
     body.freight ?? 0,
     body.discountPct ?? 0,
     body.salesTaxPct ?? 0,
@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
   const taxable = Math.max(0, subtotal - discountAmount + freight);
   const salesTaxValue = taxable * salesTaxPct / 100;
   const netTotal = Math.max(0, taxable + salesTaxValue);
+  // CASH sale ka matlab poora paisa mil gaya; udhar mein na jaye.
+  if (String(body.type || "").toUpperCase() === "CASH") paid = netTotal;
   if (paid > netTotal + 0.000001) {
     return NextResponse.json({ error: "Paid amount cannot exceed the net total." }, { status: 400 });
   }

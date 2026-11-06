@@ -124,15 +124,8 @@ export default function POS() {
     } catch {}
   }, []);
 
-  // Modify an existing invoice: /pos?edit=<saleId>
-  useEffect(() => {
-    if (editLoaded.current || !sales.length) return;
-    const id = new URLSearchParams(window.location.search).get("edit");
-    if (!id) { editLoaded.current = true; return; }
-    const sale = sales.find((x: any) => String(x._id) === id);
-    editLoaded.current = true;
-    if (!sale) { alert("Ye invoice nahi mili ya cancel ho chuki hai."); return; }
-    setEditId(id);
+  function applySale(sale: any) {
+    setEditId(String(sale._id));
     setInvoiceNo(String(sale.invoiceNo || ""));
     setItems(Array.isArray(sale.items) ? sale.items.map((i: any) => ({ ...i })) : []);
     setCustomer(String(sale.customerId || ""));
@@ -147,6 +140,31 @@ export default function POS() {
     setFreight(String(sale.freight ?? 0));
     setDiscountPct(String(sale.discountPct ?? 0));
     setTaxPct(String(sale.salesTaxPct ?? 0));
+  }
+  const [findInv, setFindInv] = useState("");
+  async function loadSaleByNo() {
+    const raw = findInv.trim();
+    const digits = raw.replace(/\D/g, "");
+    if (!raw) return alert("Invoice number likhein, jaise S009.");
+    try {
+      const all: any[] = await fetch("/api/data?collection=sales&limit=5000", { cache: "no-store" }).then((r) => r.json());
+      const re = digits ? new RegExp(`^S0*${Number(digits)}$`, "i") : null;
+      const sale = (Array.isArray(all) ? all : []).find((x: any) => (String(x.invoiceNo || "").toUpperCase() === raw.toUpperCase() || (re && re.test(String(x.invoiceNo || "")))) && x.status !== "cancelled");
+      if (!sale) return alert(`Invoice ${raw.toUpperCase()} nahi mili ya cancel ho chuki hai.`);
+      if (sale.kind === "OLD_BALANCE" || sale.type === "OLD_BALANCE") return alert("Ye purana balance entry hai, modify nahi ho sakti.");
+      applySale(sale); setFindInv("");
+    } catch { alert("Invoice load nahi hui."); }
+  }
+
+  // Modify an existing invoice: /pos?edit=<saleId>
+  useEffect(() => {
+    if (editLoaded.current || !sales.length) return;
+    const id = new URLSearchParams(window.location.search).get("edit");
+    if (!id) { editLoaded.current = true; return; }
+    const sale = sales.find((x: any) => String(x._id) === id);
+    editLoaded.current = true;
+    if (!sale) { alert("Ye invoice nahi mili ya cancel ho chuki hai."); return; }
+    applySale(sale);
   }, [sales]);
 
   const subtotal = useMemo(
@@ -165,7 +183,7 @@ export default function POS() {
   );
   const netTotal = Math.max(0, taxable + salesTaxValue);
   const totalQty = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-  const paidAmount = Number(paid || 0);
+  const paidAmount = saleType === "CASH" ? netTotal : Number(paid || 0);
   const remaining = Math.max(0, netTotal - paidAmount);
 
   const [costIdx, setCostIdx] = useState<number | null>(null);
@@ -518,6 +536,7 @@ export default function POS() {
         <section className={styles.invoiceHeader}>
           <div className={styles.leftFields}>
             <label>Inv No:<input value={invoiceNo} readOnly /></label>
+            {!editId && <label className={styles.modBox}>✎ Sale Modify:<input value={findInv} placeholder="Old Invoice No (S009)" onChange={(e) => setFindInv(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void loadSaleByNo(); } }} /><button type="button" onClick={() => void loadSaleByNo()}>Load</button></label>}
             {editId && <div role="status" style={{ color: "#fbbf24", fontWeight: 700 }}>✎ Modify mode: {invoiceNo} — <a href="/pos" style={{ color: "#22d3ee" }}>edit cancel</a></div>}
             {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
             <label className={`${styles.wide} ${styles.custBox}`}>Customer:
@@ -635,7 +654,7 @@ export default function POS() {
             <label>Disc Amt<input value={money(discountAmount)} readOnly /></label>
             <label>Sales Tax %<input type="number" value={taxPct} onChange={(e) => setTaxPct(e.target.value)} /></label>
             <label>Net Total<input className={styles.netInput} value={money(netTotal)} readOnly /></label>
-            <label>Cash Rec:<input type="number" value={paid} onChange={(e) => setPaid(e.target.value)} /></label>
+            <label>Cash Rec:<input type="number" value={saleType === "CASH" ? String(Math.round(netTotal * 100) / 100) : paid} readOnly={saleType === "CASH"} title={saleType === "CASH" ? "CASH sale: poora paisa mil gaya" : ""} onChange={(e) => setPaid(e.target.value)} /></label>
             <label>Remaining<input value={money(remaining)} readOnly /></label>
             <label>Level / Price Level<select value={level} onChange={(e) => changeLevel(e.target.value)}><option value="0">Level 0 · Retail</option><option value="1">Level 1 · Wholesale</option><option value="2">Level 2 · Retail Price</option><option value="cost">Level 3 · Purchase Cost</option><option value="last">Last Level · This Customer</option></select></label>
           </div>

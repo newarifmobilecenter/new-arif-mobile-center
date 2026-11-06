@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
   if (!items.length) return NextResponse.json({ error: "At least one item is required." }, { status: 400 });
   if (items.some((i: any) => !Number.isInteger(Number(i.qty)) || Number(i.qty) <= 0 || !Number.isFinite(Number(i.price)) || Number(i.price) < 0 || num(i.discountPct) < 0 || num(i.discountPct) > 100))
     return NextResponse.json({ error: "Each item needs a positive whole quantity, a valid price and discount 0-100%." }, { status: 400 });
-  const freight = num(body.freight), discountPct = num(body.discountPct), salesTaxPct = num(body.salesTaxPct), paid = num(body.paid);
+  const freight = num(body.freight), discountPct = num(body.discountPct), salesTaxPct = num(body.salesTaxPct);
+  let paid = num(body.paid);
   if (freight < 0 || discountPct < 0 || discountPct > 100 || salesTaxPct < 0 || paid < 0) return NextResponse.json({ error: "Invalid freight/percentages/paid amount." }, { status: 400 });
 
   const subtotal = items.reduce((s: number, i: any) => s + num(i.qty) * num(i.price), 0);
@@ -28,6 +29,8 @@ export async function POST(req: NextRequest) {
   const taxable = Math.max(0, subtotal - discountAmount + freight);
   const salesTaxValue = taxable * salesTaxPct / 100;
   const netTotal = Math.max(0, taxable + salesTaxValue);
+  // CASH sale ka matlab poora paisa mil gaya; udhar mein na jaye.
+  if (String(body.type || "").toUpperCase() === "CASH") paid = netTotal;
   if (paid > netTotal + 0.000001) return NextResponse.json({ error: "Paid amount cannot exceed the net total." }, { status: 400 });
   const remaining = Math.max(0, netTotal - paid);
   const normalized = items.map((i: any) => ({ ...i, qty: num(i.qty), price: num(i.price), discountPct: num(i.discountPct), discountAmount: num(i.qty) * num(i.price) * num(i.discountPct) / 100, total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100) }));
