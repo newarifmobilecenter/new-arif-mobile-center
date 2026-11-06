@@ -169,6 +169,19 @@ export default function POS() {
   const remaining = Math.max(0, netTotal - paidAmount);
 
   const selectedCustomer = customers.find((c) => c._id === customer);
+  const [custQ, setCustQ] = useState("");
+  const [custOpen, setCustOpen] = useState(false);
+  const [custHl, setCustHl] = useState(0);
+  const custMatches = useMemo(() => {
+    const tokens = custQ.toLowerCase().split(/\s+/).filter(Boolean);
+    const list = tokens.length ? customers.filter((c) => { const text = `${c.name || ""} ${c.phone || ""} ${c.phoneNo || ""} ${c.mobile || ""} ${c.code || ""} ${c.city || ""}`.toLowerCase(); return tokens.every((t) => text.includes(t)); }) : customers;
+    return list.slice(0, 50);
+  }, [customers, custQ]);
+  function pickCustomer(id: string) {
+    changeCustomer(id); if (id) setSaleType("CREDIT");
+    setCustOpen(false); setCustQ("");
+    (document.getElementById("customer") as HTMLInputElement | null)?.blur();
+  }
   const currentBalance = useMemo(() => {
     if (!customer) return 0;
     const customerSales = sales.filter((s) => String(s.customerId || "") === String(customer));
@@ -499,11 +512,23 @@ export default function POS() {
             <label>Inv No:<input value={invoiceNo} readOnly /></label>
             {editId && <div role="status" style={{ color: "#fbbf24", fontWeight: 700 }}>✎ Modify mode: {invoiceNo} — <a href="/pos" style={{ color: "#22d3ee" }}>edit cancel</a></div>}
             {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
-            <label className={styles.wide}>Customer:
-              <select id="customer" value={customer} onChange={(e) => { changeCustomer(e.target.value); if (e.target.value) setSaleType("CREDIT"); }}>
-                <option value="">CASH SALES</option>
-                {customers.map((c) => <option key={c._id} value={c._id}>{c.name} {c.phone ? `— ${c.phone}` : ""}</option>)}
-              </select>
+            <label className={`${styles.wide} ${styles.custBox}`}>Customer:
+              <input id="customer" autoComplete="off" value={custOpen ? custQ : (selectedCustomer ? `${selectedCustomer.name}${selectedCustomer.phone ? ` — ${selectedCustomer.phone}` : ""}` : "CASH SALES")}
+                placeholder="Naam / phone likh kar search karein"
+                onFocus={(e) => { setCustQ(""); setCustOpen(true); setCustHl(0); e.currentTarget.select(); }}
+                onBlur={() => window.setTimeout(() => setCustOpen(false), 160)}
+                onChange={(e) => { setCustQ(e.target.value); setCustOpen(true); setCustHl(0); }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") { e.preventDefault(); setCustHl((h) => Math.min(custMatches.length, h + 1)); }
+                  else if (e.key === "ArrowUp") { e.preventDefault(); setCustHl((h) => Math.max(0, h - 1)); }
+                  else if (e.key === "Enter") { e.preventDefault(); pickCustomer(custHl === 0 ? "" : String(custMatches[custHl - 1]?._id || "")); }
+                  else if (e.key === "Escape") setCustOpen(false);
+                }} />
+              {custOpen && <div className={styles.custList} role="listbox">
+                <button type="button" className={`${styles.custOpt} ${custHl === 0 ? styles.custOn : ""}`} onMouseDown={(e) => { e.preventDefault(); pickCustomer(""); }}>CASH SALES</button>
+                {custMatches.map((c, i) => <button type="button" key={c._id} className={`${styles.custOpt} ${custHl === i + 1 ? styles.custOn : ""}`} onMouseDown={(e) => { e.preventDefault(); pickCustomer(String(c._id)); }}>{c.name}{c.phone ? ` — ${c.phone}` : ""}{c.city ? ` · ${c.city}` : ""}</button>)}
+                {!custMatches.length && custQ.trim() && <div className={styles.custNone}>Koi customer nahi mila</div>}
+              </div>}
             </label>
             <label>Current Balance:<input value={`Rs. ${money(currentBalance)}`} readOnly /></label>
             <label>Cust Ref:<input value={custRef} onChange={(e) => setCustRef(e.target.value)} /></label>
