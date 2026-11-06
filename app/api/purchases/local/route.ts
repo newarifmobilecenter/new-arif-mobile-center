@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
 import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 import { REPAIR_COLLECTION } from "@/lib/repairs";
+import { customerBalance } from "@/lib/vouchers";
 
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
 const ACCOUNTS = ["Cash", "JazzCash", "Easypaisa", "Raast", "NayaPay", "UBL", "Bank", "Other Bank", "Other"];
@@ -33,9 +34,11 @@ export async function POST(req: NextRequest) {
     const invoiceNo = await nextNumber(d, "localPurchase");
     const s = client.startSession();
     let adjusted = 0;
+    let prevBalance = 0;
     try {
       await s.withTransaction(async () => {
         adjusted = 0;
+        prevBalance = Math.round((await customerBalance(d, customerId, s)) * 100) / 100;
         for (const it of items) {
           const pid = String(it.productId);
           const p = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(pid) }, { $inc: { stock: Number(it.qty) }, $set: { costPrice: Number(it.costPrice), ...(Number(it.retail) > 0 ? { price: Number(it.retail) } : {}), ...(Number(it.wholesale) > 0 ? { wholesale: Number(it.wholesale) } : {}), updatedAt: new Date() } }, { session: s, returnDocument: "after" });
@@ -69,11 +72,11 @@ export async function POST(req: NextRequest) {
           if (left > 0.0001) throw new Error(`Customer ka sirf Rs. ${adjusted} baqi tha; adjust ${adjust} nahi ho sakta.`);
         }
         const remaining = Math.round((total - paid - adjusted) * 100) / 100;
-        const purchase = { kind: "LOCAL", invoiceNo, customerId, supplierName: String(customer.name || ""), supplierId: null, items: items.map((i: any) => ({ productId: String(i.productId), name: String(i.name || ""), qty: Number(i.qty), costPrice: Number(i.costPrice), retail: Number(i.retail || 0) })), subtotal: total, total, paid, adjusted, remaining, status: remaining > 0 ? "credit" : "paid", note: String(b.note || "").slice(0, 300), paymentMethod: account, createdAt: new Date(), updatedAt: new Date(), createdBy: user.u };
+        const purchase = { kind: "LOCAL", invoiceNo, customerId, supplierName: String(customer.name || ""), supplierId: null, items: items.map((i: any) => ({ productId: String(i.productId), name: String(i.name || ""), qty: Number(i.qty), costPrice: Number(i.costPrice), retail: Number(i.retail || 0) })), subtotal: total, total, paid, adjusted, remaining, prevBalance, newBalance: Math.round((prevBalance - total + paid) * 100) / 100, status: remaining > 0 ? "credit" : "paid", note: String(b.note || "").slice(0, 300), paymentMethod: account, createdAt: new Date(), updatedAt: new Date(), createdBy: user.u };
         await d.collection("purchases").insertOne(purchase, { session: s });
         if (paid > 0) await d.collection("transactions").insertOne({ type: "OUT", account, amount: paid, ref: invoiceNo, customerId, party: customer.name || "", note: "Local purchase payment", voucherType: "PAY", user: user.u, createdAt: new Date() }, { session: s });
       }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
     } catch (e: any) { return fail(e?.message || "Local purchase save nahi hui."); } finally { await s.endSession(); }
-    return NextResponse.json({ ok: true, invoiceNo, total, adjusted, remaining: Math.round((total - paid - adjusted) * 100) / 100 }, { status: 201 });
+    return NextResponse.json({ ok: true, invoiceNo, total, adjusted, prevBalance, newBalance: Math.round((prevBalance - total + paid) * 100) / 100, remaining: Math.round((total - paid - adjusted) * 100) / 100 }, { status: 201 });
   } catch (e: any) { return fail(e?.message || "Save nahi hua.", 500); }
 }

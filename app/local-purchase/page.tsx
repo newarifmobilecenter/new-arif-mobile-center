@@ -32,7 +32,7 @@ export default function LocalPurchase() {
   const [saved, setSaved] = useState<any>(null);
   const [slip, setSlip] = useState<any>(null);
   const printSlip = (rec: any, size: string) => { setSlip({ rec, size }); setTimeout(() => window.print(), 150); };
-  const slipOf = (h: any) => ({ invoiceNo: h.invoiceNo, date: h.createdAt || new Date().toISOString(), customerName: h.supplierName || customers.find((c) => String(c._id) === String(h.customerId))?.name || "", phone: (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phone || (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phoneNo || "", items: h.items || [], total: h.total, paid: h.paid, adjusted: h.adjusted, remaining: h.remaining, account: h.paymentMethod || "Cash", note: h.note || "" });
+  const slipOf = (h: any) => ({ invoiceNo: h.invoiceNo, date: h.createdAt || new Date().toISOString(), customerName: h.supplierName || customers.find((c) => String(c._id) === String(h.customerId))?.name || "", phone: (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phone || (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phoneNo || "", items: h.items || [], total: h.total, paid: h.paid, adjusted: h.adjusted, remaining: h.remaining, prevBalance: h.prevBalance, newBalance: h.newBalance, account: h.paymentMethod || "Cash", note: h.note || "" });
 
   const load = async () => {
     const [c, p, s, r, h] = await Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=products&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=purchases&limit=5000").then(arr)]);
@@ -65,7 +65,7 @@ export default function LocalPurchase() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Save nahi hua.");
       setMsg({ t: `Local purchase ${d.invoiceNo} save ho gayi. Stock barh gaya.${d.adjusted ? ` Rs. ${money(d.adjusted)} customer ke baqi mein adjust.` : ""}${d.remaining > 0 ? ` Customer ko dene baqi: Rs. ${money(d.remaining)}.` : ""}`, ok: true });
-      setSaved(slipOf({ invoiceNo: d.invoiceNo, createdAt: new Date().toISOString(), supplierName: customer?.name, customerId, items: used.map((l) => ({ name: l.name, qty: n(l.qty), costPrice: n(l.cost) })), total: d.total, paid: cash, adjusted: d.adjusted, remaining: d.remaining, paymentMethod: account, note }));
+      setSaved(slipOf({ invoiceNo: d.invoiceNo, createdAt: new Date().toISOString(), supplierName: customer?.name, customerId, items: used.map((l) => ({ name: l.name, qty: n(l.qty), costPrice: n(l.cost) })), total: d.total, paid: cash, adjusted: d.adjusted, remaining: d.remaining, prevBalance: d.prevBalance, newBalance: d.newBalance, paymentMethod: account, note }));
       setLines([blank()]); setPaid(""); setAdjust(""); setNote(""); await load();
     } catch (e: any) { setMsg({ t: e.message, ok: false }); } finally { setBusy(false); }
   }
@@ -126,14 +126,17 @@ export default function LocalPurchase() {
       <table><thead><tr><th>#</th><th>Item</th><th className="r">Qty</th><th className="r">Rate</th><th className="r">Amount</th></tr></thead>
         <tbody>{slip.rec.items.map((i: any, k: number) => <tr key={k}><td>{k + 1}</td><td>{String(i.name || "")}</td><td className="r">{i.qty}</td><td className="r">{money(i.costPrice)}</td><td className="r">{money(n(i.qty) * n(i.costPrice))}</td></tr>)}</tbody></table>
       <div className="tot">
-        <div><b>Kul Bill</b><b>Rs. {money(slip.rec.total)}</b></div>
-        <div><span>Cash / {slip.rec.account} se ada</span><span>Rs. {money(slip.rec.paid)}</span></div>
-        {n(slip.rec.adjusted) > 0 && <div><span>Customer ke baqi mein adjust</span><span>Rs. {money(slip.rec.adjusted)}</span></div>}
-        <div><b>Customer ko dene baqi</b><b>Rs. {money(slip.rec.remaining)}</b></div>
+        <div><b>Total Bill</b><b>Rs. {money(slip.rec.total)}</b></div>
+        {n(slip.rec.paid) > 0 && <div><span>Paid in {slip.rec.account}</span><span>Rs. {money(slip.rec.paid)}</span></div>}
+        {slip.rec.prevBalance != null ? <>
+          <div style={{ borderTop: "1px solid #000", marginTop: 2, paddingTop: 2 }}><span>Previous Balance</span><span>Rs. {money(slip.rec.prevBalance)}</span></div>
+          <div><span>Less: Bill Adjusted from Account (Khata)</span><span>Rs. {money(n(slip.rec.total) - n(slip.rec.paid))}</span></div>
+          <div style={{ borderTop: "1px solid #000", marginTop: 2, paddingTop: 2 }}><b>Current Balance</b><b>Rs. {money(slip.rec.newBalance)}</b></div>
+        </> : <div><b>Balance Due to Customer</b><b>Rs. {money(slip.rec.remaining)}</b></div>}
       </div>
+      <p style={{ textAlign: "left", fontSize: "0.85em" }}>(-) minus balance = shop has to pay the customer.</p>
       {slip.rec.note ? <p style={{ textAlign: "left" }}>Note: {slip.rec.note}</p> : null}
-      <div className="sig"><span>Customer: ________</span><span>Shop: ________</span></div>
-      <p>Shukriya!</p>
+      <p>Thank you!</p>
     </div>}
   </main>;
 }
