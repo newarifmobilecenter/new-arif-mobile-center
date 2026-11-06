@@ -168,8 +168,8 @@ export default function Purchases() {
 
   return <main className={styles.page}>
     <nav className={styles.toolbar}>
-      <Link href="/">← Dashboard</Link><Link href="/suppliers">👤 Supplier List</Link><Link href="/admin">📦 New Item</Link><Link href="/suppliers">＋ New Supplier</Link>
-      <button type="button" onClick={() => barcodeRef.current?.focus()}>🔍 Item Search</button><Link href="/purchases/history">🧾 Purchase History</Link><Link href="/purchases/returns">↩ Purchase Return</Link>
+      <Link href="/">← Dashboard</Link><Link href="/suppliers" target="arifNewParty" rel="noopener">👤 Supplier List</Link><Link href="/admin" target="arifNewItem" rel="noopener">📦 New Item</Link><Link href="/suppliers" target="arifNewParty" rel="noopener">＋ New Supplier</Link>
+      <button type="button" onClick={() => barcodeRef.current?.focus()}>🔍 Item Search</button><Link href="/purchases/history" target="arifSide" rel="noopener">🧾 Purchase History</Link><Link href="/purchases/returns" target="arifSide" rel="noopener">↩ Purchase Return</Link>
     </nav>
     {editId ? <div className={styles.editBar}><b>✏ EDIT MODE — Purchase {editNo}</b>{laterPaid > 0 && <span>Baad ki supplier payment Rs. {money(laterPaid)} wese hi rahegi</span>}<button type="button" onClick={cancelEdit}>Cancel Edit</button></div>
       : <div className={styles.editBar}><b>✏ Modify Purchase:</b><input value={findNo} placeholder="Old Purchase No (P009)" onChange={e => setFindNo(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void loadOld(); } }} /><button type="button" disabled={busy} onClick={() => void loadOld()}>Load</button></div>}
@@ -215,7 +215,7 @@ export default function Purchases() {
       {active !== null && <div className={styles.picker}>
         <table className={styles.tbl}><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Cost</th><th>In Hand</th><th>Retail</th></tr></thead>
           <tbody>{matches.map((p, mi) => <tr key={p._id} ref={mi === hl ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${Number(p.stock || 0) <= 0 ? styles.zeroRow : ""} ${mi === hl ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
-            {!matches.length && <tr><td colSpan={7} className={styles.dim}>Koi product nahi mila. <Link href="/admin">Naya item banayein</Link></td></tr>}</tbody></table>
+            {!matches.length && <tr><td colSpan={7} className={styles.dim}>Koi product nahi mila. <Link href="/admin" target="arifNewItem" rel="noopener">Naya item banayein</Link></td></tr>}</tbody></table>
       </div>}
     </section>
 
@@ -258,6 +258,7 @@ export default function Purchases() {
       </div>
     </div>}
 
+    {printed && <style>{`@media print{@page{size:${printed.size === "a4" ? "A4" : printed.size === "a5" ? "A5" : "auto"};margin:${printed.size === "thermal" ? "0" : "10mm"}}html,body,.shell{height:auto!important;min-height:0!important;overflow:visible!important;background:#fff!important}}`}</style>}
     {printed && <div className={`${styles.printSheet} ${styles["p_" + printed.size]}`}>
       <h2>{SHOP.nameUpper}</h2><h3>PURCHASE INVOICE</h3>
       <p>No: <b>{printed.invoiceNo}</b> &nbsp; Date: {printed.date || date} &nbsp; Supplier: {printed.supplierName}</p>

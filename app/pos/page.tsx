@@ -476,18 +476,18 @@ export default function POS() {
           <button onClick={showTemporaryBill}>Print Record</button>
           <button onClick={() => { setSaleType("CREDIT"); setTimeout(() => document.getElementById("customer")?.focus(), 50); }}>Credit Customer</button>
           <button onClick={() => { setSaleType("CASH"); setCustomer(""); setCashRef("WALKING CUSTOMER"); }}>Walking Customer</button>
-          <Link href="/admin" className={styles.toolLink}>New Item</Link>
-          <Link href="/product-cost" className={styles.toolLink}>Change Product Cost</Link>
-          <Link href="/vouchers" className={styles.toolLink}>Vouchers / Collect Due</Link>
+          <Link href="/admin" target="arifNewItem" rel="noopener" className={styles.toolLink}>New Item</Link>
+          <Link href="/product-cost" target="arifSide" rel="noopener" className={styles.toolLink}>Change Product Cost</Link>
+          <Link href="/vouchers" target="arifSide" rel="noopener" className={styles.toolLink}>Vouchers / Collect Due</Link>
           <Link href="/purchases" className={styles.toolLink}>Purchase</Link>
-          <Link href="/sales/returns" className={styles.toolLink}>Sale Return</Link>
+          <Link href="/sales/returns" target="arifSide" rel="noopener" className={styles.toolLink}>Sale Return</Link>
         </header>
 
         <div className={styles.secondBar}>
-          <Link href="/ledger">Customer Ledger</Link>
-          <Link href="/customers">Customer List</Link>
-          <Link href="/suppliers">Supplier List</Link>
-          <Link href="/sales">Today List</Link>
+          <Link href="/ledger" target="arifSide" rel="noopener">Customer Ledger</Link>
+          <Link href="/customers" target="arifNewParty" rel="noopener">Customer List</Link>
+          <Link href="/suppliers" target="arifNewParty" rel="noopener">Supplier List</Link>
+          <Link href="/sales" target="arifSide" rel="noopener">Today List</Link>
           <button onClick={() => { barcodeRef.current?.focus(); setSearch(""); }}>Item Search</button>
           <button onClick={() => setShowHeld((x) => !x)}>Hold / Hide / Show</button>
           <button onClick={() => { setCustomer(""); setSaleType("CASH"); setCashRef("WALKING CUSTOMER"); }}>Cash Customer List</button>
