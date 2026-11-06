@@ -168,6 +168,14 @@ export default function POS() {
   const paidAmount = Number(paid || 0);
   const remaining = Math.max(0, netTotal - paidAmount);
 
+  const [costIdx, setCostIdx] = useState<number | null>(null);
+  const costItem = useMemo(() => {
+    const row: any = items[costIdx !== null && costIdx < items.length ? costIdx : items.length - 1];
+    if (!row) return null;
+    const prod: any = products.find((p: any) => String(p._id) === String(row.productId));
+    const cost = Number(prod?.costPrice ?? row.costPrice ?? 0);
+    return { name: String(row.name || ""), cost, qty: Number(row.qty || 1) };
+  }, [items, costIdx, products]);
   const selectedCustomer = customers.find((c) => c._id === customer);
   const [custQ, setCustQ] = useState("");
   const [custOpen, setCustOpen] = useState(false);
@@ -592,7 +600,7 @@ export default function POS() {
             </thead>
             <tbody>
               {items.map((item, index) => (
-                <tr key={`${item.productId || "misc"}-${index}`}>
+                <tr key={`${item.productId || "misc"}-${index}`} onFocusCapture={() => setCostIdx(index)} onClick={() => setCostIdx(index)}>
                   <td>{index + 1}</td>
                   <td><b>{item.name}</b></td>
                   <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
@@ -618,7 +626,7 @@ export default function POS() {
         </div>
 
         <section className={styles.bottomArea}>
-          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>
+          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span className={styles.costBox}>Cost: <b>{costItem ? `Rs. ${money(costItem.cost)}` : "—"}</b>{costItem ? <small> {costItem.name}{costItem.qty > 1 ? ` · ${costItem.qty} × = Rs. ${money(costItem.cost * costItem.qty)}` : ""}</small> : null}</span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>
           <div className={styles.calcGrid}>
             <label>Grand Total<input value={money(subtotal)} readOnly /></label>
             <label>Freight<input type="number" value={freight} onChange={(e) => setFreight(e.target.value)} /></label>

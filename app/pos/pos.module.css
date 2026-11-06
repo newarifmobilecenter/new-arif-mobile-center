@@ -93,3 +93,6 @@
 .custOpt { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-bottom: 1px solid #1e293b; background: transparent; color: #e5e7eb; font-size: 14px; cursor: pointer; }
 .custOn, .custOpt:hover { background: #1d4ed8; color: #fff; }
 .custNone { padding: 8px 10px; color: #94a3b8; font-size: 13px; }
+
+.costBox { color: #fbbf24; }
+.costBox small { color: #94a3b8; font-size: 12px; margin-left: 4px; }
