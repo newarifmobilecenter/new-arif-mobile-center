@@ -24,6 +24,7 @@ export default function Customers() {
   const [cust, setCust] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [repairs, setRepairs] = useState<any[]>([]);
+  const [localBuys, setLocalBuys] = useState<any[]>([]);
   const [opts, setOpts] = useState<any[]>([]);
   const [f, setF] = useState<F>(blank);
   const [editId, setEditId] = useState("");
@@ -35,13 +36,14 @@ export default function Customers() {
 
   const load = async () => {
     const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
-    const [c, s, r, o] = await Promise.all([
+    const [c, s, pu, r, o] = await Promise.all([
       fetch("/api/data?collection=customers").then(arr),
       fetch("/api/data?collection=sales&limit=5000").then(arr),
+      fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => []),
       fetch("/api/repairs").then(arr).catch(() => []),
       fetch("/api/data?collection=productOptions").then(arr).catch(() => []),
     ]);
-    setCust(c); setSales(s); setRepairs(r); setOpts(o);
+    setCust(c); setSales(s); setLocalBuys(pu.filter((x: any) => x.kind === "LOCAL")); setRepairs(r); setOpts(o);
     setF(cur => (cur.code || editId ? cur : { ...cur, code: nextCode(c) }));
     return c;
   };
@@ -114,7 +116,8 @@ export default function Customers() {
 
   const balance = (id: string) =>
     sales.filter(s => String(s.customerId || "") === id).reduce((a, s) => a + Number(s.remaining || 0), 0) +
-    repairs.filter(r => String(r.customerId || "") === id).reduce((a, r) => a + Number(r.remaining || 0), 0);
+    repairs.filter(r => String(r.customerId || "") === id).reduce((a, r) => a + Number(r.remaining || 0), 0) -
+    localBuys.filter(p => String(p.customerId || "") === id).reduce((a, p) => a + Number(p.remaining || 0), 0);
 
   const listRows = useMemo(() => {
     const q = listQ.trim().toLowerCase();
@@ -187,7 +190,7 @@ export default function Customers() {
             <td>{t(c.code) || "-"}</td>
             <td><span className={styles.avatar}>{(t(c.name).trim()[0] || "?").toUpperCase()}</span><Link href={`/customers/${c._id}`}>{c.name}</Link></td>
             <td>{t(c.phoneNo || c.mobile || c.phone) || "-"}</td><td>{[c.city, c.area].filter(Boolean).join(" / ") || "-"}</td><td>{t(c.type) || "-"}</td>
-            <td><span className={b > 0 ? styles.debtPill : styles.clearPill}>Rs. {money(b)}</span></td>
+            <td><span className={b > 0 ? styles.debtPill : styles.clearPill} title={b < 0 ? "Humein is customer ko dene hain" : ""}>Rs. {money(b)}{b < 0 ? " (humein dene)" : ""}</span></td>
             <td><button onClick={() => edit(c)}>Edit</button><Link href={`/customers/${c._id}`}>History</Link> · <Link href={`/repairs/new?customerId=${c._id}`}>New Repair</Link></td>
           </tr>; })}</tbody></table>
       </div>

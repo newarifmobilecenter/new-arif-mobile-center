@@ -55,6 +55,7 @@ export default function POS() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [repairRecords, setRepairRecords] = useState<any[]>([]);
+  const [localBuys, setLocalBuys] = useState<any[]>([]);
   const [readyRepairs, setReadyRepairs] = useState<any[]>([]);
   const [holds, setHolds] = useState<Record<string, any[]>>({});
   const [items, setItems] = useState<SaleItem[]>([]);
@@ -98,7 +99,7 @@ export default function POS() {
       fetch("/api/repairs?status=READY&unbilled=1").then((r) => r.json()).catch(() => []),
       fetch("/api/repairs?status=DELIVERED&unbilled=1").then((r) => r.json()).catch(() => []),
     ]).then(([a, b]) => setReadyRepairs([...readyList(a), ...readyList(b)].sort((x: any, y: any) => String(y.updatedAt || "").localeCompare(String(x.updatedAt || ""))))).catch(() => {});
-    const [p, c, s, r] = await Promise.all([
+    const [p, c, s, r, lb] = await Promise.all([
       fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
       fetch("/api/data?collection=customers").then(async (r) => {
         const d = await r.json().catch(() => null);
@@ -108,11 +109,13 @@ export default function POS() {
       }).catch(() => { setLoadError("Customers load nahi ho sakay (network)."); return []; }),
       fetch("/api/data?collection=sales").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).catch(() => []),
       fetch("/api/repairs?status=PAYMENT_DUE").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]).catch(() => []),
+      fetch("/api/data?collection=purchases&limit=5000").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d.filter((x:any)=>x.kind==="LOCAL"):[]).catch(() => []),
     ]);
     setProducts(Array.isArray(p) ? p : []);
     setCustomers(Array.isArray(c) ? c : []);
     setSales(Array.isArray(s) ? s : []);
     setRepairRecords(Array.isArray(r) ? r : []);
+    setLocalBuys(lb);
   };
 
   useEffect(() => {
@@ -213,8 +216,9 @@ export default function POS() {
     const customerSales = sales.filter((s) => String(s.customerId || "") === String(customer));
     const saleDue = customerSales.reduce((sum, s) => sum + Number(s.remaining || 0), 0);
     const repairDue = repairRecords.filter((r) => String(r.customerId || "") === String(customer)).reduce((sum, r) => sum + Number(r.remaining || 0), 0);
-    return saleDue + repairDue;
-  }, [customer, sales, repairRecords]);
+    const localDue = localBuys.filter((x: any) => String(x.customerId || "") === String(customer)).reduce((sum: number, x: any) => sum + Number(x.remaining || 0), 0);
+    return saleDue + repairDue - localDue;
+  }, [customer, sales, repairRecords, localBuys]);
 
   function lastSaleForProduct(productId: string, customerOverride = customer) {
     if (!customerOverride || !productId) return null;

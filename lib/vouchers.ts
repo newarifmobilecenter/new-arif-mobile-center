@@ -16,7 +16,9 @@ export async function customerBalance(d: Db, customerId: string, session?: Clien
   const o = session ? { session } : undefined;
   const sales = await d.collection("sales").find({ customerId, status: { $ne: "cancelled" }, remaining: { $gt: 0 } }, o).toArray();
   const reps = await d.collection(REPAIR_COLLECTION).find({ recordType: "REPAIR", deletedAt: null, customerId, remaining: { $gt: 0 } }, o).toArray();
-  return sales.reduce((a, x) => a + Number(x.remaining || 0), 0) + reps.reduce((a, x) => a + Number(x.remaining || 0), 0);
+  // Local purchase: customer se maal liya, jo paisa humein dena baqi hai wo minus (-) mein jata hai.
+  const local = await d.collection("purchases").find({ kind: "LOCAL", customerId, remaining: { $gt: 0 } }, o).toArray();
+  return sales.reduce((a, x) => a + Number(x.remaining || 0), 0) + reps.reduce((a, x) => a + Number(x.remaining || 0), 0) - local.reduce((a, x) => a + Number(x.remaining || 0), 0);
 }
 
 export async function walkingBalance(d: Db, walkingId: string, session?: ClientSession) {

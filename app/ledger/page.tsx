@@ -15,21 +15,22 @@ function LedgerContent() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [sales, setSales] = useState<any[]>([]);
   const [repairs, setRepairs] = useState<any[]>([]);
+  const [localBuys, setLocalBuys] = useState<any[]>([]);
   const [tx, setTx] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try { setCustomerId(new URLSearchParams(window.location.search).get("customer") || ""); } catch {}
-    void Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr)])
-      .then(([c, s, r, t]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setLoading(false); });
+    void Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr), fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => [])])
+      .then(([c, s, r, t, pu]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setLocalBuys(pu.filter((x: any) => x.kind === "LOCAL")); setLoading(false); });
   }, []);
 
   const summary = useMemo(() => customers.map((c) => {
     const id = String(c._id);
-    const bal = sales.filter((s) => String(s.customerId || "") === id).reduce((a, s) => a + n(s.remaining), 0) + repairs.filter((r) => String(r.customerId || "") === id).reduce((a, r) => a + n(r.remaining), 0);
+    const bal = sales.filter((s) => String(s.customerId || "") === id).reduce((a, s) => a + n(s.remaining), 0) + repairs.filter((r) => String(r.customerId || "") === id).reduce((a, r) => a + n(r.remaining), 0) - localBuys.filter((p) => String(p.customerId || "") === id).reduce((a, p) => a + n(p.remaining), 0);
     return { ...c, bal };
-  }), [customers, sales, repairs]);
+  }), [customers, sales, repairs, localBuys]);
 
   const customer = summary.find((c) => String(c._id) === customerId);
   const mySales = sales.filter((s) => String(s.customerId || "") === customerId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
@@ -58,7 +59,7 @@ function LedgerContent() {
           <div className={styles.stats}>
             <div className={styles.stat}><small>Kul bill (sale + repair)</small><b>Rs. {money(billed)}</b></div>
             <div className={styles.stat}><small>Wasool / Paid</small><b>Rs. {money(paid)}</b></div>
-            <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}</b></div>
+            <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}{bal < 0 ? " (humein dene)" : ""}</b></div>
           </div>
           <div className={styles.bar} style={{ marginTop: 0 }}>
             <button className={styles.alt} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
