@@ -452,7 +452,7 @@ export default function POS() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  useThermalFit(".receipt", "saleReceiptPage", 80, !!(done || preview) && printSize !== "a4" && printSize !== "a5", true);
+  useThermalFit(".receipt", "saleReceiptPage", 72, !!(done || preview) && printSize !== "a4" && printSize !== "a5");
   useEffect(() => { if (done && printSize) { const t = window.setTimeout(() => window.print(), 400); return () => window.clearTimeout(t); } }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (done) {
