@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import ReceivingSlip from "../ReceivingSlip";
+import { useThermalFit } from "@/lib/thermalFit";
 import NotebookEntryForm, { type NotebookEntry } from "../NotebookEntryForm";
 import NotebookVoucher from "../NotebookVoucher";
 import RepairParts from "../RepairParts";
@@ -20,6 +21,7 @@ const localDateTime = (value: string) => {
 
 function RepairDetailPage() {
   const { id } = useParams<{ id: string }>();
+  useThermalFit("article[aria-label=\"Customer copy mobile receiving slip\"]", "receivingSlipPage", 76);
   const [repair, setRepair] = useState<any>(null);
   const [customerBalance, setCustomerBalance] = useState(0);
   const [reminders, setReminders] = useState<any[]>([]);

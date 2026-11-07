@@ -41,4 +41,5 @@
 @page saleReceiptPage { size: auto; margin: 0; }
 @media print {
   .thermal { page: saleReceiptPage; max-width: none; margin: 0; padding: 3mm 4mm !important; border-radius: 0; }
+  :global(body) :global(main):has(.thermal) { padding: 0 !important; margin: 0 !important; min-height: 0 !important; height: auto !important; }
 }

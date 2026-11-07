@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useThermalFit } from "@/lib/thermalFit";
 import Link from "next/link";
 import SaleReceipt from "../components/SaleReceipt";
 import styles from "./pos.module.css";
@@ -451,6 +452,7 @@ export default function POS() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+  useThermalFit(".receipt", "saleReceiptPage", 80, !!(done || preview) && printSize !== "a4" && printSize !== "a5", true);
   useEffect(() => { if (done && printSize) { const t = window.setTimeout(() => window.print(), 400); return () => window.clearTimeout(t); } }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (done) {
