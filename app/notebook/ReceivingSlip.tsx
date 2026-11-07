@@ -2,7 +2,6 @@ import ShopLogoText from "@/app/components/ShopLogoText";
 import { SHOP } from "@/lib/shop";
 import { QRCodeSVG } from "qrcode.react";
 import styles from "./notebook.module.css";
-import { SHOPKEEPER_OPTIONS, SHOP_PHONES } from "../../lib/shopOptions";
 
 type RepairSlipData = {
   tokenNo: string;
@@ -22,7 +21,6 @@ type RepairSlipData = {
 };
 
 const accessoryOptions = ["SIM", "Memory Card", "Simtray", "Battery"];
-const mobileTypes = ["Keypad", "Android", "iPhone"];
 
 function dateTime(value: string | Date) {
   const date = new Date(value);
@@ -44,9 +42,8 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
   const otherAccessories = (repair.accessories || []).filter((item) => !accessoryOptions.includes(item) && item !== "Other");
   const hasOtherAcc = received.has("Other") || otherAccessories.length > 0;
   const keeper = (repair.shopkeeper || "").trim();
-  const keeperOther = keeper && !SHOPKEEPER_OPTIONS.includes(keeper) ? keeper : "";
-  const phone = repair.shopPhone && SHOP_PHONES.includes(repair.shopPhone) ? repair.shopPhone : repair.shopPhone || SHOP_PHONES[0];
-  const box = (on: boolean) => <i className={styles.rsBox}>{on ? "✓" : ""}</i>;
+  const phone = (repair.shopPhone || "").trim();
+  const box = (on: boolean) => <i className={styles.rsBox}>{on && <svg viewBox="0 0 24 24" aria-label="checked"><path d="M3.5 12.5l5.5 5.5L20.5 5.5" fill="none" stroke="#000" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" /></svg>}</i>;
 
   return <article className={styles.receivingSlip} aria-label="Customer copy mobile receiving slip">
     <header className={styles.rsHead}>
@@ -74,11 +71,10 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
         <div><dt>Customer Name</dt><dd>{repair.customerName || "-"}</dd></div>
         <div><dt>Customer Phone</dt><dd>{repair.customerPhone || "-"}</dd></div>
         <div><dt>Mobile Model</dt><dd>{repair.model || "-"}</dd></div>
-        <div><dt>Mobile Type</dt><dd className={styles.rsTypes}>{mobileTypes.map((t) => <span key={t}>{box(repair.mobileType === t)} {t}</span>)}{repair.mobileType && !mobileTypes.includes(repair.mobileType) && <span>{box(true)} {repair.mobileType}</span>}</dd></div>
+        <div><dt>Mobile Type</dt><dd>{repair.mobileType || "-"}</dd></div>
         <div><dt>Fault / Problem</dt><dd>{repair.fault || "-"}</dd></div>
         <div><dt>Condition</dt><dd>{repair.condition || "-"}</dd></div>
       </dl>
-      <div className={`${styles.rsPhone} ${styles.rsDark}`}><b>{(repair.model || "").split(" ")[0]}</b><span>{(repair.model || "").split(" ").slice(1).join(" ")}</span></div>
     </div>
 
     <div className={styles.rsAcc}>
@@ -107,12 +103,11 @@ export default function ReceivingSlip({ repair }: { repair: RepairSlipData }) {
         <b>Shop Address:</b>
         <strong>{SHOP.short}</strong>
         <span>{repair.shopAddress || SHOP.address}</span>
-        <div className={styles.rsPhoneRow}><b>Shop Phone:</b><strong>{phone}</strong></div>
       </div>
       <div className={styles.rsKeeper}>
         <b>Shopkeeper:</b>
-        {SHOPKEEPER_OPTIONS.map((name) => <span key={name}>{box(keeper === name)} {name}</span>)}
-        <span>{box(!!keeperOther)} Other: <u>{keeperOther}</u></span>
+        <strong>{keeper || "-"}</strong>
+        {phone && <div className={styles.rsPhoneRow}><strong>{phone}</strong></div>}
       </div>
     </div>
     <div className={styles.rsFoot}>Quality Service | Happy Customers</div>

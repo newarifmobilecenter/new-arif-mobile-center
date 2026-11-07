@@ -377,7 +377,7 @@ export default function POS() {
   function showTemporaryBill() {
     if (!items.length) return alert("Pehle item select karein.");
     setPreview({
-      saleType: customer ? "customer" : "cash", type: saleType, cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"), date,
+      saleType: customer ? "customer" : "cash", priceLevel: level, type: saleType, cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"), date,
       items: items.map((i) => ({ ...i, total: Number(i.qty || 0) * Number(i.price || 0) * (1 - Number(i.discountPct || 0) / 100) })),
       subtotal, discountAmount, salesTaxValue, grandTotal: subtotal, total: netTotal, netTotal, paid: paidAmount, remaining, paymentMethod: pay, createdAt: new Date().toISOString(),
       ...(customer ? { prevBalance: currentBalance } : {}),
@@ -398,6 +398,7 @@ export default function POS() {
     const sale = {
       invoiceNo,
       saleType: customer ? "customer" : "cash",
+      priceLevel: level,
       type: saleType,
       customerId: customer || null,
       cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"),
@@ -431,7 +432,7 @@ export default function POS() {
     const saved = await response.json();
     if (!response.ok) return alert(saved.error || "Sale failed");
 
-    setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : saved);
+    setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : { ...sale, ...saved });
     await load();
   }
 

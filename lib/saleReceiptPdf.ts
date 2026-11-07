@@ -1,6 +1,6 @@
 import { SHOP } from "./shop";
 import { jsPDF } from "jspdf";
-import { SHOP_PHONES } from "./shopOptions";
+import { billPhones } from "./shopOptions";
 import { groupItems, warrantyFlags, shortItemName } from "./saleReceiptUtil";
 
 const W = 80, M = 4, CW = W - M * 2;
@@ -103,7 +103,7 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
   y += 2; bar("--- CUSTOMER COPY ---", 9.5, 6.2); y += 4.5;
   pdf.setFont("helvetica", "bold"); pdf.setFontSize(9); txt(SHOP.short, W / 2, y, { align: "center" }); y += 3.8;
   pdf.setFontSize(7); txt(SHOP.address, W / 2, y, { align: "center" }); y += 3.4;
-  pdf.setFontSize(6.2); txt(SHOP_PHONES.join(" | "), W / 2, y, { align: "center" }); y += 3.6;
+  pdf.setFontSize(6.2); txt(billPhones(sale?.priceLevel), W / 2, y, { align: "center" }); y += 3.6;
   pdf.setLineWidth(0.25); pdf.line(M, y, W - M, y); y += 3.4;
   pdf.setFont("helvetica", "bolditalic"); pdf.setFontSize(6.2);
   const f: string[] = pdf.splitTextToSize("Bill dikhaye baghair warranty nahi. Shukriya! | Quality Service | Happy Customers", CW);

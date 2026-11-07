@@ -1,7 +1,7 @@
 import ShopLogoText from "@/app/components/ShopLogoText";
 import { SHOP } from "@/lib/shop";
 import styles from "./saleReceipt.module.css";
-import { SHOP_PHONES } from "../../lib/shopOptions";
+import { billPhones } from "../../lib/shopOptions";
 import { BATTERY, PANEL, itemCategory, shortItemName } from "../../lib/saleReceiptUtil";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
@@ -75,7 +75,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
     <div className={styles.shop}>
       <b>{SHOP.short}</b>
       <span>{SHOP.address}</span>
-      <span>{SHOP_PHONES.join(" | ")}</span>
+      <span>{billPhones(sale?.priceLevel)}</span>
     </div>
     <div className={styles.foot}>Bill dikhaye baghair warranty nahi. Shukriya! | Quality Service | Happy Customers</div>
   </div>;
