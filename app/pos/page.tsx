@@ -100,8 +100,8 @@ export default function POS() {
       fetch("/api/repairs?status=DELIVERED&unbilled=1").then((r) => r.json()).catch(() => []),
     ]).then(([a, b]) => setReadyRepairs([...readyList(a), ...readyList(b)].sort((x: any, y: any) => String(y.updatedAt || "").localeCompare(String(x.updatedAt || ""))))).catch(() => {});
     const [p, c, s, r, lb] = await Promise.all([
-      fetch("/api/data?collection=products").then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
-      fetch("/api/data?collection=customers").then(async (r) => {
+      fetch("/api/data?collection=products", { cache: "no-store" }).then((r) => r.json()).then((d:any)=>Array.isArray(d)?d:[]),
+      fetch("/api/data?collection=customers", { cache: "no-store" }).then(async (r) => {
         const d = await r.json().catch(() => null);
         if (!r.ok) { setLoadError(d?.error || "Customers load nahi ho sakay."); return []; }
         setLoadError("");
@@ -117,6 +117,15 @@ export default function POS() {
     setRepairRecords(Array.isArray(r) ? r : []);
     setLocalBuys(lb);
   };
+
+  // New Item / New Customer dusre tab mein save ho to is tab par wapas aate hi lists khud refresh ho jayen (bill nahi bigarta).
+  useEffect(() => {
+    let last = 0;
+    const refresh = () => { if (document.visibilityState === "hidden" || Date.now() - last < 1500) return; last = Date.now(); void load(); };
+    window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh);
+    return () => { window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     void load();

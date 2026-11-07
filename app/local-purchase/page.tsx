@@ -39,6 +39,13 @@ export default function LocalPurchase() {
     setCustomers(c); setProducts(p); setSales(s); setRepairs(r); setHistory(h.filter((x: any) => x.kind === "LOCAL"));
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    let last = 0;
+    const refresh = () => { if (document.visibilityState === "hidden" || Date.now() - last < 1500) return; last = Date.now(); void load(); };
+    window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh);
+    return () => { window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const customer = customers.find((c) => String(c._id) === customerId);
   const due = useMemo(() => customerId ? sales.filter((x) => String(x.customerId || "") === customerId && x.status !== "cancelled").reduce((a, x) => a + n(x.remaining), 0) + repairs.filter((x) => String(x.customerId || "") === customerId).reduce((a, x) => a + n(x.remaining), 0) : 0, [customerId, sales, repairs]);

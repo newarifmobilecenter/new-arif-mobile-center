@@ -50,13 +50,21 @@ export default function Purchases() {
   const loadNo = () => fetch("/api/counters?type=purchase", { cache: "no-store" }).then(r => r.json()).then(d => setPurchaseNo(d.next || "")).catch(() => {});
   const loadAll = async () => {
     const [p, s, pu] = await Promise.all([
-      fetch("/api/data?collection=products&limit=5000").then(arr).catch(() => []),
-      fetch("/api/data?collection=suppliers&limit=5000").then(arr).catch(() => []),
+      fetch("/api/data?collection=products&limit=5000", { cache: "no-store" }).then(arr).catch(() => []),
+      fetch("/api/data?collection=suppliers&limit=5000", { cache: "no-store" }).then(arr).catch(() => []),
       fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => []),
     ]);
     setProducts(p); setSuppliers(s); setPurchases(pu);
   };
   useEffect(() => { void loadAll(); void loadNo(); }, []);
+  // New Item / New Supplier dusre tab mein save ho to wapas aate hi lists khud refresh (bill ki lines nahi chhedti).
+  useEffect(() => {
+    let last = 0;
+    const refresh = () => { if (document.visibilityState === "hidden" || Date.now() - last < 1500) return; last = Date.now(); void loadAll(); };
+    window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh);
+    return () => { window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const subtotal = useMemo(() => lines.reduce((t, l) => t + (l.productId ? n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100) : 0), 0), [lines]);
   const totalQty = lines.reduce((t, l) => t + (l.productId ? n(l.qty) : 0), 0);
