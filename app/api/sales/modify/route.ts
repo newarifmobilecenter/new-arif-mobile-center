@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
 import { getSession, hasRole } from "@/lib/auth";
+import { customerBalance } from "@/lib/vouchers";
+import { REPAIR_COLLECTION } from "@/lib/repairs";
 
 const num = (v: any) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
@@ -63,6 +65,21 @@ export async function POST(req: NextRequest) {
         const history = Array.isArray(sale.modifications) ? sale.modifications : [];
         history.push({ at: new Date(), by: user.u, prevTotal: sale.total, prevPaid: sale.paid });
         await d.collection("sales").updateOne({ _id: sale._id }, { $set: { ...fields, items: normalized, subtotal, discountAmount, lineDiscountAmount, globalDiscountAmount, discountPct, freight, salesTaxValue, salesTaxPct, grandTotal: subtotal, total: netTotal, netTotal, paid, remaining, status: remaining > 0 ? "credit" : "paid", modifications: history, updatedAt: new Date() } }, { session });
+        // Billed repair ka baqi ab bill (sale) ke zimme hai: repair ko naye customer se jodein aur double ginti na ho.
+        const newCust = "customerId" in body ? (body.customerId || null) : (sale.customerId || null);
+        for (const item of normalized) {
+          if (!item.repairId || !ObjectId.isValid(String(item.repairId))) continue;
+          const rep = await d.collection(REPAIR_COLLECTION).findOne({ _id: new ObjectId(String(item.repairId)) }, { session });
+          if (!rep) continue;
+          const set: Record<string, unknown> = { updatedAt: new Date() };
+          if (Number(rep.remaining || 0) > 0) { set.billedRemaining = Number(rep.remaining); set.remaining = 0; }
+          if (newCust) { set.customerId = String(newCust); set.walkingId = null; }
+          await d.collection(REPAIR_COLLECTION).updateOne({ _id: rep._id }, { $set: set }, { session });
+        }
+        if (newCust && ObjectId.isValid(String(newCust))) {
+          const bal = Math.round((await customerBalance(d, String(newCust), session)) * 100) / 100;
+          await d.collection("sales").updateOne({ _id: sale._id }, { $set: { prevBalance: Math.round((bal - remaining) * 100) / 100, newBalance: bal } }, { session });
+        }
         const tx = d.collection("transactions");
         const old = await tx.findOne({ ref: sale.invoiceNo, type: "IN", note: "Sale" }, { session });
         if (old && paid > 0) await tx.updateOne({ _id: old._id }, { $set: { amount: paid, account: (body.paymentMethod || old.account || "Cash"), customerId: body.customerId || null } }, { session });

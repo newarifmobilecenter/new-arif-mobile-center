@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
 
       // Repair lines: fitted parts leave stock now (they were only reserved until billing).
       const billedRepairs: ObjectId[] = [];
+      const billedRemaining: Record<string, number> = {};
       for (const item of normalizedItems) {
         if (!item.repairId) continue;
         if (!ObjectId.isValid(String(item.repairId))) throw new Error("Invalid repair on bill.");
@@ -111,12 +112,13 @@ export async function POST(req: NextRequest) {
           await products.updateOne({ _id: prod._id }, { $set: { stock: Math.max(0, Number(prod.stock || 0) - q), updatedAt: new Date() } }, { session });
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
         }
+        billedRemaining[String(repair._id)] = Math.max(0, Number(repair.remaining || 0));
         billedRepairs.push(repair._id);
       }
 
       // Bill se pehle customer ka baqaya (pichla hisab), taake bill par Previous / Current Balance chhap sake.
       let prevBalance: number | null = null;
-      if (body.customerId && ObjectId.isValid(String(body.customerId))) prevBalance = Math.round((await customerBalance(d, String(body.customerId), session)) * 100) / 100;
+      if (body.customerId && ObjectId.isValid(String(body.customerId))) prevBalance = Math.round((await customerBalance(d, String(body.customerId), session) - Object.values(billedRemaining).reduce((a, x) => a + x, 0)) * 100) / 100;
       const newBalance = prevBalance === null ? null : Math.round((prevBalance + remaining) * 100) / 100;
       balances = { prevBalance, newBalance };
       const sale = {
@@ -142,7 +144,7 @@ export async function POST(req: NextRequest) {
       };
       delete (sale as any)._id;
       saved = await sales.insertOne(sale, { session });
-      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, billedAt: new Date() } }, { session });
+      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, remaining: 0, billedRemaining: billedRemaining[String(rid)] || 0, billedAt: new Date() } }, { session });
 
       if (paid > 0) {
         await transactions.insertOne({

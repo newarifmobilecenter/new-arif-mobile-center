@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             await d.collection("products").updateOne({ _id: new ObjectId(String(part.productId)) }, { $inc: { stock: q }, $set: { updatedAt: new Date() } }, { session });
             await d.collection("stockMovements").insertOne({ type: "IN", productId: String(part.productId), qty: q, reason: `Sale cancelled: repair ${repair.tokenNo}`, ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
           }
-          await d.collection(REPAIR_COLLECTION).updateOne({ _id: repair._id }, { $set: { billedSaleId: null, billedInvoiceNo: null }, $unset: { billedAt: "" } }, { session });
+          await d.collection(REPAIR_COLLECTION).updateOne({ _id: repair._id }, { $set: { billedSaleId: null, billedInvoiceNo: null, ...(Number(repair.billedRemaining || 0) > 0 ? { remaining: Number(repair.billedRemaining) } : {}) }, $unset: { billedAt: "", billedRemaining: "" } }, { session });
         }
         const paid = Number(sale.paid || 0);
         if (paid > 0) {
