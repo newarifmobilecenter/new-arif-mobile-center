@@ -67,7 +67,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
 
     {(hasBattery || hasPanel) && <div className={styles.warr}>
       <b>WARRANTY</b>
-      {hasBattery && <p>Battery: <strong>7 days</strong> warranty — sirf battery timing (backup) ki. Physical damage / pani / ghalat istemal covered nahi.</p>}
+      {hasBattery && <p>Battery: Sirf battery ki timing (backup) ki <strong>7 din</strong> ki warranty hai. Toot phoot, pani ya ghalat istemal par warranty nahi.</p>}
       {hasPanel && <p>Panel / Display: <strong>koi warranty ya guarantee nahi.</strong> Check karke lein.</p>}
     </div>}
 

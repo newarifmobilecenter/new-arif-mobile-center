@@ -90,7 +90,7 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
   if (wf.battery || wf.panel) {
     y += 1.5;
     const lines: string[] = [];
-    if (wf.battery) lines.push(...pdf.splitTextToSize("Battery: 7 days warranty - sirf battery timing (backup) ki. Physical damage / pani / ghalat istemal covered nahi.", CW - 4));
+    if (wf.battery) lines.push(...pdf.splitTextToSize("Battery: Sirf battery ki timing (backup) ki 7 din ki warranty hai. Toot phoot, pani ya ghalat istemal par warranty nahi.", CW - 4));
     if (wf.panel) lines.push(...pdf.splitTextToSize("Panel / Display: koi warranty ya guarantee nahi. Check karke lein.", CW - 4));
     const h = 5.5 + lines.length * 3.2;
     pdf.setLineWidth(0.4); pdf.roundedRect(M, y, CW, h, 1.2, 1.2, "S");
