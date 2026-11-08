@@ -1,4 +1,5 @@
 import type { ClientSession, Db } from "mongodb";
+import { ObjectId } from "mongodb";
 import { nextNumber } from "./counters";
 import { REPAIR_COLLECTION } from "./repairs";
 
@@ -14,10 +15,13 @@ export async function createVoucher(d: Db, v: { kind: VoucherKind; partyType: st
 // What a saved customer owes right now: unpaid sales + unpaid repairs.
 export async function customerBalance(d: Db, customerId: string, session?: ClientSession) {
   const o = session ? { session } : undefined;
-  const sales = await d.collection("sales").find({ customerId, status: { $ne: "cancelled" }, remaining: { $gt: 0 } }, o).toArray();
-  const reps = await d.collection(REPAIR_COLLECTION).find({ recordType: "REPAIR", deletedAt: null, customerId, remaining: { $gt: 0 } }, o).toArray();
+  // customerId kahin string aur kahin ObjectId ke tor par save ho sakta hai; dono match karein (Customers page jaisa hisab).
+  const ids: any[] = [customerId];
+  try { if (ObjectId.isValid(customerId)) ids.push(new ObjectId(customerId)); } catch {}
+  const sales = await d.collection("sales").find({ customerId: { $in: ids }, status: { $ne: "cancelled" } }, o).toArray();
+  const reps = await d.collection(REPAIR_COLLECTION).find({ recordType: "REPAIR", deletedAt: null, customerId: { $in: ids } }, o).toArray();
   // Local purchase: customer se maal liya, jo paisa humein dena baqi hai wo minus (-) mein jata hai.
-  const local = await d.collection("purchases").find({ kind: "LOCAL", customerId, remaining: { $gt: 0 } }, o).toArray();
+  const local = await d.collection("purchases").find({ kind: "LOCAL", customerId: { $in: ids }, remaining: { $gt: 0 } }, o).toArray();
   return sales.reduce((a, x) => a + Number(x.remaining || 0), 0) + reps.reduce((a, x) => a + Number(x.remaining || 0), 0) - local.reduce((a, x) => a + Number(x.remaining || 0), 0);
 }
 
