@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule } from "@/lib/autoRules";
+import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
@@ -35,8 +35,20 @@ export default function Settings() {
       const saved = o.find((x: any) => x.type === AUTO_RULES_TYPE);
       if (saved) { setRuleId(String(saved._id)); if (Array.isArray(saved.rules) && saved.rules.length) setRules(saved.rules); }
       const bs = o.find((x: any) => x.type === BRAND_RULES_TYPE);
-      if (bs) { setBrandRuleId(String(bs._id)); if (Array.isArray(bs.rules)) setBrandRules(bs.rules); }
-      setBrandNames(o.filter((x: any) => x.type === "brand").map((x: any) => String(x.name || "").trim()).filter(Boolean));
+      if (bs) setBrandRuleId(String(bs._id));
+      const optBrands = o.filter((x: any) => x.type === "brand").map((x: any) => String(x.name || "").trim()).filter(Boolean);
+      setBrandNames(optBrands);
+      // Pehle se maujood brands (Samsung, Vivo waghera + products/options wale) bhi list mein dikhayein, taake keywords manual set ho saken.
+      const merge = (prods: any[]) => {
+        const saved: BrandRule[] = bs && Array.isArray(bs.rules) ? bs.rules : [];
+        const known = new Set(saved.map(r => String(r.brand || "").trim().toLowerCase()));
+        const names = [...DEFAULT_BRANDS, ...optBrands, ...prods.map(p => String(p.brand || "").trim())].filter(b => b && !/^(other|universal)$/i.test(b));
+        const extra: BrandRule[] = [];
+        for (const n of names) { const k = n.toLowerCase(); if (known.has(k)) continue; known.add(k); extra.push({ id: `b-${k.replace(/[^a-z0-9]/g, "")}`, brand: n, keywords: "" }); }
+        setBrandRules([...saved, ...extra]);
+      };
+      merge([]);
+      fetch("/api/data?collection=products&limit=5000", { cache: "no-store" }).then(arr).then(merge).catch(() => {});
       setCats(Array.from(new Set(o.filter((x: any) => x.type === "category").map((x: any) => String(x.name || "")))).filter(Boolean) as string[]);
     }).catch(() => {});
   }, []);

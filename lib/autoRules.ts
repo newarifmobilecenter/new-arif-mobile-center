@@ -73,3 +73,5 @@ export function matchBrandRule(name: string, rules: BrandRule[]) {
   }
   return "";
 }
+
+export const DEFAULT_BRANDS = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone"];
