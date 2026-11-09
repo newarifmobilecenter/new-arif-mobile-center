@@ -25,6 +25,7 @@ export default function Settings() {
   const [brandNames, setBrandNames] = useState<string[]>([]);
   const [brandMsg, setBrandMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [brandTest, setBrandTest] = useState("");
+  const [newBrandIds, setNewBrandIds] = useState<string[]>([]);
   const hitIdx = testName.trim() ? rules.findIndex(r => ruleMatches(r, testName)) : -1;
 
   useEffect(() => {
@@ -158,14 +159,28 @@ export default function Settings() {
       {brandTest.trim() && <div style={{ fontWeight: 700, color: brandHit ? "#4ade80" : "#f87171" }}>{brandHit ? `Brand select hoga → ${brandHit}` : "Is naam par koi brand rule nahi lagi (purani auto detection chalegi)."}</div>}
       <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
         {brandRules.map(r => <div key={r.id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <input className="input" style={{ flex: "1 1 160px" }} value={r.brand} onChange={e => updBrand(r.id, { brand: e.target.value })} placeholder="Brand (jaise Huawei)" />
+          {(() => {
+            const list = Array.from(new Set([...brandNames, ...brandRules.map(x => x.brand.trim())].filter(Boolean))).sort((a, b) => a.localeCompare(b));
+            const isNew = newBrandIds.includes(r.id) || (!!r.brand && !list.some(b => b.toLowerCase() === r.brand.trim().toLowerCase()));
+            return <div style={{ flex: "1 1 200px", display: "grid", gap: 6 }}>
+              <select className="input" value={isNew ? "__new__" : (list.find(b => b.toLowerCase() === r.brand.trim().toLowerCase()) || "")} onChange={e => {
+                if (e.target.value === "__new__") { setNewBrandIds(c => [...c, r.id]); updBrand(r.id, { brand: "" }); }
+                else { setNewBrandIds(c => c.filter(x => x !== r.id)); updBrand(r.id, { brand: e.target.value }); }
+              }}>
+                <option value="">— Brand chunein —</option>
+                {list.map(b => <option key={b} value={b}>{b}</option>)}
+                <option value="__new__">➕ Naya brand banayein…</option>
+              </select>
+              {isNew && <input className="input" value={r.brand} onChange={e => updBrand(r.id, { brand: e.target.value })} placeholder="Naye brand ka naam (jaise Huawei)" autoFocus />}
+            </div>;
+          })()}
           <input className="input" style={{ flex: "2 1 240px" }} value={r.keywords} onChange={e => updBrand(r.id, { keywords: e.target.value })} placeholder="Extra keywords (optional): y9, nova" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
           <button className="btn" type="button" onClick={() => setBrandRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button>
         </div>)}
         {!brandRules.length && <p style={{ color: "#94a3b8", fontSize: 13 }}>Abhi koi manual brand nahi hai. ➕ dabayein.</p>}
       </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-        <button className="btn" type="button" onClick={() => setBrandRules(cur => [...cur, { id: `b-${Date.now()}`, brand: "", keywords: "" }])}>➕ Naya Brand</button>
+        <button className="btn" type="button" onClick={() => { const id = `b-${Date.now()}`; setNewBrandIds(c => [...c, id]); setBrandRules(cur => [...cur, { id, brand: "", keywords: "" }]); }}>➕ Naya Brand</button>
         <button className="btn green" type="button" onClick={() => void saveBrandRules()}>Save Brands</button>
       </div>
       {brandMsg && <p role="status" style={{ color: brandMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{brandMsg.text}</p>}
