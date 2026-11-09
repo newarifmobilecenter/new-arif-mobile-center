@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches } from "@/lib/autoRules";
+import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
@@ -20,6 +20,11 @@ export default function Settings() {
   const [cats, setCats] = useState<string[]>([]);
   const [newCat, setNewCat] = useState<string[]>([]);
   const [testName, setTestName] = useState("");
+  const [brandRules, setBrandRules] = useState<BrandRule[]>([]);
+  const [brandRuleId, setBrandRuleId] = useState("");
+  const [brandNames, setBrandNames] = useState<string[]>([]);
+  const [brandMsg, setBrandMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [brandTest, setBrandTest] = useState("");
   const hitIdx = testName.trim() ? rules.findIndex(r => ruleMatches(r, testName)) : -1;
 
   useEffect(() => {
@@ -28,6 +33,9 @@ export default function Settings() {
     fetch("/api/data?collection=productOptions&limit=5000", { cache: "no-store" }).then(arr).then(o => {
       const saved = o.find((x: any) => x.type === AUTO_RULES_TYPE);
       if (saved) { setRuleId(String(saved._id)); if (Array.isArray(saved.rules) && saved.rules.length) setRules(saved.rules); }
+      const bs = o.find((x: any) => x.type === BRAND_RULES_TYPE);
+      if (bs) { setBrandRuleId(String(bs._id)); if (Array.isArray(bs.rules)) setBrandRules(bs.rules); }
+      setBrandNames(o.filter((x: any) => x.type === "brand").map((x: any) => String(x.name || "").trim()).filter(Boolean));
       setCats(Array.from(new Set(o.filter((x: any) => x.type === "category").map((x: any) => String(x.name || "")))).filter(Boolean) as string[]);
     }).catch(() => {});
   }, []);
@@ -52,6 +60,30 @@ export default function Settings() {
       setRuleMsg({ text: "Auto-select rules save ho gaye. Add Product page refresh karein.", ok: true });
     } catch (e: any) { setRuleMsg({ text: e?.message || "Rules save nahi hue.", ok: false }); }
   }
+
+  async function saveBrandRules() {
+    try {
+      const clean = brandRules.map(r => ({ ...r, brand: r.brand.trim(), keywords: r.keywords.trim() })).filter(r => r.brand);
+      const payload = { collection: "productOptions", type: BRAND_RULES_TYPE, name: "Brand select rules", rules: clean };
+      const r = await fetch("/api/data", { method: brandRuleId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(brandRuleId ? { ...payload, id: brandRuleId } : payload) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Save nahi hua");
+      if (!brandRuleId && d._id) setBrandRuleId(String(d._id));
+      // Naya brand Make / Brand ki list mein bhi shamil karein (sab categories ke liye), taake dropdown mein nazar aaye.
+      const have = new Set(brandNames.map(b => b.toLowerCase()));
+      const added: string[] = [];
+      for (const br of clean) {
+        if (have.has(br.brand.toLowerCase())) continue;
+        const x = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "productOptions", type: "brand", name: br.brand, category: "" }) });
+        if (x.ok) { added.push(br.brand); have.add(br.brand.toLowerCase()); }
+      }
+      if (added.length) setBrandNames(cur => [...cur, ...added]);
+      setBrandRules(clean);
+      setBrandMsg({ text: "Brand selection save ho gayi. Add Product page refresh karein.", ok: true });
+    } catch (e: any) { setBrandMsg({ text: e?.message || "Save nahi hua.", ok: false }); }
+  }
+  const updBrand = (id: string, patch: Partial<BrandRule>) => setBrandRules(cur => cur.map(r => r.id === id ? { ...r, ...patch } : r));
+  const brandHit = brandTest.trim() ? matchBrandRule(brandTest, brandRules) : "";
 
   const upd = (id: string, patch: Partial<AutoRule>) => setRules(cur => cur.map(r => r.id === id ? { ...r, ...patch } : r));
   const move = (i: number, d: number) => setRules(cur => { const j = i + d; if (j < 0 || j >= cur.length) return cur; const n = [...cur]; [n[i], n[j]] = [n[j], n[i]]; return n; });
@@ -117,6 +149,26 @@ export default function Settings() {
         <button className="btn" type="button" onClick={() => { if (window.confirm("Sab rules default par wapas ho jayengi. Save Rules dabane tak change nahi hota. Theek hai?")) setRules(DEFAULT_RULES.map(r => ({ ...r }))); }}>Default par wapas</button>
       </div>
       {ruleMsg && <p role="status" style={{ color: ruleMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{ruleMsg.text}</p>}
+    </div>
+
+    <div className="panel"><h2>🏷️ Brand Selection (Add Product)</h2>
+      <p style={{ color: "#94a3b8", fontSize: 13 }}>Product ke naam mein yeh lafz likhein to Make / Brand khud select ho. Brand ka apna naam khud keyword hai (jaise Huawei likhne se Huawei). Extra lafz comma (,) se alag karein, jaise: y9, nova, mate.</p>
+      <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likhein
+        <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={brandTest} onChange={e => setBrandTest(e.target.value)} placeholder="jaise: huawei y9 panel" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+      {brandTest.trim() && <div style={{ fontWeight: 700, color: brandHit ? "#4ade80" : "#f87171" }}>{brandHit ? `Brand select hoga → ${brandHit}` : "Is naam par koi brand rule nahi lagi (purani auto detection chalegi)."}</div>}
+      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+        {brandRules.map(r => <div key={r.id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <input className="input" style={{ flex: "1 1 160px" }} value={r.brand} onChange={e => updBrand(r.id, { brand: e.target.value })} placeholder="Brand (jaise Huawei)" />
+          <input className="input" style={{ flex: "2 1 240px" }} value={r.keywords} onChange={e => updBrand(r.id, { keywords: e.target.value })} placeholder="Extra keywords (optional): y9, nova" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+          <button className="btn" type="button" onClick={() => setBrandRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button>
+        </div>)}
+        {!brandRules.length && <p style={{ color: "#94a3b8", fontSize: 13 }}>Abhi koi manual brand nahi hai. ➕ dabayein.</p>}
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+        <button className="btn" type="button" onClick={() => setBrandRules(cur => [...cur, { id: `b-${Date.now()}`, brand: "", keywords: "" }])}>➕ Naya Brand</button>
+        <button className="btn green" type="button" onClick={() => void saveBrandRules()}>Save Brands</button>
+      </div>
+      {brandMsg && <p role="status" style={{ color: brandMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{brandMsg.text}</p>}
     </div>
 
     <div className="panel"><h2>🏪 Shop</h2>

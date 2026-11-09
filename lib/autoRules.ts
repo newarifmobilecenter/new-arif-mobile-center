@@ -57,3 +57,19 @@ export function detectBrand(name: string, brandList: string[]) {
 }
 
 export const AUTO_RULES_TYPE = "autoRules";
+
+// Brand Selection (Settings): product name mein keyword aaye to Make / Brand khud select ho.
+export type BrandRule = { id: string; brand: string; keywords: string };
+export const BRAND_RULES_TYPE = "brandRules";
+
+/** First brand rule whose brand name or any keyword appears as a word (prefix) in the product name. */
+export function matchBrandRule(name: string, rules: BrandRule[]) {
+  const toks = tokens(name);
+  for (const r of rules) {
+    const brand = String(r.brand || "").trim();
+    if (!brand) continue;
+    const kws = [brand, ...String(r.keywords || "").split(",")].map(k => k.trim().toLowerCase()).filter(Boolean);
+    if (kws.some(k => (/\s/.test(k) ? name.toLowerCase().includes(k) : toks.some(t => t === k || (k.length >= 4 && t.startsWith(k)))))) return brand;
+  }
+  return "";
+}
