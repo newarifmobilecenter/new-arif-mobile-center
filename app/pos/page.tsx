@@ -661,7 +661,7 @@ export default function POS() {
         </div>
 
         <section className={styles.bottomArea}>
-          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span className={styles.costBox}>Cost: <b>{costItem ? `Rs. ${money(costItem.cost)}` : "—"}</b>{costItem ? <small> {costItem.name}{costItem.qty > 1 ? ` · ${costItem.qty} × = Rs. ${money(costItem.cost * costItem.qty)}` : ""}</small> : null}</span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>
+          <div className={styles.statusBox}><i>Status:</i><strong>{items.length ? " READY" : " NEW"}</strong><span>T.Qty: <b>{totalQty}</b></span><span className={styles.costBox}>Cost: <b>{costItem ? `Rs. ${money(costItem.cost)}` : "—"}</b>{costItem ? <small title={costItem.name}> {String(costItem.name).length > 24 ? `${String(costItem.name).slice(0, 24)}…` : costItem.name}{costItem.qty > 1 ? ` · ${costItem.qty} × = Rs. ${money(costItem.cost * costItem.qty)}` : ""}</small> : null}</span><span>Price: {level === "cost" ? "Purchase Cost" : level === "last" ? "Customer Last Level" : `Level ${level}`}</span></div>
           <div className={styles.calcGrid}>
             <label>Grand Total<input value={money(subtotal)} readOnly /></label>
             <label>Freight<input type="number" value={freight} onChange={(e) => setFreight(e.target.value)} /></label>
