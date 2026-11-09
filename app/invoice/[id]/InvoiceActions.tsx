@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import SaleReceipt from "../../components/SaleReceipt";
 import { makeSalePdf } from "../../../lib/saleReceiptPdf";
+import { elementToPngBlob } from "../../../lib/domToPng";
 
 const makePdf = (invoice: any) => makeSalePdf(invoice, invoice.customerName, invoice.customerPhone);
 
@@ -41,14 +42,34 @@ export default function InvoiceActions({ invoice: orig }: any) {
       if (e?.name !== "AbortError") alert("PDF/WhatsApp sharing failed. PDF download can be used instead.");
     } finally { setBusy(false); }
   }
+  async function whatsappImage() {
+    setBusy(true);
+    try {
+      const el = document.getElementById("invoice-receipt")?.firstElementChild as HTMLElement | null;
+      if (!el) throw new Error("receipt not found");
+      const blob = await elementToPngBlob(el, 2);
+      const file = new File([blob], `${invoice.invoiceNo || "invoice"}.png`, { type: "image/png" });
+      const text = `${SHOP.nameUpper}\nInvoice ${invoice.invoiceNo || "-"}\nTotal Rs. ${invoice.total}`;
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: invoice.invoiceNo || "Invoice", text, files: [file] });
+      } else {
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = file.name; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        location.href = "https://wa.me/?text=" + encodeURIComponent(text + "\nImage saved on this device. Attach the image in WhatsApp.");
+      }
+    } catch (e: any) {
+      if (e?.name !== "AbortError") { console.error("img share", e); alert("Image sharing failed. PDF ya Print use karein."); }
+    } finally { setBusy(false); }
+  }
   return <>
     <div className="nav no-print">
       <Link href="/invoices">← Invoices</Link>
       <button className="btn" onClick={downloadPdf} disabled={busy}>📄 Download PDF</button>
       <button className="btn" onClick={() => print()} disabled={busy}>🖨 Print</button>
       <button className="btn green" onClick={whatsapp} disabled={busy}>📲 WhatsApp PDF</button>
+      <button className="btn green" onClick={whatsappImage} disabled={busy}>🖼 WhatsApp Image</button>
       {canPrev && <label style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 8 }}><input type="checkbox" checked={showPrev} onChange={(e) => setShowPrev(e.target.checked)} /> Previous Balance dikhao</label>}
     </div>
-    <SaleReceipt sale={invoice} customerName={invoice.customerName} customerPhone={invoice.customerPhone} />
+    <div id="invoice-receipt"><SaleReceipt sale={invoice} customerName={invoice.customerName} customerPhone={invoice.customerPhone} /></div>
   </>;
 }
