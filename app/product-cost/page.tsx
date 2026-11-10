@@ -13,7 +13,7 @@ export default function ProductCostPage() {
   const [lines, setLines] = useState<CostLine[]>([blankLine()]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  useEffect(() => { fetch("/api/data?collection=products&limit=5000").then(r => r.json()).then(rows => setProducts(Array.isArray(rows) ? rows : [])).catch(() => setMessage("Products load nahi ho sakay.")); }, []);
+  useEffect(() => { fetch("/api/data?collection=products&limit=20000").then(r => r.json()).then(rows => setProducts(Array.isArray(rows) ? rows : [])).catch(() => setMessage("Products load nahi ho sakay.")); }, []);
 
   function update(id: string, changes: Partial<CostLine>) { setLines(current => current.map(line => line.id === id ? { ...line, ...changes } : line)); }
   function selectProduct(lineId: string, product: any) {
@@ -32,7 +32,7 @@ export default function ProductCostPage() {
       }
       setMessage(`${filled.length} product cost update ho gayi.`);
       setLines([blankLine()]);
-      const response = await fetch("/api/data?collection=products&limit=5000");
+      const response = await fetch("/api/data?collection=products&limit=20000");
       const rows = await response.json(); setProducts(Array.isArray(rows) ? rows : []);
     } catch (error: any) { setMessage(error?.message || "Cost update save nahi hui."); }
     finally { setBusy(false); }

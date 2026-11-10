@@ -35,7 +35,7 @@ export default function LocalPurchase() {
   const slipOf = (h: any) => ({ invoiceNo: h.invoiceNo, date: h.createdAt || new Date().toISOString(), customerName: h.supplierName || customers.find((c) => String(c._id) === String(h.customerId))?.name || "", phone: (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phone || (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phoneNo || "", items: h.items || [], total: h.total, paid: h.paid, adjusted: h.adjusted, remaining: h.remaining, prevBalance: h.prevBalance, newBalance: h.newBalance, account: h.paymentMethod || "Cash", note: h.note || "" });
 
   const load = async () => {
-    const [c, p, s, r, h] = await Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=products&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=purchases&limit=5000").then(arr)]);
+    const [c, p, s, r, h] = await Promise.all([fetch("/api/data?collection=customers&limit=20000").then(arr), fetch("/api/data?collection=products&limit=20000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=purchases&limit=5000").then(arr)]);
     setCustomers(c); setProducts(p); setSales(s); setRepairs(r); setHistory(h.filter((x: any) => x.kind === "LOCAL"));
   };
   useEffect(() => { void load(); }, []);

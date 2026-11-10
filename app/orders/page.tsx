@@ -48,7 +48,7 @@ export default function OrderBook() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const [o, p] = await Promise.all([fetch("/api/orders", { cache: "no-store" }).then(arr), fetch("/api/data?collection=products&limit=5000").then(arr)]);
+    const [o, p] = await Promise.all([fetch("/api/orders", { cache: "no-store" }).then(arr), fetch("/api/data?collection=products&limit=20000").then(arr)]);
     setOrders(o); setProducts(p);
   };
   useEffect(() => {

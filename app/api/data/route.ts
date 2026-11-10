@@ -19,7 +19,9 @@ export async function GET(req: NextRequest) {
     if (!allowed.includes(c)) return NextResponse.json({error:"Invalid collection"}, {status:400});
     if (adminOnly.has(c) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
     const d = await db();
-    const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || 1000), 5000);
+    // Master lists (products, customers...) poori dikhni chahiyen: pehle default 1000 tha, is liye 1000 se zyada products mein purane products list se gayab dikhte the (data delete nahi hota tha).
+    const bigLists = new Set(["products", "customers", "suppliers", "productOptions"]);
+    const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") || (bigLists.has(c) ? 20000 : 1000)), 20000);
     const filter: Record<string, unknown> = c === "sales" && req.nextUrl.searchParams.get("includeCancelled") !== "1" ? { status: { $ne: "cancelled" } } : {};
     const rows = await d.collection(c).find(filter).sort({createdAt:-1}).limit(limit).toArray();
     return NextResponse.json(rows.map(x=>({...x,_id:x._id.toString()})));

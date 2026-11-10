@@ -26,8 +26,8 @@ export default function SaleReturns() {
 
   const arr = (r: Response) => r.json().then((d) => (Array.isArray(d) ? d : []));
   const load = () => Promise.all([
-    fetch("/api/data?collection=customers&limit=5000", { cache: "no-store" }).then(arr),
-    fetch("/api/data?collection=products&limit=5000", { cache: "no-store" }).then(arr),
+    fetch("/api/data?collection=customers&limit=20000", { cache: "no-store" }).then(arr),
+    fetch("/api/data?collection=products&limit=20000", { cache: "no-store" }).then(arr),
     fetch("/api/data?collection=sales&limit=5000", { cache: "no-store" }).then(arr),
     fetch("/api/data?collection=returns&limit=5000", { cache: "no-store" }).then(arr),
   ]).then(([c, p, s, r]) => { setCustomers(c); setProducts(p); setSales(s); setReturns(r.filter((x: any) => x.type === "SALE_RETURN")); }).catch(() => {});

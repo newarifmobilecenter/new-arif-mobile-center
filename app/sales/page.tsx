@@ -15,7 +15,7 @@ export default function Sales() {
   const load = async () => {
     const [s, c] = await Promise.all([
       fetch("/api/data?collection=sales&limit=5000&includeCancelled=1").then(arr).catch(() => []),
-      fetch("/api/data?collection=customers&limit=5000").then(arr).catch(() => []),
+      fetch("/api/data?collection=customers&limit=20000").then(arr).catch(() => []),
     ]);
     setRows(s); setCustomers(c);
   };

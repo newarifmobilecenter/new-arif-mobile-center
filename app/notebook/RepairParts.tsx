@@ -19,7 +19,7 @@ export default function RepairParts({ repair, onSaved }: { repair: any; onSaved:
   const editable = !billed && ["RECEIVED", "IN_REPAIR", "READY"].includes(repair.status);
 
   useEffect(() => {
-    fetch("/api/data?collection=products&limit=5000").then((r) => r.json()).then((d) => setProducts(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch("/api/data?collection=products&limit=20000").then((r) => r.json()).then((d) => setProducts(Array.isArray(d) ? d : [])).catch(() => {});
     fetch(`/api/reservations?exclude=${encodeURIComponent(repair._id)}`).then((r) => r.json()).then((d) => setHolds(d && !d.error ? d : {})).catch(() => {});
   }, [repair._id, repair.parts]);
 

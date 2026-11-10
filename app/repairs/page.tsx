@@ -48,7 +48,7 @@ export default function Repairs() {
   }, [q, from, to, customerId, status]);
 
   useEffect(() => {
-    fetch("/api/data?collection=customers&limit=5000")
+    fetch("/api/data?collection=customers&limit=20000")
       .then((response) => response.ok ? response.json() : [])
       .then((data) => setCustomers(Array.isArray(data) ? data : []))
       .catch(() => setCustomers([]));

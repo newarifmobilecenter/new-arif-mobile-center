@@ -45,9 +45,9 @@ export default function Vouchers() {
 
   const load = async () => {
     const [v, c, s, p, r, sp, w] = await Promise.all([
-      fetch("/api/data?collection=vouchers&limit=300").then(arr), fetch("/api/data?collection=customers&limit=5000").then(arr),
+      fetch("/api/data?collection=vouchers&limit=300").then(arr), fetch("/api/data?collection=customers&limit=20000").then(arr),
       fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/data?collection=purchases&limit=5000").then(arr),
-      fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=suppliers&limit=5000").then(arr), fetch("/api/walking").then(arr),
+      fetch("/api/repairs?status=PAYMENT_DUE").then(arr).catch(() => []), fetch("/api/data?collection=suppliers&limit=20000").then(arr), fetch("/api/walking").then(arr),
     ]);
     setVouchers(v); setCustomers(c); setSales(s); setPurchases(p); setRepairs(r); setSuppliers(sp); setWalking(w);
   };

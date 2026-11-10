@@ -48,7 +48,7 @@ export default function Settings() {
         setBrandRules([...saved, ...extra]);
       };
       merge([]);
-      fetch("/api/data?collection=products&limit=5000", { cache: "no-store" }).then(arr).then(merge).catch(() => {});
+      fetch("/api/data?collection=products&limit=20000", { cache: "no-store" }).then(arr).then(merge).catch(() => {});
       setCats(Array.from(new Set(o.filter((x: any) => x.type === "category").map((x: any) => String(x.name || "")))).filter(Boolean) as string[]);
     }).catch(() => {});
   }, []);

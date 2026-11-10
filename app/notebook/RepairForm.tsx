@@ -66,7 +66,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/data?collection=customers&limit=5000").then((response) => response.json()),
+      fetch("/api/data?collection=customers&limit=20000").then((response) => response.json()),
       fetch("/api/repairs/meta").then((response) => response.json()),
     ]).then(([customerData, shopData]) => {
       setCustomers(Array.isArray(customerData) ? customerData : []);
@@ -78,7 +78,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
   }, []);
 
   useEffect(() => {
-    fetch("/api/data?collection=products&limit=5000").then((r) => r.json()).then((d) => setProducts(Array.isArray(d) ? d : [])).catch(() => {});
+    fetch("/api/data?collection=products&limit=20000").then((r) => r.json()).then((d) => setProducts(Array.isArray(d) ? d : [])).catch(() => {});
     fetch("/api/reservations").then((r) => r.json()).then((d) => setHolds(d && !d.error ? d : {})).catch(() => {});
   }, []);
 

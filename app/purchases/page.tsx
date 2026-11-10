@@ -50,8 +50,8 @@ export default function Purchases() {
   const loadNo = () => fetch("/api/counters?type=purchase", { cache: "no-store" }).then(r => r.json()).then(d => setPurchaseNo(d.next || "")).catch(() => {});
   const loadAll = async () => {
     const [p, s, pu] = await Promise.all([
-      fetch("/api/data?collection=products&limit=5000", { cache: "no-store" }).then(arr).catch(() => []),
-      fetch("/api/data?collection=suppliers&limit=5000", { cache: "no-store" }).then(arr).catch(() => []),
+      fetch("/api/data?collection=products&limit=20000", { cache: "no-store" }).then(arr).catch(() => []),
+      fetch("/api/data?collection=suppliers&limit=20000", { cache: "no-store" }).then(arr).catch(() => []),
       fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => []),
     ]);
     setProducts(p); setSuppliers(s); setPurchases(pu);

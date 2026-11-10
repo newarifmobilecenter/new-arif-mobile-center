@@ -66,7 +66,7 @@ export default function NotebookEntryForm({ entry, initialCustomerId = "", onSav
   const remainingPreview = Math.max(0, Number(form.amount || 0) - Number(form.paid || 0));
 
   useEffect(() => {
-    fetch("/api/data?collection=customers&limit=5000")
+    fetch("/api/data?collection=customers&limit=20000")
       .then((response) => response.ok ? response.json() : [])
       .then((data) => setCustomers(Array.isArray(data) ? data : []))
       .catch(() => setCustomers([]));

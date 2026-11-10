@@ -22,7 +22,7 @@ function LedgerContent() {
 
   useEffect(() => {
     try { setCustomerId(new URLSearchParams(window.location.search).get("customer") || ""); } catch {}
-    void Promise.all([fetch("/api/data?collection=customers&limit=5000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr), fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => [])])
+    void Promise.all([fetch("/api/data?collection=customers&limit=20000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr), fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => [])])
       .then(([c, s, r, t, pu]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setLocalBuys(pu.filter((x: any) => x.kind === "LOCAL")); setLoading(false); });
   }, []);
 
