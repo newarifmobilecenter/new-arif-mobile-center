@@ -113,6 +113,7 @@ export default function AuthNavigation() {
   }
 
   return <header className="appAuthBar no-print">
+    <div className="appAuthDua" lang="ar" dir="rtl"><span>بِسْمِ اللّٰهِ الرَّحْمَٰنِ الرَّحِيمِ</span><span>إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ</span></div>
     <div className="appAuthInner">
       <Link className="appAuthBrand" href={session.authenticated ? "/" : "/login"}>{SHOP.nameUpper}</Link>
       <div className="appAuthActions">
