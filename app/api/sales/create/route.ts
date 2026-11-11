@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
       // Repair lines: fitted parts leave stock now (they were only reserved until billing).
       const billedRepairs: ObjectId[] = [];
       const billedRemaining: Record<string, number> = {};
+      const salePaidInFull = Number(body.remaining || 0) <= 0;
       for (const item of normalizedItems) {
         if (!item.repairId) continue;
         if (!ObjectId.isValid(String(item.repairId))) throw new Error("Invalid repair on bill.");
@@ -144,7 +145,7 @@ export async function POST(req: NextRequest) {
       };
       delete (sale as any)._id;
       saved = await sales.insertOne(sale, { session });
-      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, remaining: 0, billedRemaining: billedRemaining[String(rid)] || 0, billedAt: new Date() } }, { session });
+      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, remaining: 0, billedRemaining: billedRemaining[String(rid)] || 0, billedPaidAdd: salePaidInFull ? (billedRemaining[String(rid)] || 0) : 0, ...(salePaidInFull ? { paymentStatus: "PAID" } : {}), billedAt: new Date() }, ...(salePaidInFull && (billedRemaining[String(rid)] || 0) > 0 ? { $inc: { paid: billedRemaining[String(rid)] } } : {}) }, { session });
 
       if (paid > 0) {
         await transactions.insertOne({

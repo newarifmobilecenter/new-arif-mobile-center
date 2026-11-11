@@ -87,6 +87,20 @@ export default function POS() {
   const [showHeld, setShowHeld] = useState(false);
   const [heldBills, setHeldBills] = useState<HeldBill[]>([]);
   const [done, setDone] = useState<any>(null);
+  // Sawal wala dialog (Yes/No jaise options) — promise ke zariye jawab milta hai.
+  const [dlg, setDlg] = useState<null | { title: string; text?: string; options: { label: string; cls?: string }[]; resolve: (i: number) => void }>(null);
+  const askChoice = (title: string, options: { label: string; cls?: string }[], text?: string) => new Promise<number>(resolve => setDlg({ title, text, options, resolve }));
+  const dlgEl = dlg ? (
+    <div className={`no-print ${styles.dlgBack}`} role="dialog" aria-modal="true">
+      <div className={styles.dlgBox}>
+        <h3>{dlg.title}</h3>
+        {dlg.text && <p>{dlg.text}</p>}
+        <div className={styles.dlgBtns}>
+          {dlg.options.map((o, i) => <button key={o.label} autoFocus={i === 0} className={`btn ${o.cls || ""}`} type="button" onClick={() => { const r = dlg.resolve; setDlg(null); r(i); }}>{o.label}</button>)}
+        </div>
+      </div>
+    </div>
+  ) : null;
   const [preview, setPreview] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
@@ -405,11 +419,21 @@ export default function POS() {
     if (saleType === "CREDIT" && !customer) return alert("Credit Sale ke liye Customer select karein.");
     if (saleType === "CASH" && !customer && !cashRef) setCashRef("WALKING CUSTOMER");
 
+    // Repair ka bill ho to pooch lein: customer ne payment kar di ya baqi hai.
+    let forcePaid: boolean | null = null;
+    if (!editId && items.some((it: any) => it.repairId)) {
+      const a = await askChoice("Repair ki payment?", [{ label: "✅ Payment mil gayi (Paid)", cls: "green" }, { label: "⏳ Remaining / Baqi" }], "Customer ne repair ki payment kar di hai ya baqi hai?");
+      forcePaid = a === 0;
+      if (!forcePaid && !customer) return alert("Remaining (udhar) ke liye pehle Customer select karein.");
+    }
+    const paidNow = forcePaid === true ? netTotal : forcePaid === false ? Number(paid || 0) : paidAmount;
+    const remainingNow = Math.max(0, netTotal - paidNow);
+
     const sale = {
       invoiceNo,
       saleType: customer ? "customer" : "cash",
       priceLevel: level,
-      type: saleType,
+      type: forcePaid === false && customer ? "CREDIT" : saleType,
       customerId: customer || null,
       cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"),
       custRef: custRef || null,
@@ -427,10 +451,10 @@ export default function POS() {
       grandTotal: subtotal,
       total: netTotal,
       netTotal,
-      paid: paidAmount,
-      remaining,
+      paid: paidNow,
+      remaining: remainingNow,
       paymentMethod: pay,
-      status: remaining > 0 ? "credit" : "paid",
+      status: remainingNow > 0 ? "credit" : "paid",
       createdAt: new Date().toISOString(),
     };
 
@@ -442,8 +466,16 @@ export default function POS() {
     const saved = await response.json();
     if (!response.ok) return alert(saved.error || "Sale failed");
 
+    let doPrint = !!printSize;
+    if (!printSize) {
+      const pr = await askChoice("Invoice print karna hai?", [{ label: "Yes (Print)", cls: "green" }, { label: "No" }], "Do You Want To Print Invoice?");
+      if (pr === 0) { doPrint = true; setPrintSize("thermal"); }
+    }
     setDone(editId ? { ...sale, ...saved, invoiceNo: saved.invoiceNo || sale.invoiceNo } : { ...sale, ...saved });
     await load();
+    if (doPrint) await new Promise<void>(res => { const f = () => { window.removeEventListener("afterprint", f); res(); }; window.addEventListener("afterprint", f); window.setTimeout(f, 120000); });
+    const nw = await askChoice("Naya invoice banana hai?", [{ label: "Yes (New Invoice)", cls: "green" }, { label: "No" }], "Do You Want To Make New Invoice?");
+    if (nw === 0) window.location.assign("/pos");
   }
 
   const completeRef = useRef(complete); completeRef.current = complete;
@@ -458,6 +490,7 @@ export default function POS() {
   if (done) {
     return (
       <main className="shell">
+        {dlgEl}
         {printSize === "a4" && <style>{`@media print{@page{size:A4;margin:12mm}.receipt{width:100%!important;max-width:none!important}}`}</style>}
         {printSize === "a5" && <style>{`@media print{@page{size:A5;margin:10mm}.receipt{width:100%!important;max-width:none!important}}`}</style>}
         <div className="nav no-print">
@@ -524,6 +557,7 @@ export default function POS() {
 
   return (
     <main className="shell">
+      {dlgEl}
       <div className={styles.saleWindow}>
         <header className={styles.topBar}>
           <Link href="/" className={styles.toolLink}>← Dashboard</Link>
