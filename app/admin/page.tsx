@@ -80,6 +80,8 @@ export default function Admin() {
     ...(["category", "brandType", "productGroup", "itemType"].includes(type) ? rules.map(r => String((r as any)[type] || "").trim()).filter(Boolean) : []),
     ...options.filter(option => option.type === type && (!option.category || option.category === category)).map(option => String(option.name || "").trim()).filter(Boolean),
     ...products.filter(product => product[type] && (!category || type === "category" || product.category === category)).map(product => String(product[type]).trim()).filter(Boolean),
+    // Auto-select hua (ya pehle se chuna hua) brand/type dropdown mein hamesha nazar aaye, chahe wo is category ki list mein na ho.
+    ...(type !== "category" && category === form.category && (form as any)[type] ? [String((form as any)[type]).trim()] : []),
   ]));
 
   const filtered = useMemo(() => {

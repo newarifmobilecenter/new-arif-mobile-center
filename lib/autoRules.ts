@@ -46,9 +46,12 @@ export function applyRules(name: string, rules: AutoRule[]) {
   return rules.find(r => ruleMatches(r, name)) || null;
 }
 
+// Aam mobile brands: agar list mein na bhi hon to naam se pehchan liye jate hain.
+export const KNOWN_BRANDS = ["Nokia", "Huawei", "Xiaomi", "Redmi", "Poco", "Honor", "Motorola", "Sony", "LG", "HTC", "Lenovo", "Asus", "Google", "Alcatel", "ZTE", "QMobile", "Realme", "Nothing", "Tecno", "Infinix", "Itel", "Vivo", "Oppo", "OnePlus", "Samsung", "Meizu", "Micromax", "Gionee", "Blackview", "Ulefone", "Doogee", "Oukitel", "Cubot", "Hotwav", "G'Five", "Voice", "Haier", "TCL", "Sparx", "Rivo", "Jazz", "Dany", "Maxfone"];
+
 export function detectBrand(name: string, brandList: string[]) {
   if (/\b(iphone|apple)\b/i.test(name)) return "iPhone";
-  const sorted = [...brandList].filter(b => b && !/^(other|universal)$/i.test(b)).sort((a, b) => b.length - a.length);
+  const sorted = [...brandList, ...KNOWN_BRANDS.filter(k => !brandList.some(b => b.toLowerCase() === k.toLowerCase()))].filter(b => b && !/^(other|universal)$/i.test(b)).sort((a, b) => b.length - a.length);
   for (const b of sorted) {
     const esc = b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     if (new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`, "i").test(name)) return b;
