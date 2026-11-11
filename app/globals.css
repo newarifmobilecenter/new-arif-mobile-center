@@ -140,14 +140,6 @@ h1{font-size:30px;margin:2px 0 6px}
 .loginCard button:disabled{opacity:.7}
 @media (max-height:560px){.loginBrand{display:none}}
 
-/* Themes (screen only): shift hue of the whole blue UI */
-html[data-theme="emerald"]{filter:hue-rotate(-75deg)}
-html[data-theme="purple"]{filter:hue-rotate(55deg)}
-html[data-theme="sunset"]{filter:hue-rotate(150deg) saturate(1.15)}
-html[data-theme="rose"]{filter:hue-rotate(115deg)}
-html[data-theme="light"]{filter:invert(1) hue-rotate(180deg)}
-@media print{html[data-theme]{filter:none!important}}
-
 /* Helpline watermark: slim strip at the bottom of every page */
 .helplineMark{position:fixed;left:0;right:0;bottom:0;z-index:2;pointer-events:none;display:flex;justify-content:center}
 .helplineMark span{padding:2px 14px;border-radius:8px 8px 0 0;background:rgba(9,13,24,.85);border:1px solid #26304a;border-bottom:0;font-size:12px;font-weight:700;letter-spacing:.08em;color:#7dd3fc;user-select:none}
@@ -248,3 +240,137 @@ body:has(.dashFoot) .helplineMark{display:none}
 .ruleHead button{min-width:40px;height:36px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e5e7eb;cursor:pointer;font-size:16px}
 .ruleCard label{display:grid;gap:4px;font-size:13px;color:#94a3b8;font-weight:600}
 .ruleCard .input,.ruleCard select{width:100%;box-sizing:border-box;min-height:42px;font-size:16px}
+
+/* Themes (screen only). Palette per theme: html filter shifts the whole UI, and the global surfaces below are pre-compensated so they land exactly on the designed colours. */
+html[data-theme="emerald"]{--hr:-45deg;filter:hue-rotate(-45deg)}
+html[data-theme="emerald"] body{background:radial-gradient(1100px 520px at 12% -8%,#133546,transparent 62%),radial-gradient(900px 480px at 100% 0,#13354688,transparent 60%),#061115}
+html[data-theme="emerald"] .panel,html[data-theme="emerald"] .card,html[data-theme="emerald"] .hero,html[data-theme="emerald"] .dashboardMenu,html[data-theme="emerald"] .dashFoot,html[data-theme="emerald"] .appAuthBar{background:#0d212b;border-color:#1e4e63}
+html[data-theme="emerald"] .hero{background:linear-gradient(135deg,#122e3b,#0d212b)}
+html[data-theme="emerald"] .input,html[data-theme="emerald"] select,html[data-theme="emerald"] textarea{background:#122e3b;border-color:#1e4e63}
+html[data-theme="emerald"] .card:hover,html[data-theme="emerald"] .dashboardAction:hover{border-color:#49c3f4}
+html[data-theme="emerald"] .eyebrow,html[data-theme="emerald"] .go,html[data-theme="emerald"] .nav a,html[data-theme="emerald"] .dashFoot a,html[data-theme="emerald"] .dashFootHelp,html[data-theme="emerald"] .table a{color:#49c3f4}
+html[data-theme="emerald"] .btn{background:linear-gradient(135deg,#1a6b98,#2aa7e1)}
+html[data-theme="emerald"] .appAuthButton{border-color:#49c3f4;background:#122e3b}
+html[data-theme="emerald"] .dashboardShortcuts{background:linear-gradient(110deg,#122e3b,#1a6b9866)}
+html[data-theme="emerald"] .dashboardAction{background:#122e3b;border-color:#1e4e63}
+html[data-theme="emerald"] .table thead th,html[data-theme="emerald"] table thead th{background:#0d212b}
+html[data-theme="emerald"]
+html[data-theme="emerald"] .btn.green,
+html[data-theme="emerald"] .btn.red,
+html[data-theme="emerald"] [class*="Green"],
+html[data-theme="emerald"] [class*="_green"],
+html[data-theme="emerald"] [class*="Red"],
+html[data-theme="emerald"] [class*="_red"],
+html[data-theme="emerald"] [class*="danger"],
+html[data-theme="emerald"] [class*="Danger"],
+html[data-theme="emerald"] [class*="success"],
+html[data-theme="emerald"] [class*="Success"],
+html[data-theme="emerald"] [class*="warning"],
+html[data-theme="emerald"] [class*="Warning"],
+html[data-theme="emerald"] [class*="toast_"]{filter:hue-rotate(45deg)}
+html[data-theme="purple"]{--hr:75deg;filter:hue-rotate(75deg)}
+html[data-theme="purple"] body{background:radial-gradient(1100px 520px at 12% -8%,#003040,transparent 62%),radial-gradient(900px 480px at 100% 0,#00304088,transparent 60%),#000d10}
+html[data-theme="purple"] .panel,html[data-theme="purple"] .card,html[data-theme="purple"] .hero,html[data-theme="purple"] .dashboardMenu,html[data-theme="purple"] .dashFoot,html[data-theme="purple"] .appAuthBar{background:#00181e;border-color:#004a58}
+html[data-theme="purple"] .hero{background:linear-gradient(135deg,#00232a,#00181e)}
+html[data-theme="purple"] .input,html[data-theme="purple"] select,html[data-theme="purple"] textarea{background:#00232a;border-color:#004a58}
+html[data-theme="purple"] .card:hover,html[data-theme="purple"] .dashboardAction:hover{border-color:#68c0d8}
+html[data-theme="purple"] .eyebrow,html[data-theme="purple"] .go,html[data-theme="purple"] .nav a,html[data-theme="purple"] .dashFoot a,html[data-theme="purple"] .dashFootHelp,html[data-theme="purple"] .table a{color:#68c0d8}
+html[data-theme="purple"] .btn{background:linear-gradient(135deg,#0076a2,#0062dd)}
+html[data-theme="purple"] .appAuthButton{border-color:#68c0d8;background:#00232a}
+html[data-theme="purple"] .dashboardShortcuts{background:linear-gradient(110deg,#00232a,#0076a266)}
+html[data-theme="purple"] .dashboardAction{background:#00232a;border-color:#004a58}
+html[data-theme="purple"] .table thead th,html[data-theme="purple"] table thead th{background:#00181e}
+html[data-theme="purple"]
+html[data-theme="purple"] .btn.green,
+html[data-theme="purple"] .btn.red,
+html[data-theme="purple"] [class*="Green"],
+html[data-theme="purple"] [class*="_green"],
+html[data-theme="purple"] [class*="Red"],
+html[data-theme="purple"] [class*="_red"],
+html[data-theme="purple"] [class*="danger"],
+html[data-theme="purple"] [class*="Danger"],
+html[data-theme="purple"] [class*="success"],
+html[data-theme="purple"] [class*="Success"],
+html[data-theme="purple"] [class*="warning"],
+html[data-theme="purple"] [class*="Warning"],
+html[data-theme="purple"] [class*="toast_"]{filter:hue-rotate(-75deg)}
+html[data-theme="sunset"]{--hr:170deg;filter:hue-rotate(170deg)}
+html[data-theme="sunset"] body{background:radial-gradient(1100px 520px at 12% -8%,#063552,transparent 62%),radial-gradient(900px 480px at 100% 0,#06355288,transparent 60%),#020c11}
+html[data-theme="sunset"] .panel,html[data-theme="sunset"] .card,html[data-theme="sunset"] .hero,html[data-theme="sunset"] .dashboardMenu,html[data-theme="sunset"] .dashFoot,html[data-theme="sunset"] .appAuthBar{background:#07161f;border-color:#144161}
+html[data-theme="sunset"] .hero{background:linear-gradient(135deg,#0c202c,#07161f)}
+html[data-theme="sunset"] .input,html[data-theme="sunset"] select,html[data-theme="sunset"] textarea{background:#0c202c;border-color:#144161}
+html[data-theme="sunset"] .card:hover,html[data-theme="sunset"] .dashboardAction:hover{border-color:#5cabff}
+html[data-theme="sunset"] .eyebrow,html[data-theme="sunset"] .go,html[data-theme="sunset"] .nav a,html[data-theme="sunset"] .dashFoot a,html[data-theme="sunset"] .dashFootHelp,html[data-theme="sunset"] .table a{color:#5cabff}
+html[data-theme="sunset"] .btn{background:linear-gradient(135deg,#0d84eb,#007e47)}
+html[data-theme="sunset"] .appAuthButton{border-color:#5cabff;background:#0c202c}
+html[data-theme="sunset"] .dashboardShortcuts{background:linear-gradient(110deg,#0c202c,#0d84eb66)}
+html[data-theme="sunset"] .dashboardAction{background:#0c202c;border-color:#144161}
+html[data-theme="sunset"] .table thead th,html[data-theme="sunset"] table thead th{background:#07161f}
+html[data-theme="sunset"]
+html[data-theme="sunset"] .btn.green,
+html[data-theme="sunset"] .btn.red,
+html[data-theme="sunset"] [class*="Green"],
+html[data-theme="sunset"] [class*="_green"],
+html[data-theme="sunset"] [class*="Red"],
+html[data-theme="sunset"] [class*="_red"],
+html[data-theme="sunset"] [class*="danger"],
+html[data-theme="sunset"] [class*="Danger"],
+html[data-theme="sunset"] [class*="success"],
+html[data-theme="sunset"] [class*="Success"],
+html[data-theme="sunset"] [class*="warning"],
+html[data-theme="sunset"] [class*="Warning"],
+html[data-theme="sunset"] [class*="toast_"]{filter:hue-rotate(-170deg)}
+html[data-theme="rose"]{--hr:130deg;filter:hue-rotate(130deg)}
+html[data-theme="rose"] body{background:radial-gradient(1100px 520px at 12% -8%,#002943,transparent 62%),radial-gradient(900px 480px at 100% 0,#00294388,transparent 60%),#010b10}
+html[data-theme="rose"] .panel,html[data-theme="rose"] .card,html[data-theme="rose"] .hero,html[data-theme="rose"] .dashboardMenu,html[data-theme="rose"] .dashFoot,html[data-theme="rose"] .appAuthBar{background:#04151e;border-color:#093b55}
+html[data-theme="rose"] .hero{background:linear-gradient(135deg,#041e28,#04151e)}
+html[data-theme="rose"] .input,html[data-theme="rose"] select,html[data-theme="rose"] textarea{background:#041e28;border-color:#093b55}
+html[data-theme="rose"] .card:hover,html[data-theme="rose"] .dashboardAction:hover{border-color:#5399e9}
+html[data-theme="rose"] .eyebrow,html[data-theme="rose"] .go,html[data-theme="rose"] .nav a,html[data-theme="rose"] .dashFoot a,html[data-theme="rose"] .dashFootHelp,html[data-theme="rose"] .table a{color:#5399e9}
+html[data-theme="rose"] .btn{background:linear-gradient(135deg,#00499e,#1575d9)}
+html[data-theme="rose"] .appAuthButton{border-color:#5399e9;background:#041e28}
+html[data-theme="rose"] .dashboardShortcuts{background:linear-gradient(110deg,#041e28,#00499e66)}
+html[data-theme="rose"] .dashboardAction{background:#041e28;border-color:#093b55}
+html[data-theme="rose"] .table thead th,html[data-theme="rose"] table thead th{background:#04151e}
+html[data-theme="rose"]
+html[data-theme="rose"] .btn.green,
+html[data-theme="rose"] .btn.red,
+html[data-theme="rose"] [class*="Green"],
+html[data-theme="rose"] [class*="_green"],
+html[data-theme="rose"] [class*="Red"],
+html[data-theme="rose"] [class*="_red"],
+html[data-theme="rose"] [class*="danger"],
+html[data-theme="rose"] [class*="Danger"],
+html[data-theme="rose"] [class*="success"],
+html[data-theme="rose"] [class*="Success"],
+html[data-theme="rose"] [class*="warning"],
+html[data-theme="rose"] [class*="Warning"],
+html[data-theme="rose"] [class*="toast_"]{filter:hue-rotate(-130deg)}
+html[data-theme="light"]{--hr:180deg;filter:invert(1) hue-rotate(180deg)}
+html[data-theme="light"] body{background:radial-gradient(1100px 520px at 12% -8%,#0e1a32,transparent 62%),radial-gradient(900px 480px at 100% 0,#0e1a3288,transparent 60%),#080d14}
+html[data-theme="light"] .panel,html[data-theme="light"] .card,html[data-theme="light"] .hero,html[data-theme="light"] .dashboardMenu,html[data-theme="light"] .dashFoot,html[data-theme="light"] .appAuthBar{background:#000000;border-color:#273344}
+html[data-theme="light"] .hero{background:linear-gradient(135deg,#05090f,#000000)}
+html[data-theme="light"] .input,html[data-theme="light"] select,html[data-theme="light"] textarea{background:#05090f;border-color:#273344}
+html[data-theme="light"] .card:hover,html[data-theme="light"] .dashboardAction:hover{border-color:#53b9f1}
+html[data-theme="light"] .eyebrow,html[data-theme="light"] .go,html[data-theme="light"] .nav a,html[data-theme="light"] .dashFoot a,html[data-theme="light"] .dashFootHelp,html[data-theme="light"] .table a{color:#53b9f1}
+html[data-theme="light"] .btn{background:linear-gradient(135deg,#65a3ff,#a79eff)}
+html[data-theme="light"] .appAuthButton{border-color:#53b9f1;background:#05090f}
+html[data-theme="light"] .dashboardShortcuts{background:linear-gradient(110deg,#05090f,#65a3ff66)}
+html[data-theme="light"] .dashboardAction{background:#05090f;border-color:#273344}
+html[data-theme="light"] .table thead th,html[data-theme="light"] table thead th{background:#000000}
+html[data-theme="light"]
+html[data-theme="light"] img,html[data-theme="light"] video{filter:invert(1) hue-rotate(180deg)}
+html[data-theme="light"] .btn.green,
+html[data-theme="light"] .btn.red,
+html[data-theme="light"] [class*="Green"],
+html[data-theme="light"] [class*="_green"],
+html[data-theme="light"] [class*="Red"],
+html[data-theme="light"] [class*="_red"],
+html[data-theme="light"] [class*="danger"],
+html[data-theme="light"] [class*="Danger"],
+html[data-theme="light"] [class*="success"],
+html[data-theme="light"] [class*="Success"],
+html[data-theme="light"] [class*="warning"],
+html[data-theme="light"] [class*="Warning"],
+html[data-theme="light"] [class*="toast_"]{filter:invert(1) hue-rotate(180deg)}
+@media print{html[data-theme]{filter:none!important}}
