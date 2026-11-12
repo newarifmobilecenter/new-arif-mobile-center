@@ -9,9 +9,9 @@
 .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .bar input, .bar select { padding: 7px 9px; border: 1px solid #334155; border-radius: 6px; background: #0f172a; color: #e5e7eb; font-size: 14px; min-width: 0; }
 .bar button { padding: 7px 14px; border-radius: 6px; border: 0; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
-.body { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; align-content: start; }
-.group { border: 1px solid #26304a; border-radius: 10px; background: #0b1220; overflow: hidden; }
-.group h3 { margin: 0; padding: 7px 10px; background: #1e3a8a; font-size: 14px; display: flex; justify-content: space-between; }
+.body { flex: 1 1 auto; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; align-content: start; grid-auto-rows: max-content; }
+.group { border: 1px solid #26304a; border-radius: 10px; background: #0b1220; overflow-x: hidden; overflow-y: auto; max-height: 380px; }
+.group h3 { position: sticky; top: 0; z-index: 1; margin: 0; padding: 7px 10px; background: #1e3a8a; font-size: 14px; display: flex; justify-content: space-between; }
 .row { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-top: 1px solid #1b2440; font-size: 13px; }
 .row b { flex: 1 1 auto; min-width: 0; }
 .sub { display: block; color: #93a4bd; font-size: 11px; font-weight: 400; }
