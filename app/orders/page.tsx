@@ -47,10 +47,18 @@ export default function OrderBook() {
   const [cat, setCat] = useState(CATS[0]);
   const [busy, setBusy] = useState(false);
 
+  const [optCats, setOptCats] = useState<string[]>([]);
   const load = async () => {
-    const [o, p] = await Promise.all([fetch("/api/orders", { cache: "no-store" }).then(arr), fetch("/api/data?collection=products&limit=20000").then(arr)]);
+    const [o, p, opts] = await Promise.all([fetch("/api/orders", { cache: "no-store" }).then(arr), fetch("/api/data?collection=products&limit=20000").then(arr), fetch("/api/data?collection=productOptions&limit=20000", { cache: "no-store" }).then(arr).catch(() => [])]);
     setOrders(o); setProducts(p);
+    setOptCats((opts as any[]).filter((x) => x.type === "category").map((x) => String(x.name || "").trim()).filter(Boolean));
   };
+  // Dropdown mein purani list + New Item mein banai hui sab categories (productOptions aur products ki)
+  const catList = useMemo(() => {
+    const seen = new Set<string>(); const out: string[] = [];
+    for (const c of [...CATS, ...optCats, ...products.map((x: any) => String(x.category || "").trim())]) { const k = c.toLowerCase(); if (c && !seen.has(k)) { seen.add(k); out.push(c); } }
+    return out;
+  }, [optCats, products]);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "stock") setTab("stock");
     void load();
@@ -98,7 +106,7 @@ export default function OrderBook() {
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: naam / C1400 / customer…" style={{ minWidth: 240 }} />
       {tab === "urgent" && <>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: e.g. VIVO Y100 BACK RING" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addManual(); } }} />
-        <select value={cat} onChange={(e) => setCat(e.target.value)}>{CATS.map((c) => <option key={c}>{c}</option>)}</select>
+        <select value={cat} onChange={(e) => setCat(e.target.value)}>{catList.map((c) => <option key={c}>{c}</option>)}</select>
         <button type="button" disabled={busy} onClick={addManual}>＋ Order Book mein daalein</button>
       </>}
       <button type="button" onClick={() => {
