@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
-import { applyRules, detectBrand, matchBrandRule, AUTO_RULES_TYPE, BRAND_RULES_TYPE, DEFAULT_RULES, AutoRule } from "@/lib/autoRules";
+import { applyRules, detectBrand, matchBrandRule, AUTO_RULES_TYPE, BRAND_RULES_TYPE, DEFAULT_RULES, AutoRule, withNewDefaults } from "@/lib/autoRules";
 
 const cats = ["Displays / LCD", "Displays / INCELL / TFT", "Displays LED ORG", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
 const brands = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone", "Universal", "Other"];
@@ -56,7 +56,7 @@ export default function Admin() {
   const [brandManagerTab, setBrandManagerTab] = useState<"new" | "list">("new");
   // Fields the user changed by hand are not auto-filled again from the product name.
   const touched = useRef<Record<string, boolean>>({});
-  const rules: AutoRule[] = useMemo(() => { const saved = options.find(o => o.type === AUTO_RULES_TYPE); return Array.isArray(saved?.rules) && saved.rules.length ? saved.rules : DEFAULT_RULES; }, [options]);
+  const rules: AutoRule[] = useMemo(() => { const saved = options.find(o => o.type === AUTO_RULES_TYPE); return Array.isArray(saved?.rules) && saved.rules.length ? withNewDefaults(saved.rules) : DEFAULT_RULES; }, [options]);
   const [brandDraft, setBrandDraft] = useState("");
   const [brandCategory, setBrandCategory] = useState(cats[0]);
 
@@ -81,7 +81,7 @@ export default function Admin() {
     ...options.filter(option => option.type === type && (!option.category || option.category === category)).map(option => String(option.name || "").trim()).filter(Boolean),
     ...products.filter(product => product[type] && (!category || type === "category" || product.category === category)).map(product => String(product[type]).trim()).filter(Boolean),
     // Auto-select hua (ya pehle se chuna hua) brand/type dropdown mein hamesha nazar aaye, chahe wo is category ki list mein na ho.
-    ...(type !== "category" && category === form.category && (form as any)[type] ? [String((form as any)[type]).trim()] : []),
+    ...(((type === "category") || category === form.category) && (form as any)[type] ? [String((form as any)[type]).trim()] : []),
   ]));
 
   const filtered = useMemo(() => {

@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS } from "@/lib/autoRules";
+import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS, withNewDefaults } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
@@ -33,7 +33,7 @@ export default function Settings() {
     fetch("/api/data?collection=settings&limit=10").then(arr).then(x => { if (x[0]) setS(x[0]); }).catch(() => {});
     fetch("/api/data?collection=productOptions&limit=5000", { cache: "no-store" }).then(arr).then(o => {
       const saved = o.find((x: any) => x.type === AUTO_RULES_TYPE);
-      if (saved) { setRuleId(String(saved._id)); if (Array.isArray(saved.rules) && saved.rules.length) setRules(saved.rules); }
+      if (saved) { setRuleId(String(saved._id)); if (Array.isArray(saved.rules) && saved.rules.length) setRules(withNewDefaults(saved.rules)); }
       const bs = o.find((x: any) => x.type === BRAND_RULES_TYPE);
       if (bs) setBrandRuleId(String(bs._id));
       const optBrands = o.filter((x: any) => x.type === "brand").map((x: any) => String(x.name || "").trim()).filter(Boolean);

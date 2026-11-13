@@ -17,6 +17,7 @@ const parts = (category: string, keywords: string, extra: Partial<AutoRule> = {}
 export const DEFAULT_RULES: AutoRule[] = [
   parts("Charging Ports", "charging,charger,port,pcb,board"),
   parts("Batteries", "batter"),
+  parts("Displays OLED", "oled,amoled"),
   parts("Displays / INCELL / TFT", "incell,tft"),
   parts("Displays LED ORG", "led+org,panel+org,lcd+org,display+org,screen+org,touch+org,panel+original,lcd+original,display+original"),
   parts("Displays / LCD", "panel,lcd,display,screen,touch,folder"),
@@ -78,3 +79,11 @@ export function matchBrandRule(name: string, rules: BrandRule[]) {
 }
 
 export const DEFAULT_BRANDS = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone"];
+
+/** Naye default rules (jaise Displays OLED) jo purani saved rules mein nahi hoti: saved list mein sab se pehle jod dete hain, agar us category ki rule pehle se na ho. */
+export const NEW_DEFAULT_RULE_IDS = ["d-Displays OLED"];
+export function withNewDefaults(saved: AutoRule[]) {
+  const have = new Set(saved.map(r => String(r.category || "").toLowerCase()));
+  const add = DEFAULT_RULES.filter(r => NEW_DEFAULT_RULE_IDS.includes(r.id) && !have.has(r.category.toLowerCase()));
+  return [...add, ...saved];
+}
