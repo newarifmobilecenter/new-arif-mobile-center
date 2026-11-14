@@ -63,6 +63,7 @@ function draw(pdf: jsPDF, sale: any, customerName: string, customerPhone: string
       txt(String(i.qty), cQty, y + 3.3, { align: "right" }); txt(money(i.price), cRate + 3, y + 3.3, { align: "right" });
       txt(money(i.total ?? Number(i.price || 0) * Number(i.qty || 0)), cAmt - 1, y + 3.3, { align: "right" });
       y += 1.2 + lines.length * 3.2;
+      if (Array.isArray((i as any).parts)) for (const x of (i as any).parts) { pdf.setFont("helvetica", "normal"); pdf.setFontSize(6.2); const pl: string[] = pdf.splitTextToSize(`- ${String(x.name || "")} x${x.qty}`, 34); pl.forEach((ln, li) => txt(ln, M + 6, y + 2.2 + li * 2.6)); y += 0.6 + pl.length * 2.6; }
       if (i.imei || i.serial) { pdf.setFontSize(5.5); txt(`IMEI/Serial: ${i.imei || i.serial}`, M + 6, y + 0.6); y += 2.6; }
       pdf.setLineDashPattern([0.4, 0.6], 0); pdf.setLineWidth(0.15); pdf.line(M, y, W - M, y); pdf.setLineDashPattern([], 0); y += 0.8;
     });

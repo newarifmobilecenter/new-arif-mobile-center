@@ -44,7 +44,7 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       {[...groups.entries()].map(([cat, list]) => <tbody key={cat}>
         <tr className={styles.cat}><td colSpan={5}>{cat.toUpperCase()}</td></tr>
         {list.map((i, k) => <tr key={`${cat}-${k}`}>
-          <td>{k + 1}</td><td className={styles.nm}>{shortItemName(i.name)}{i.imei || i.serial ? <small>IMEI/Serial: {i.imei || i.serial}</small> : null}</td>
+          <td>{k + 1}</td><td className={styles.nm}>{shortItemName(i.name)}{Array.isArray(i.parts) ? i.parts.map((x: any, n: number) => <small key={n}>- {String(x.name || "")} x{x.qty}</small>) : null}{i.imei || i.serial ? <small>IMEI/Serial: {i.imei || i.serial}</small> : null}</td>
           <td>{i.qty}</td><td>{money(i.price)}</td><td>{money(i.total ?? Number(i.price || 0) * Number(i.qty || 0))}</td>
         </tr>)}
       </tbody>)}

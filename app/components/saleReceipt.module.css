@@ -19,7 +19,7 @@
 .tbl td { padding: 2px 3px; text-align: right; vertical-align: top; font-weight: 700; border-bottom: 1px dotted #000; }
 .tbl td:nth-child(1), .tbl td.nm { text-align: left; }
 .nm { overflow-wrap: anywhere; }
-.nm small { display: block; font-size: 9px; font-weight: 600; }
+.nm small { display: block; font-size: 9px; font-weight: 600; white-space: normal; }
 .cat td { padding: 3px 4px; border: 1px solid #000; border-left: 0; border-right: 0; background: #e8e8e8; font-size: 10px; font-weight: 900; letter-spacing: .6px; text-align: left !important; }
 .totals { display: grid; gap: 2px; margin-top: 6px; padding-top: 4px; border-top: 1px solid #000; }
 .totals > div { display: flex; justify-content: space-between; font-weight: 700; }

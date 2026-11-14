@@ -23,6 +23,7 @@ type SaleItem = {
   stock?: number;
   isMisc?: boolean;
   repairId?: string;
+  parts?: { name: string; qty: number; cost: number }[];
   category?: string;
 };
 
@@ -218,6 +219,10 @@ export default function POS() {
     const row: any = items[costIdx !== null && costIdx < items.length ? costIdx : items.length - 1];
     if (!row) return null;
     const prod: any = products.find((p: any) => String(p._id) === String(row.productId));
+    if (row.repairId && Array.isArray(row.parts)) {
+      const total = row.parts.reduce((a: number, x: any) => a + Number(x.cost || 0) * Number(x.qty || 1), 0);
+      return { name: `${String(row.name || "")} (parts cost)`, cost: total, qty: 1 };
+    }
     const cost = Number(prod?.costPrice ?? row.costPrice ?? 0);
     return { name: String(row.name || ""), cost, qty: Number(row.qty || 1) };
   }, [items, costIdx, products]);
@@ -544,8 +549,12 @@ export default function POS() {
   const addRepairToSale = (r: any) => {
     if (items.some((i) => i.repairId === String(r._id))) return;
     const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
-    const partNames = (r.parts || []).map((x: any) => x.name).filter(Boolean).join(" + ");
-    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}${partNames ? ` (${partNames})` : ""}`, qty: 1, price: baqi, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
+    // Repair mein lage har product ko alag line mein (naam, qty, cost) rakhein.
+    const parts = (r.parts || []).filter((x: any) => x && x.name).map((x: any) => {
+      const prod: any = products.find((p: any) => String(p._id) === String(x.productId));
+      return { name: String(x.name), qty: Math.max(1, Number(x.qty || 1)), cost: Number(prod?.costPrice || 0) };
+    });
+    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, qty: 1, price: baqi, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
     if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
     notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
   };
@@ -671,7 +680,7 @@ export default function POS() {
               {items.map((item, index) => (
                 <tr key={`${item.productId || "misc"}-${index}`} onFocusCapture={() => setCostIdx(index)} onClick={() => setCostIdx(index)}>
                   <td>{index + 1}</td>
-                  <td><b>{item.name}</b></td>
+                  <td><b>{item.name}</b>{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}</div>)}</td>
                   <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
                   <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
                   <td><NumInput onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchRef.current?.focus(); } }} aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>

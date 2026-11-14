@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     discountPct: num(i.discountPct),
     discountAmount: num(i.qty) * num(i.price) * num(i.discountPct) / 100,
     total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100),
+    ...(Array.isArray(i.parts) ? { parts: i.parts.slice(0, 30).map((x:any) => ({ name: String(x?.name || "").slice(0, 160), qty: Math.max(1, num(x?.qty) || 1), cost: num(x?.cost) })) } : {}),
   }));
 
   body.invoiceNo = await nextNumber(d, "sale");
