@@ -426,12 +426,13 @@ export default function POS() {
 
     // Repair ka bill ho to pooch lein: customer ne payment kar di ya baqi hai.
     let forcePaid: boolean | null = null;
-    if (!editId && items.some((it: any) => it.repairId)) {
+    if (items.some((it: any) => it.repairId)) {
       const a = await askChoice("Repair ki payment?", [{ label: "✅ Payment mil gayi (Paid)", cls: "green" }, { label: "⏳ Remaining / Baqi" }], "Customer ne repair ki payment kar di hai ya baqi hai?");
       forcePaid = a === 0;
       if (!forcePaid && !customer) return alert("Remaining (udhar) ke liye pehle Customer select karein.");
     }
-    const paidNow = forcePaid === true ? netTotal : forcePaid === false ? Number(paid || 0) : paidAmount;
+    // Remaining chunne par: agar Cash Rec poora bill hai (galti se Paid hua tha) to 0 maane, warna jo likha hai wohi (partial).
+    const paidNow = forcePaid === true ? netTotal : forcePaid === false ? (Number(paid || 0) >= netTotal ? 0 : Number(paid || 0)) : paidAmount;
     const remainingNow = Math.max(0, netTotal - paidNow);
 
     const sale = {

@@ -73,6 +73,14 @@ export async function POST(req: NextRequest) {
           if (!rep) continue;
           const set: Record<string, unknown> = { updatedAt: new Date() };
           if (Number(rep.remaining || 0) > 0) { set.billedRemaining = Number(rep.remaining); set.remaining = 0; }
+          // Payment badli ho (Paid <-> Remaining) to repair ka paid/status bhi us ke mutabiq theek karein.
+          const fullyPaid = remaining <= 0;
+          const inc: Record<string, number> = {};
+          const bAdd = Number(rep.billedPaidAdd || 0);
+          const bRem = Number(set.billedRemaining ?? rep.billedRemaining ?? 0);
+          if (bAdd > 0 && !fullyPaid) { inc.paid = -bAdd; set.billedPaidAdd = 0; set.paymentStatus = "PAYMENT_DUE"; }
+          else if (bAdd === 0 && fullyPaid && bRem > 0) { inc.paid = bRem; set.billedPaidAdd = bRem; set.paymentStatus = "PAID"; }
+          if (Object.keys(inc).length) { await d.collection(REPAIR_COLLECTION).updateOne({ _id: rep._id }, { $inc: inc }, { session }); }
           if (newCust) { set.customerId = String(newCust); set.walkingId = null; }
           await d.collection(REPAIR_COLLECTION).updateOne({ _id: rep._id }, { $set: set }, { session });
         }
