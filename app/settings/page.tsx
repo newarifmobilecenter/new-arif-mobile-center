@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS, withNewDefaults } from "@/lib/autoRules";
+import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS, withNewDefaults, catKey } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
@@ -26,6 +26,20 @@ export default function Settings() {
   const [brandMsg, setBrandMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [brandTest, setBrandTest] = useState("");
   const [newBrandIds, setNewBrandIds] = useState<string[]>([]);
+  const [mFrom, setMFrom] = useState("");
+  const [mTo, setMTo] = useState("");
+  const [mMsg, setMMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  async function mergeCats() {
+    if (!mFrom || !mTo || mFrom === mTo) { setMMsg({ text: "Dono alag categories chunein.", ok: false }); return; }
+    if (!window.confirm(`"${mFrom}" ke sab products "${mTo}" mein chale jayenge aur "${mFrom}" category khatam ho jayegi. Koi product delete nahi hota. Theek hai?`)) return;
+    try {
+      const r = await fetch("/api/categories/merge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ from: mFrom, to: mTo }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Merge nahi hui");
+      setMMsg({ text: `Ho gaya: ${d.products} products, ${d.orders} orders, ${d.rules} rules "${mTo}" mein aa gaye. Page refresh ho raha hai…`, ok: true });
+      setTimeout(() => window.location.reload(), 1800);
+    } catch (e: any) { setMMsg({ text: e?.message || "Merge nahi hui.", ok: false }); }
+  }
   const hitIdx = testName.trim() ? rules.findIndex(r => ruleMatches(r, testName)) : -1;
 
   useEffect(() => {
@@ -48,7 +62,7 @@ export default function Settings() {
         setBrandRules([...saved, ...extra]);
       };
       merge([]);
-      fetch("/api/data?collection=products&limit=20000", { cache: "no-store" }).then(arr).then(merge).catch(() => {});
+      fetch("/api/data?collection=products&limit=20000", { cache: "no-store" }).then(arr).then((prods: any[]) => { merge(prods); setCats(cur => Array.from(new Set([...cur, ...prods.map(p => String(p.category || "").trim())])).filter(Boolean)); }).catch(() => {});
       setCats(Array.from(new Set(o.filter((x: any) => x.type === "category").map((x: any) => String(x.name || "")))).filter(Boolean) as string[]);
     }).catch(() => {});
   }, []);
@@ -98,6 +112,7 @@ export default function Settings() {
   const updBrand = (id: string, patch: Partial<BrandRule>) => setBrandRules(cur => cur.map(r => r.id === id ? { ...r, ...patch } : r));
   const brandHit = brandTest.trim() ? matchBrandRule(brandTest, brandRules) : "";
 
+  const catListAll = Array.from(new Set(cats.filter(Boolean))).sort((a, b) => a.localeCompare(b));
   const upd = (id: string, patch: Partial<AutoRule>) => setRules(cur => cur.map(r => r.id === id ? { ...r, ...patch } : r));
   const move = (i: number, d: number) => setRules(cur => { const j = i + d; if (j < 0 || j >= cur.length) return cur; const n = [...cur]; [n[i], n[j]] = [n[j], n[i]]; return n; });
 
@@ -132,7 +147,7 @@ export default function Settings() {
       </div>
       <div className="ruleList">
         {rules.map((r, i) => {
-          const catOptions = Array.from(new Set([...DEFAULT_RULES.map(x => x.category), ...rules.map(x => x.category), ...cats])).filter(Boolean);
+          const catOptions = (() => { const seen = new Set<string>(); const out: string[] = []; for (const c of [...cats, ...rules.map(x => x.category), ...DEFAULT_RULES.map(x => x.category)]) { const k = catKey(c); if (c && !seen.has(k)) { seen.add(k); out.push(c); } } return out; })();
           const custom = !!r.category && !catOptions.includes(r.category) || newCat.includes(r.id);
           return <div className="ruleCard" key={r.id}>
             <div className="ruleHead"><b>Rule {i + 1}</b>
@@ -162,6 +177,16 @@ export default function Settings() {
         <button className="btn" type="button" onClick={() => { if (window.confirm("Sab rules default par wapas ho jayengi. Save Rules dabane tak change nahi hota. Theek hai?")) setRules(DEFAULT_RULES.map(r => ({ ...r }))); }}>Default par wapas</button>
       </div>
       {ruleMsg && <p role="status" style={{ color: ruleMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{ruleMsg.text}</p>}
+    </div>
+
+    <div className="panel"><h2>🧩 Do Categories ko Aik Karein</h2>
+      <p style={{ color: "#94a3b8", fontSize: 13 }}>Agar aik hi category do naam se ban gayi ho (jaise "Displays OLED" aur "Displays / OLED"), to pehli (jo khatam karni hai) aur doosri (jo rakhni hai) chunein. Pehli ke sab products doosri mein chale jayenge. Koi product delete nahi hota. Sirf Admin kar sakta hai.</p>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <select className="input" style={{ flex: "1 1 220px" }} value={mFrom} onChange={e => setMFrom(e.target.value)}><option value="">— Khatam karni hai —</option>{catListAll.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <select className="input" style={{ flex: "1 1 220px" }} value={mTo} onChange={e => setMTo(e.target.value)}><option value="">— Rakhni hai —</option>{catListAll.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <button className="btn green" type="button" onClick={() => void mergeCats()}>Aik Karein</button>
+      </div>
+      {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
     </div>
 
     <div className="panel"><h2>🏷️ Brand Selection (Add Product)</h2>

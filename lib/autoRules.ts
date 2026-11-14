@@ -17,7 +17,7 @@ const parts = (category: string, keywords: string, extra: Partial<AutoRule> = {}
 export const DEFAULT_RULES: AutoRule[] = [
   parts("Charging Ports", "charging,charger,port,pcb,board"),
   parts("Batteries", "batter"),
-  parts("Displays OLED", "oled,amoled"),
+  parts("Displays / OLED", "oled,amoled"),
   parts("Displays / INCELL / TFT", "incell,tft"),
   parts("Displays LED ORG", "led+org,panel+org,lcd+org,display+org,screen+org,touch+org,panel+original,lcd+original,display+original"),
   parts("Displays / LCD", "panel,lcd,display,screen,touch,folder"),
@@ -80,10 +80,22 @@ export function matchBrandRule(name: string, rules: BrandRule[]) {
 
 export const DEFAULT_BRANDS = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone"];
 
-/** Naye default rules (jaise Displays OLED) jo purani saved rules mein nahi hoti: saved list mein sab se pehle jod dete hain, agar us category ki rule pehle se na ho. */
-export const NEW_DEFAULT_RULE_IDS = ["d-Displays OLED"];
+/** Category ka mukhtasar "key": spaces, / aur capital/small ka farq nahi (Displays OLED == Displays / oled). */
+export const catKey = (s: string) => String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Agar is naam ki category pehle se (kisi bhi likhawat mein) maujood hai to wohi naam wapas dein, warna naam jaisa tha waisa. */
+export function canonCategory(name: string, existing: string[]) {
+  const k = catKey(name);
+  if (!k) return name;
+  const same = existing.filter(c => c && catKey(c) === k);
+  if (!same.length) return name;
+  return same.find(c => c.includes("/")) || same.find(c => c !== "Displays OLED") || same[0];
+}
+
+/** Naye default rules (jaise Displays / OLED) jo purani saved rules mein nahi hoti: saved list mein sab se pehle jod dete hain, agar us category ki rule pehle se na ho. */
+export const NEW_DEFAULT_RULE_IDS = ["d-Displays / OLED"];
 export function withNewDefaults(saved: AutoRule[]) {
-  const have = new Set(saved.map(r => String(r.category || "").toLowerCase()));
-  const add = DEFAULT_RULES.filter(r => NEW_DEFAULT_RULE_IDS.includes(r.id) && !have.has(r.category.toLowerCase()));
+  const have = new Set(saved.map(r => catKey(r.category)));
+  const add = DEFAULT_RULES.filter(r => NEW_DEFAULT_RULE_IDS.includes(r.id) && !have.has(catKey(r.category)));
   return [...add, ...saved];
 }

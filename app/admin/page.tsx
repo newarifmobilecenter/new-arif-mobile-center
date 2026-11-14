@@ -4,7 +4,7 @@ import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
-import { applyRules, detectBrand, matchBrandRule, AUTO_RULES_TYPE, BRAND_RULES_TYPE, DEFAULT_RULES, AutoRule, withNewDefaults } from "@/lib/autoRules";
+import { applyRules, detectBrand, matchBrandRule, AUTO_RULES_TYPE, BRAND_RULES_TYPE, DEFAULT_RULES, AutoRule, withNewDefaults, canonCategory } from "@/lib/autoRules";
 
 const cats = ["Displays / LCD", "Displays / INCELL / TFT", "Displays LED ORG", "Batteries", "Charging Ports", "Speakers / Mic", "Cameras", "Buttons / Flex", "Body / Housing", "Repairing Parts", "Tools", "Other Parts"];
 const brands = ["Infinix", "Tecno", "Itel", "Vivo", "Oppo", "Realme", "OnePlus", "Samsung", "iPhone", "Universal", "Other"];
@@ -105,7 +105,7 @@ export default function Admin() {
       const brandRules = options.find(o => o.type === BRAND_RULES_TYPE)?.rules;
       if (!t.brand) { const b = (rule && rule.brand) || (Array.isArray(brandRules) ? matchBrandRule(value, brandRules) : "") || detectBrand(value, brandList); if (b) next.brand = b; }
       if (!t.category && rule && rule.category) {
-        next.category = rule.category;
+        next.category = canonCategory(rule.category, choices("category", ""));
         if (!t.brandType && rule.brandType) next.brandType = rule.brandType;
         if (!t.productGroup && rule.productGroup) next.productGroup = rule.productGroup;
         if (!t.itemType && rule.itemType) next.itemType = rule.itemType;
