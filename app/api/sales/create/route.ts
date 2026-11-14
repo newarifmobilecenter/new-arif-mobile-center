@@ -95,6 +95,7 @@ export async function POST(req: NextRequest) {
       // Repair lines: fitted parts leave stock now (they were only reserved until billing).
       const billedRepairs: ObjectId[] = [];
       const billedRemaining: Record<string, number> = {};
+      let countedRepairDue = 0; // is customer ke balance mein pehle se ginti hui repair ka baqi
       const salePaidInFull = Number(body.remaining || 0) <= 0;
       for (const item of normalizedItems) {
         if (!item.repairId) continue;
@@ -114,12 +115,13 @@ export async function POST(req: NextRequest) {
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
         }
         billedRemaining[String(repair._id)] = Math.max(0, Number(repair.remaining || 0));
+        if (body.customerId && String(repair.customerId || "") === String(body.customerId)) countedRepairDue += billedRemaining[String(repair._id)];
         billedRepairs.push(repair._id);
       }
 
       // Bill se pehle customer ka baqaya (pichla hisab), taake bill par Previous / Current Balance chhap sake.
       let prevBalance: number | null = null;
-      if (body.customerId && ObjectId.isValid(String(body.customerId))) prevBalance = Math.round((await customerBalance(d, String(body.customerId), session) - Object.values(billedRemaining).reduce((a, x) => a + x, 0)) * 100) / 100;
+      if (body.customerId && ObjectId.isValid(String(body.customerId))) prevBalance = Math.round((await customerBalance(d, String(body.customerId), session) - countedRepairDue) * 100) / 100;
       const newBalance = prevBalance === null ? null : Math.round((prevBalance + remaining) * 100) / 100;
       balances = { prevBalance, newBalance };
       const sale = {
