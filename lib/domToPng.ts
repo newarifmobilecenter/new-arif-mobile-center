@@ -21,7 +21,7 @@ async function imgToData(img: HTMLImageElement): Promise<string> {
 
 export async function elementToPngBlob(el: HTMLElement, scale = 2, extraCss = ""): Promise<Blob> {
   const rect = el.getBoundingClientRect();
-  const w = Math.ceil(rect.width), h = Math.ceil(rect.height);
+  const w = Math.ceil(Math.max(rect.width, el.scrollWidth)), h = Math.ceil(Math.max(rect.height, el.scrollHeight));
   const clone = el.cloneNode(true) as HTMLElement;
   clone.style.margin = "0";
   clone.style.width = w + "px";

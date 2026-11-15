@@ -4,12 +4,12 @@ import { elementToPngBlob } from "./domToPng";
 /** HTML + CSS ko (screen ke bahar) render kar ke PNG banata hai. */
 export async function htmlToPng(html: string, css: string, widthPx: number, scale = 2): Promise<Blob> {
   const host = document.createElement("div");
-  host.style.cssText = `position:fixed;left:-10000px;top:0;width:${widthPx}px;background:#fff;`;
-  host.innerHTML = `<style>${css}</style><div id="__slip" style="width:${widthPx}px;background:#fff">${html}</div>`;
+  host.style.cssText = `position:fixed;left:-10000px;top:0;width:${widthPx}px;max-width:none;background:#fff;`;
+  host.innerHTML = `<style>${css}</style><div id="__slip" style="width:${widthPx}px;max-width:none;background:#fff">${html}</div>`;
   document.body.appendChild(host);
   try {
     await new Promise((r) => requestAnimationFrame(() => r(null)));
-    return await elementToPngBlob(host.querySelector("#__slip") as HTMLElement, scale, css);
+    return await elementToPngBlob(host.querySelector("#__slip") as HTMLElement, scale, css + "\n.lg{max-width:none !important}");
   } finally { host.remove(); }
 }
 

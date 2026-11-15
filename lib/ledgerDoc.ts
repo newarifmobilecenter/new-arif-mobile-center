@@ -8,7 +8,7 @@ const dmy = (d: Date) => `${String(d.getDate()).padStart(2, "0")}-${String(d.get
 const short = (d: Date) => d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" }).replace(/,/g, "");
 const day = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-export type LedgerRow = { date: Date; ref: string; kind: "SALE" | "REPAIR" | "PAYMENT" | "RETURN" | "REFUND" | "LOCAL" | "ADJ" | "OPEN"; title: string; lines?: { name: string; qty: number; amount: number }[]; debit: number; credit: number };
+export type LedgerRow = { date: Date; ref: string; kind: "SALE" | "REPAIR" | "PENDING" | "PAYMENT" | "RETURN" | "REFUND" | "LOCAL" | "ADJ" | "OPEN"; title: string; lines?: { name: string; qty: number; amount: number }[]; debit: number; credit: number; pending?: number };
 
 /** Customer ki saari entries (sale, repair, payment, return...) tarteeb se. Balance: + = customer ne dene hain (DR). */
 export function buildLedgerRows(customerId: string, d: { sales: any[]; repairs: any[]; tx: any[]; returns: any[]; localBuys: any[] }, authoritativeBalance: number): LedgerRow[] {
@@ -24,8 +24,15 @@ export function buildLedgerRows(customerId: string, d: { sales: any[]; repairs: 
       debit: n(s.total), credit: 0 });
   }
   const repairTokensPaid = new Set(d.tx.filter(mine).map((t) => `${t.ref || ""} ${t.note || ""}`.toUpperCase()));
+  let pendingDue = 0;
   for (const r of d.repairs.filter((x) => mine(x) && !x.billedSaleId && x.recordType !== "ESTIMATE")) {
     const date = new Date(r.receivedAt || r.createdAt || Date.now());
+    if (String(r.status || "").toUpperCase() !== "DELIVERED") {
+      // Mobile abhi dukaan mein hai: deliver hone tak ye hisaab (balance) mein shamil nahi, sirf highlight.
+      pendingDue += n(r.remaining);
+      rows.push({ date, ref: String(r.tokenNo || "-"), kind: "PENDING", title: `Repair ${r.tokenNo || ""} · ${r.model || ""}`, debit: 0, credit: 0, pending: n(r.totalBill) });
+      continue;
+    }
     rows.push({ date, ref: String(r.tokenNo || "-"), kind: "REPAIR", title: `Repair ${r.tokenNo || ""} · ${r.model || ""}`, lines: [], debit: n(r.totalBill), credit: 0 });
     const tok = String(r.tokenNo || "").toUpperCase();
     const hasTx = tok && Array.from(repairTokensPaid).some((t) => t.includes(tok));
@@ -47,7 +54,7 @@ export function buildLedgerRows(customerId: string, d: { sales: any[]; repairs: 
   rows.sort((a, b) => +a.date - +b.date);
   // Hisaab ka milan: agar entries ka jod customer ke asli baqi se alag ho to farq ek line mein dikhayen.
   const calc = rows.reduce((a, r) => a + r.debit - r.credit, 0);
-  const diff = Math.round((n(authoritativeBalance) - calc) * 100) / 100;
+  const diff = Math.round((n(authoritativeBalance) - pendingDue - calc) * 100) / 100;
   if (Math.abs(diff) >= 1) rows.push({ date: new Date(), ref: "-", kind: "ADJ", title: "Hisaab milan (adjustment)", debit: diff > 0 ? diff : 0, credit: diff < 0 ? -diff : 0 });
   return rows;
 }
@@ -68,10 +75,10 @@ export const LEDGER_CSS = `
 .lg tr.bf td{background:#f1f5f9;font-weight:700}
 .lg td.p b{display:block;margin-bottom:2px}
 .lg .it{font-size:10.5px;color:#475569;display:flex;justify-content:space-between;gap:12px;max-width:430px;border-left:2px solid #cbd5e1;padding-left:6px;margin-top:1px}
-.lg .it span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lg .it span{white-space:nowrap}.lg .it span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .lg tr.pay td{background:#f0fdf4}.lg .cr{color:#15803d;font-weight:700}
 .lg .tag{font-size:9.5px;font-weight:800;padding:1px 5px;border-radius:4px;background:#e2e8f0;margin-right:4px}
-.lg .tag.rp{background:#fef3c7}.lg .tag.py{background:#bbf7d0}.lg .tag.rt{background:#fecaca}.lg .tag.ad{background:#ddd6fe}
+.lg tr.pend td{background:#fef9c3;border-top:1px dashed #ca8a04;border-bottom:1px dashed #ca8a04}.lg tr.pend td.p{color:#854d0e}.lg .tag.pd{background:#facc15;color:#422006}.lg .pa{color:#92400e;font-style:italic}.lg .tag.rp{background:#fef3c7}.lg .tag.py{background:#bbf7d0}.lg .tag.rt{background:#fecaca}.lg .tag.ad{background:#ddd6fe}
 .lg .net{margin-top:10px;border:2px solid #0f172a;border-radius:8px;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-weight:800}
 .lg .net .big{font-size:20px}
 .lg .sum{display:flex;gap:10px;margin-top:10px}.lg .sum div{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;font-size:11px;color:#475569}.lg .sum b{display:block;font-size:15px;color:#0f172a;margin-top:2px}
@@ -79,13 +86,13 @@ export const LEDGER_CSS = `
 `;
 
 const bal = (v: number) => v === 0 ? "0" : `${money(Math.abs(v))} ${v > 0 ? "DR" : "CR"}`;
-const TAG: Record<string, string> = { SALE: '<span class="tag">SALE</span>', REPAIR: '<span class="tag rp">REPAIR</span>', PAYMENT: '<span class="tag py">PAYMENT</span>', RETURN: '<span class="tag rt">RETURN</span>', REFUND: '<span class="tag rt">REFUND</span>', LOCAL: '<span class="tag">PURCHASE</span>', ADJ: '<span class="tag ad">ADJ</span>', OPEN: '<span class="tag">OPENING</span>' };
+const TAG: Record<string, string> = { SALE: '<span class="tag">SALE</span>', REPAIR: '<span class="tag rp">REPAIR</span>', PAYMENT: '<span class="tag py">PAYMENT</span>', RETURN: '<span class="tag rt">RETURN</span>', REFUND: '<span class="tag rt">REFUND</span>', LOCAL: '<span class="tag">PURCHASE</span>', PENDING: '<span class="tag pd">⏳ DELIVER NAHI HUI</span>', ADJ: '<span class="tag ad">ADJ</span>', OPEN: '<span class="tag">OPENING</span>' };
 
 export function ledgerHtml(o: { name: string; phone?: string; code?: string; from: string; to: string; rows: LedgerRow[] }) {
   const f = new Date(o.from + "T00:00:00"), t = new Date(o.to + "T23:59:59");
   let run = 0, bf = 0;
   const body: string[] = [];
-  let sd = 0, sc = 0;
+  let sd = 0, sc = 0, pend = 0, pendAmt = 0;
   for (const r of o.rows) {
     if (r.date < f) { bf += r.debit - r.credit; run = bf; }
   }
@@ -93,6 +100,11 @@ export function ledgerHtml(o: { name: string; phone?: string; code?: string; fro
   body.push(`<tr class="bf"><td></td><td></td><td>Brought Forward Balance</td><td class="n"></td><td class="n"></td><td class="n">${bal(bf)}</td></tr>`);
   for (const r of o.rows) {
     if (r.date < f || r.date > t) continue;
+    if (r.kind === "PENDING") {
+      pend++; pendAmt += n(r.pending);
+      body.push(`<tr class="pend"><td>${esc(short(r.date))}</td><td>${esc(r.ref)}</td><td class="p"><b>${TAG.PENDING}${esc(r.title)}</b><div class="pa">Mobile abhi dukaan mein hai — deliver hone tak hisaab mein shamil nahi</div></td><td class="n pa">(${money(r.pending)})</td><td class="n"></td><td class="n">${bal(run)}</td></tr>`);
+      continue;
+    }
     run += r.debit - r.credit; sd += r.debit; sc += r.credit;
     const lines = (r.lines || []).slice(0, 12).map((l) => `<div class="it"><span>${esc(l.name)}</span><span>${l.qty} × ${money(l.amount / (l.qty || 1))}</span><span>${money(l.amount)}</span></div>`).join("");
     body.push(`<tr class="${r.credit > 0 && r.debit === 0 ? "pay" : ""}"><td>${esc(short(r.date))}</td><td>${esc(r.ref)}</td><td class="p"><b>${TAG[r.kind] || ""}${esc(r.title)}</b>${lines}</td><td class="n">${r.debit ? money(r.debit) : ""}</td><td class="n ${r.credit ? "cr" : ""}">${r.credit ? money(r.credit) : ""}</td><td class="n">${bal(run)}</td></tr>`);
@@ -104,6 +116,7 @@ export function ledgerHtml(o: { name: string; phone?: string; code?: string; fro
 <table><thead><tr><th>Date</th><th>Ref</th><th>Particulars</th><th class="n">Debit (Bill)</th><th class="n">Credit (Wasool)</th><th class="n">Balance</th></tr></thead><tbody>${body.join("")}</tbody></table>
 <div class="net"><span>NET BALANCE</span><span>Debit ${money(bf > 0 ? bf + sd : sd)} &nbsp;|&nbsp; Credit ${money(bf < 0 ? -bf + sc : sc)}</span><span class="big">Rs. ${bal(net)}</span></div>
 <div class="sum"><div>Kul Bill<b>Rs. ${money(sd)}</b></div><div>Kul Wasool<b>Rs. ${money(sc)}</b></div><div>Pichla baqi (B/F)<b>Rs. ${bal(bf)}</b></div><div>Closing baqi<b>Rs. ${bal(net)}</b></div></div>
+${pend ? `<div class="net" style="background:#fef9c3;border-color:#ca8a04;color:#854d0e;font-size:12px"><span>⏳ ${pend} repair abhi deliver nahi hui (Rs. ${money(pendAmt)})</span><span>Ye raqam upar ke balance mein shamil NAHI hai</span></div>` : ""}
 <div class="foot"><span>DR = customer ne dene hain · CR = humein dene hain</span><span>${esc(SHOP.short)}</span></div></div>`;
 }
 export const ledgerDefaultFrom = () => { const d = new Date(); d.setDate(d.getDate() - 30); return day(d); };
