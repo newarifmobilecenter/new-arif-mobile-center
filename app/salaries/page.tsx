@@ -1,5 +1,6 @@
 "use client";
 import { SHOP } from "@/lib/shop";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -100,7 +101,7 @@ export default function Salaries() {
           <div className={styles.stat}><small>Ada hui</small><b>Rs. {money(list.reduce((a, r) => a + n(r.net === undefined ? r.amount : r.paid), 0))}</b></div>
           <div className={styles.stat}><small>Baqi</small><b>Rs. {money(sum("remaining"))}</b></div>
         </div>
-        <div className={styles.bar} style={{ marginTop: 0, marginBottom: 8 }}><input className={styles.in} style={{ width: 170 }} type="month" value={monthF} onChange={(e) => setMonthF(e.target.value)} /><button className={styles.alt} onClick={() => setMonthF("")}>Sab mahine</button><button className={styles.alt} onClick={() => window.print()}>🖨 Print</button></div>
+        <div className={styles.bar} style={{ marginTop: 0, marginBottom: 8 }}><input className={styles.in} style={{ width: 170 }} type="month" value={monthF} onChange={(e) => setMonthF(e.target.value)} /><button className={styles.alt} onClick={() => setMonthF("")}>Sab mahine</button><button className={styles.alt} onClick={() => window.print()}>🖨 Print</button><ShareBtns target="main" name="Salaries" className={styles.alt} /></div>
         {payFor && <div className={styles.bar} style={{ padding: 8, border: "1px solid #22d3ee66", borderRadius: 8, marginBottom: 8 }}><b>{payFor.employee} · {payFor.month} · baqi Rs. {money(payFor.remaining)}</b><input className={styles.in} style={{ width: 120 }} type="number" value={payAmt} onChange={(e) => setPayAmt(e.target.value)} placeholder="Amount" /><button className={styles.alt} disabled={busy} onClick={() => void payRest()}>Ada karein</button><button className={styles.alt} onClick={() => setPayFor(null)}>✕</button></div>}
         <div className={styles.wrap}><table className={styles.tbl}><thead><tr><th>Month</th><th>Employee</th><th className={styles.num}>Basic</th><th className={styles.num}>+/−</th><th className={styles.num}>Net</th><th className={styles.num}>Ada</th><th className={styles.num}>Baqi</th><th>Status</th><th></th></tr></thead>
           <tbody>{list.map((r) => { const old = r.net === undefined; const rem = n(r.remaining); return <tr key={r._id}><td>{r.month}</td><td>{r.employee}<small style={{ display: "block", color: "#94a3b8" }}>{r.salaryNo || ""} {localDay(r.createdAt)} · {r.account || "Cash"}</small></td>

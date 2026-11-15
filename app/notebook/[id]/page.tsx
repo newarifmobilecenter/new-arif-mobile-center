@@ -1,6 +1,7 @@
 "use client";
 
 import { SHOP } from "@/lib/shop";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -153,7 +154,7 @@ function RepairDetailPage() {
     <header className={`${styles.header} ${styles.noPrint}`}>
       <div><h1>{repair.tokenNo}</h1><p>{new Date(repair.receivedAt).toLocaleString("en-PK")} · {repair.customerName} · {repair.model}</p></div>
       <div className={styles.actions}>
-        <button className={styles.buttonSecondary} onClick={() => window.print()}>Print Customer Copy</button>
+        <button className={styles.buttonSecondary} onClick={() => window.print()}>Print Customer Copy</button><ShareBtns target="main" name="Repair-Customer-Copy" className={styles.buttonSecondary} />
         <button className={styles.button} onClick={beginEdit}>Edit Repair</button>
         {repair.customerId && <Link className={styles.buttonSecondary} href={`/ledger?customer=${repair.customerId}`}>Receive Payment</Link>}
       </div>
@@ -300,7 +301,7 @@ function NotebookEntryDetailPage() {
     <header className={`${styles.header} ${styles.noPrint}`}>
       <div><h1>{entry.entryNo || "Notebook Entry"}</h1><p>{entry.customerName} · {entry.title}</p></div>
       <div className={styles.actions}>
-        <button className={styles.buttonSecondary} onClick={() => window.print()}>Print Voucher</button>
+        <button className={styles.buttonSecondary} onClick={() => window.print()}>Print Voucher</button><ShareBtns target="main" name="Notebook-Voucher" className={styles.buttonSecondary} />
         <button className={styles.button} onClick={() => setEditing(true)}>Edit Entry</button>
         {canDelete && <button className={styles.buttonDanger} disabled={busy} onClick={() => void softDelete()}>Delete Entry</button>}
       </div>

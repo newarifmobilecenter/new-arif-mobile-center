@@ -19,7 +19,7 @@ async function imgToData(img: HTMLImageElement): Promise<string> {
   } catch { return img.src; }
 }
 
-export async function elementToPngBlob(el: HTMLElement, scale = 2): Promise<Blob> {
+export async function elementToPngBlob(el: HTMLElement, scale = 2, extraCss = ""): Promise<Blob> {
   const rect = el.getBoundingClientRect();
   const w = Math.ceil(rect.width), h = Math.ceil(rect.height);
   const clone = el.cloneNode(true) as HTMLElement;
@@ -32,7 +32,7 @@ export async function elementToPngBlob(el: HTMLElement, scale = 2): Promise<Blob
   for (let i = 0; i < srcImgs.length; i++) if (dstImgs[i]) dstImgs[i].src = await imgToData(srcImgs[i]);
   clone.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
   const xml = new XMLSerializer().serializeToString(clone);
-  const style = new XMLSerializer().serializeToString(Object.assign(document.createElementNS("http://www.w3.org/1999/xhtml", "style"), { textContent: pageCss() }));
+  const style = new XMLSerializer().serializeToString(Object.assign(document.createElementNS("http://www.w3.org/1999/xhtml", "style"), { textContent: pageCss() + "\n" + extraCss }));
   const hh = h + 40;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${hh}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="background:#fff;width:${w}px;font-family:Arial,Helvetica,sans-serif">${style}${xml}</div></foreignObject></svg>`;
   const img = new Image();

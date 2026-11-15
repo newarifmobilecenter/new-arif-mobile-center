@@ -1,5 +1,6 @@
 "use client";
 import { SHOP } from "@/lib/shop";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -61,7 +62,7 @@ export default function Accounts() {
           <button className={styles.alt} onClick={() => { setFrom(today()); setTo(today()); }}>Aaj</button>
           <button className={styles.alt} onClick={() => { setFrom(today().slice(0, 8) + "01"); setTo(today()); }}>Is mahine</button>
           <button className={styles.alt} onClick={() => { setFrom("2000-01-01"); setTo(today()); }}>Sab</button>
-          <button className={styles.alt} onClick={() => window.print()}>🖨 Print</button>
+          <button className={styles.alt} onClick={() => window.print()}>🖨 Print</button><ShareBtns target="main" name="Accounts" className={styles.alt} />
         </div>
         <div className={styles.stats}>
           <div className={styles.stat}><small>Opening</small><b>Rs. {money(rows.opening)}</b></div>

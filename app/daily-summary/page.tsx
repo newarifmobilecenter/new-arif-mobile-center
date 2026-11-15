@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ShareBtns from "@/app/components/ShareBtns";
 import Link from "next/link";
 import { costMapOf, saleLines, returnProfitLoss } from "../../lib/profit";
 
@@ -63,7 +64,7 @@ export default function DailySummary() {
       <button className="btn" type="button" onClick={() => setDay(d => shift(d, 1))}>▶</button>
       <button className="btn" type="button" onClick={() => setDay(today())}>Aaj</button>
       <button className="btn" type="button" onClick={() => void load()}>⟳ Refresh</button>
-      <button className="btn" type="button" onClick={() => window.print()}>🖨 Print</button>
+      <button className="btn" type="button" onClick={() => window.print()}>🖨 Print</button><ShareBtns target="main" name="Daily Summary" className="btn" />
       {loading && <span style={label}>load ho raha hai…</span>}
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 8 }}>

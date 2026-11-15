@@ -73,3 +73,12 @@ export function printVoucher(v: any) {
   doc.close();
   window.setTimeout(() => { try { f.contentWindow!.focus(); f.contentWindow!.print(); } catch {} }, 300);
 }
+
+/** Voucher ko PNG image bana kar save ("png") ya WhatsApp par share ("whatsapp") karta hai. */
+export async function shareVoucher(v: any, mode: "png" | "whatsapp") {
+  const { htmlToPng, downloadBlob, sharePng } = await import("./shareSlip");
+  const blob = await htmlToPng(voucherBody(v), VOUCHER_CSS, 320, 3);
+  const name = `${v?.voucherNo || "voucher"}.png`;
+  if (mode === "png") { downloadBlob(blob, name); return; }
+  await sharePng(blob, name, `${SHOP.nameUpper}\nVoucher ${v?.voucherNo || "-"}\nRs. ${money(v?.amount)}`);
+}

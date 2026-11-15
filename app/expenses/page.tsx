@@ -1,5 +1,6 @@
 "use client";
 import { SHOP } from "@/lib/shop";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -85,7 +86,7 @@ export default function Expenses() {
           <input className={styles.in} style={{ width: 150 }} type="date" value={from} onChange={(e) => e.target.value && setFrom(e.target.value)} />
           <input className={styles.in} style={{ width: 150 }} type="date" value={to} onChange={(e) => e.target.value && setTo(e.target.value)} />
           <select className={styles.in} style={{ width: 190 }} value={catF} onChange={(e) => setCatF(e.target.value)}><option value="">Sab categories</option>{cats.map((c) => <option key={c}>{c}</option>)}</select>
-          <button className={styles.alt} onClick={() => window.print()}>🖨 Print</button>
+          <button className={styles.alt} onClick={() => window.print()}>🖨 Print</button><ShareBtns target="main" name="Expenses" className={styles.alt} />
         </div>
         {byCat.length > 0 && <div className={styles.stats}>{byCat.map(([c, v]) => <div key={c} className={styles.stat}><small>{c}</small><b>{money(v)}</b></div>)}</div>}
         <div className={styles.wrap}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Category</th><th>Detail</th><th>Paid To</th><th>From</th><th className={styles.num}>Amount</th></tr></thead>

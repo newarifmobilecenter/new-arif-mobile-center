@@ -1,5 +1,7 @@
 "use client";
 import { SHOP } from "@/lib/shop";
+import { shareLive } from "@/lib/shareSlip";
+import { notify } from "@/lib/toast";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
@@ -31,6 +33,7 @@ export default function LocalPurchase() {
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [saved, setSaved] = useState<any>(null);
   const [slip, setSlip] = useState<any>(null);
+  const shareSlipImg = (rec: any, mode: "png" | "whatsapp") => { setSlip({ rec, size: "thermal" }); setTimeout(() => { void shareLive(document.querySelector(".lpSlip") as HTMLElement | null, mode, `Slip-${rec.invoiceNo}`, `${SHOP.nameUpper}\nSlip ${rec.invoiceNo}`, { white: false, width: 300 }).catch(() => notify("Image nahi ban saki.", { kind: "danger" })); }, 250); };
   const printSlip = (rec: any, size: string) => { setSlip({ rec, size }); setTimeout(() => window.print(), 150); };
   const slipOf = (h: any) => ({ invoiceNo: h.invoiceNo, date: h.createdAt || new Date().toISOString(), customerName: h.supplierName || customers.find((c) => String(c._id) === String(h.customerId))?.name || "", phone: (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phone || (customers.find((c) => String(c._id) === String(h.customerId)) || {}).phoneNo || "", items: h.items || [], total: h.total, paid: h.paid, adjusted: h.adjusted, remaining: h.remaining, prevBalance: h.prevBalance, newBalance: h.newBalance, account: h.paymentMethod || "Cash", note: h.note || "" });
 
@@ -113,7 +116,7 @@ export default function LocalPurchase() {
       <div className={styles.card}>
         <h2>Pichli Local Purchases</h2>
         <div className={styles.wrap} style={{ maxHeight: "30vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Customer</th><th>Items</th><th className={styles.num}>Bill</th><th className={styles.num}>Cash</th><th className={styles.num}>Adjust</th><th className={styles.num}>Baqi</th><th></th></tr></thead><tbody>
-          {history.map((h) => <tr key={h._id}><td>{localDay(h.createdAt)}</td><td>{h.invoiceNo}</td><td>{h.supplierName}</td><td>{(h.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ")}</td><td className={styles.num}>{money(h.total)}</td><td className={styles.num}>{money(h.paid)}</td><td className={styles.num}>{money(h.adjusted)}</td><td className={styles.num}>{money(h.remaining)}</td><td><button type="button" className={styles.nbtn} style={{ padding: "2px 8px" }} onClick={() => printSlip(slipOf(h), "thermal")}>🖨 Slip</button></td></tr>)}
+          {history.map((h) => <tr key={h._id}><td>{localDay(h.createdAt)}</td><td>{h.invoiceNo}</td><td>{h.supplierName}</td><td>{(h.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ")}</td><td className={styles.num}>{money(h.total)}</td><td className={styles.num}>{money(h.paid)}</td><td className={styles.num}>{money(h.adjusted)}</td><td className={styles.num}>{money(h.remaining)}</td><td><button type="button" className={styles.nbtn} style={{ padding: "2px 8px" }} onClick={() => printSlip(slipOf(h), "thermal")}>🖨 Slip</button> <button type="button" className={styles.alt} title="WhatsApp" onClick={() => shareSlipImg(slipOf(h), "whatsapp")}>📲</button> <button type="button" className={styles.alt} title="PNG" onClick={() => shareSlipImg(slipOf(h), "png")}>🖼</button></td></tr>)}
           {!history.length && <tr><td colSpan={9} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Abhi koi local purchase nahi.</td></tr>}</tbody></table></div>
       </div>
     </section>
@@ -121,6 +124,8 @@ export default function LocalPurchase() {
       <div><b>✅ {saved.invoiceNo} save ho gayi</b><br /><span style={{ color: "#94a3b8", fontSize: 13 }}>Kul Rs. {money(saved.total)} · Slip nikalni hai?</span></div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {[["Thermal", "thermal"], ["A5", "a5"], ["A4", "a4"]].map(([l, v]) => <button key={v} type="button" className={styles.save} onClick={() => printSlip(saved, v)}>🖨 {l}</button>)}
+        <button type="button" className={styles.alt} onClick={() => shareSlipImg(saved, "whatsapp")}>📲 WhatsApp</button>
+        <button type="button" className={styles.alt} onClick={() => shareSlipImg(saved, "png")}>🖼 PNG</button>
         <button type="button" className={styles.alt} onClick={() => setSaved(null)}>Band</button>
       </div>
     </div>}

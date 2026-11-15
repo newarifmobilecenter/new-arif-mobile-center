@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useThermalFit } from "@/lib/thermalFit";
 import Link from "next/link";
 import SaleReceipt from "../components/SaleReceipt";
@@ -504,6 +505,7 @@ export default function POS() {
         <div className="nav no-print">
           <Link href="/">← Dashboard</Link>
           <button className="btn" onClick={() => window.print()}>🖨 Print Record</button>
+          <ShareBtns target=".receipt" name={`Invoice-${done.invoiceNo || "sale"}`} className="btn" white={false} />
           <Link className="btn" href={`/invoice/${done._id}`}>Invoice Details</Link>
           <Link className="btn green" href="/pos">New Record</Link>
         </div>

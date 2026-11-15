@@ -1,5 +1,6 @@
 "use client";
 import { SHOP } from "@/lib/shop";
+import ShareBtns from "@/app/components/ShareBtns";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./reports.module.css";
@@ -174,7 +175,7 @@ export default function Reports() {
           {rep !== "summary" && <label>Search<input className={styles.in} value={q} onChange={(e) => setQ(e.target.value)} placeholder="naam / invoice / customer" /></label>}
           <button className={styles.act} onClick={() => void load()}>⟳ Refresh</button>
           {rep !== "summary" && <button className={styles.act} onClick={csv}>⬇ CSV</button>}
-          <button className={styles.act} onClick={() => window.print()}>🖨 Print</button>
+          <button className={styles.act} onClick={() => window.print()}>🖨 Print</button><ShareBtns target="main" name="Report" className={styles.act} />
           {loading && <span className={styles.hint}>load ho raha hai…</span>}
         </div>
         <h2 style={{ margin: "0 0 6px", fontSize: 20 }}>{title}{rep !== "audit" && rep !== "dead" ? ` — ${from} se ${to}` : ""}</h2>

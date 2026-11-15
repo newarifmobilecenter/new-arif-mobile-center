@@ -3,7 +3,9 @@ import { SHOP } from "@/lib/shop";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
-import { printVoucher, voucherBody, VOUCHER_CSS } from "../../lib/voucherPrint";
+import { printVoucher, shareVoucher, voucherBody, VOUCHER_CSS } from "../../lib/voucherPrint";
+import { notify } from "../../lib/toast";
+const shareIt = (v: any, mode: "png" | "whatsapp") => shareVoucher(v, mode).catch(() => notify("Image nahi ban saki. Dobara koshish karein.", { kind: "danger" }));
 
 const ACCOUNTS = ["Cash", "JazzCash", "Easypaisa", "Raast", "NayaPay", "UBL", "Bank", "Other"];
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
@@ -161,12 +163,12 @@ export default function Vouchers() {
         <div className={styles.bar}><button className={styles.save} disabled={busy} onClick={save}>{busy ? "Saving…" : "💾 Save Voucher"}</button>{msg && <span className={`${styles.msg} ${msg.ok ? styles.ok : ""}`} role="status">{msg.t}</span>}</div>
       </div>
       <div className={styles.card}>
-        {last && <><h2>Voucher {last.voucherNo} <button className={styles.alt} onClick={() => printVoucher(last)}>🖨 Print</button></h2><div className="vprev" dangerouslySetInnerHTML={{ __html: voucherBody(last) }} /></>}
+        {last && <><h2>Voucher {last.voucherNo} <button className={styles.alt} onClick={() => printVoucher(last)}>🖨 Print</button> <button className={styles.alt} onClick={() => shareIt(last, "whatsapp")}>📲 WhatsApp</button> <button className={styles.alt} onClick={() => shareIt(last, "png")}>🖼 PNG</button></h2><div className="vprev" dangerouslySetInnerHTML={{ __html: voucherBody(last) }} /></>}
         {tab === "old" && <><h2>Purane baqi ki entries</h2><div className={styles.wrap} style={{ maxHeight: "20vh", marginBottom: 8 }}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Party</th><th className={styles.num}>Amount</th><th className={styles.num}>Baqi</th></tr></thead><tbody>
           {oldEntries.map((x) => <tr key={x._id}><td>{localDay(x.createdAt)}</td><td>{x.invoiceNo}</td><td>{x.cashRef || x.supplierName}{x.supplierId ? " (supplier)" : ""}</td><td className={styles.num}>{money(x.total)}</td><td className={styles.num}>{money(x.remaining)}</td></tr>)}{!oldEntries.length && <tr><td colSpan={5} style={{ color: "#94a3b8", textAlign: "center" }}>Abhi koi purani entry nahi.</td></tr>}</tbody></table></div></>}
         <h2>Recent Vouchers</h2>
         <div className={styles.wrap} style={{ maxHeight: last ? "26vh" : "62vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>No</th><th>Type</th><th>Party</th><th className={styles.num}>Amount</th><th className={styles.num}>Pichla</th><th className={styles.num}>Maujooda</th><th></th></tr></thead><tbody>
-          {vouchers.slice(0, 100).map((r) => <tr key={r._id}><td>{localDay(r.createdAt)}</td><td>{r.voucherNo}</td><td>{KIND_NAME[r.kind] || r.kind}</td><td>{r.partyName || "-"}</td><td className={styles.num}>{money(r.amount)}</td><td className={styles.num}>{r.prevBalance == null ? "-" : money(r.prevBalance)}</td><td className={styles.num}>{r.newBalance == null ? "-" : money(r.newBalance)}</td><td><button className={styles.alt} onClick={() => { setLast(r); printVoucher(r); }}>🖨</button></td></tr>)}
+          {vouchers.slice(0, 100).map((r) => <tr key={r._id}><td>{localDay(r.createdAt)}</td><td>{r.voucherNo}</td><td>{KIND_NAME[r.kind] || r.kind}</td><td>{r.partyName || "-"}</td><td className={styles.num}>{money(r.amount)}</td><td className={styles.num}>{r.prevBalance == null ? "-" : money(r.prevBalance)}</td><td className={styles.num}>{r.newBalance == null ? "-" : money(r.newBalance)}</td><td><button className={styles.alt} onClick={() => { setLast(r); printVoucher(r); }}>🖨</button> <button className={styles.alt} title="WhatsApp" onClick={() => shareIt(r, "whatsapp")}>📲</button> <button className={styles.alt} title="PNG" onClick={() => shareIt(r, "png")}>🖼</button></td></tr>)}
           {!vouchers.length && <tr><td colSpan={8} style={{ color: "#94a3b8", textAlign: "center", padding: 14 }}>Abhi koi voucher nahi (naye vouchers yahan aayenge).</td></tr>}</tbody></table></div>
       </div>
     </section>

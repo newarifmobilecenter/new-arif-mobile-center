@@ -4,6 +4,9 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "../components/formwin.module.css";
 import BrandBanner from "../components/BrandBanner";
+import { buildLedgerRows, ledgerHtml, LEDGER_CSS, ledgerDefaultFrom, ledgerToday } from "@/lib/ledgerDoc";
+import { htmlToPng, downloadBlob, sharePng, pngToPdf, printHtml } from "@/lib/shareSlip";
+import { notify } from "@/lib/toast";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [])).catch(() => []);
@@ -17,13 +20,17 @@ function LedgerContent() {
   const [repairs, setRepairs] = useState<any[]>([]);
   const [localBuys, setLocalBuys] = useState<any[]>([]);
   const [tx, setTx] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [from, setFrom] = useState(ledgerDefaultFrom());
+  const [to, setTo] = useState(ledgerToday());
+  const [working, setWorking] = useState(false);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     try { setCustomerId(new URLSearchParams(window.location.search).get("customer") || ""); } catch {}
-    void Promise.all([fetch("/api/data?collection=customers&limit=20000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr), fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => [])])
-      .then(([c, s, r, t, pu]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setLocalBuys(pu.filter((x: any) => x.kind === "LOCAL")); setLoading(false); });
+    void Promise.all([fetch("/api/data?collection=customers&limit=20000").then(arr), fetch("/api/data?collection=sales&limit=5000").then(arr), fetch("/api/repairs").then(arr).catch(() => []), fetch("/api/data?collection=transactions&limit=5000").then(arr), fetch("/api/data?collection=returns&limit=5000").then(arr).catch(() => []), fetch("/api/data?collection=purchases&limit=5000").then(arr).catch(() => [])])
+      .then(([c, s, r, t, ret, pu]) => { setCustomers(c); setSales(s); setRepairs(r); setTx(t); setReturns(ret); setLocalBuys(pu.filter((x: any) => x.kind === "LOCAL")); setLoading(false); });
   }, []);
 
   const summary = useMemo(() => customers.map((c) => {
@@ -40,6 +47,18 @@ function LedgerContent() {
   const paid = mySales.reduce((a, s) => a + n(s.paid), 0) + myRepairs.reduce((a, r) => a + n(r.paid), 0);
   const bal = customer?.bal || 0;
 
+  const docHtml = useMemo(() => customer ? ledgerHtml({ name: String(customer.name || ""), phone: String(customer.phoneNo || customer.phone || ""), code: String(customer.code || ""), from, to, rows: buildLedgerRows(customerId, { sales, repairs, tx, returns, localBuys }, bal) }) : "", [customer, customerId, from, to, sales, repairs, tx, returns, localBuys, bal]);
+  const act = async (mode: "pdf" | "png" | "whatsapp") => {
+    setWorking(true);
+    try {
+      const blob = await htmlToPng(docHtml, LEDGER_CSS, 900, 2);
+      const base = `Ledger-${String(customer?.name || "customer").replace(/[^\w]+/g, "_")}`;
+      if (mode === "png") downloadBlob(blob, `${base}.png`);
+      else if (mode === "pdf") downloadBlob(await pngToPdf(blob), `${base}.pdf`);
+      else await sharePng(blob, `${base}.png`, `${SHOP.nameUpper}\nCustomer Ledger: ${customer?.name}\n${from} se ${to}`);
+    } catch { notify("Ledger file nahi ban saki. Dobara koshish karein.", { kind: "danger" }); }
+    finally { setWorking(false); }
+  };
   const list = useMemo(() => { const s = q.trim().toLowerCase(); return summary.filter((c) => !s || `${c.name} ${c.phone} ${c.phoneNo} ${c.code}`.toLowerCase().includes(s)).sort((a, b) => b.bal - a.bal); }, [summary, q]);
 
   return <main className={styles.win}>
@@ -61,20 +80,20 @@ function LedgerContent() {
             <div className={styles.stat}><small>Wasool / Paid</small><b>Rs. {money(paid)}</b></div>
             <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}{bal < 0 ? " (humein dene)" : ""}</b></div>
           </div>
-          <div className={styles.bar} style={{ marginTop: 0 }}>
+          <div className={styles.bar} style={{ marginTop: 0, flexWrap: "wrap" }}>
             <button className={styles.alt} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
+            <label>From <input className={styles.in} type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 150 }} /></label>
+            <label>To <input className={styles.in} type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 150 }} /></label>
+            <button className={styles.alt} onClick={() => { setFrom("2000-01-01"); setTo(ledgerToday()); }}>Sab</button>
+            <button className={styles.alt} disabled={working} onClick={() => printHtml(docHtml, LEDGER_CSS, `Ledger ${customer.name}`)}>🖨 Print</button>
+            <button className={styles.alt} disabled={working} onClick={() => void act("pdf")}>📄 Generate PDF</button>
+            <button className={styles.alt} disabled={working} onClick={() => void act("whatsapp")}>📲 WhatsApp</button>
+            <button className={styles.alt} disabled={working} onClick={() => void act("png")}>🖼 PNG</button>
             {bal > 0 && <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
             <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
-            <button className={styles.alt} onClick={() => window.print()}>🖨 Print Ledger</button>
           </div>
         </div>
-        <div className={styles.card}><h2>Sales / Bills</h2><div className={styles.wrap} style={{ maxHeight: "30vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>Invoice</th><th>Detail</th><th className={styles.num}>Total</th><th className={styles.num}>Paid</th><th className={styles.num}>Baqi</th><th>Status</th></tr></thead><tbody>
-          {mySales.map((s) => <tr key={s._id}><td>{day(s.createdAt)}</td><td><Link href={`/invoice/${s._id}`} style={{ color: "#22d3ee" }}>{s.invoiceNo || "-"}</Link></td><td>{s.isOpening ? "Purana baqi" : (s.items || []).map((i: any) => `${i.name} ×${i.qty}`).join(", ").slice(0, 70)}</td><td className={styles.num}>{money(s.total)}</td><td className={styles.num}>{money(s.paid)}</td><td className={styles.num}>{money(s.remaining)}</td><td><span className={`${styles.pill} ${n(s.remaining) > 0 ? styles.pDue : styles.pPaid}`}>{n(s.remaining) > 0 ? "Baqi" : "Paid"}</span></td></tr>)}
-          {myRepairs.map((r) => <tr key={r._id}><td>{day(r.receivedAt)}</td><td>{r.tokenNo}</td><td>Repair · {r.model}</td><td className={styles.num}>{money(r.totalBill)}</td><td className={styles.num}>{money(r.paid)}</td><td className={styles.num}>{money(r.remaining)}</td><td><span className={`${styles.pill} ${n(r.remaining) > 0 ? styles.pDue : styles.pPaid}`}>{n(r.remaining) > 0 ? "Baqi" : "Paid"}</span></td></tr>)}
-          {!mySales.length && !myRepairs.length && <tr><td colSpan={7} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Koi bill nahi.</td></tr>}</tbody></table></div></div>
-        <div className={styles.card}><h2>Payments Received</h2><div className={styles.wrap} style={{ maxHeight: "26vh" }}><table className={styles.tbl}><thead><tr><th>Date</th><th>Ref / Voucher</th><th>Account</th><th>Detail</th><th className={styles.num}>Amount</th></tr></thead><tbody>
-          {myPay.map((t) => <tr key={t._id}><td>{day(t.createdAt)}</td><td>{t.ref || "-"}</td><td>{t.account || "Cash"}</td><td>{t.note || "-"}</td><td className={styles.num}>{money(t.amount)}</td></tr>)}
-          {!myPay.length && <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: 14 }}>Koi payment nahi.</td></tr>}</tbody></table></div></div>
+        <div className={styles.card} style={{ overflowX: "auto", background: "#fff", padding: 0 }}><style>{LEDGER_CSS}</style><div dangerouslySetInnerHTML={{ __html: docHtml }} /></div>
       </>}
     </section>
   </main>;
