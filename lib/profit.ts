@@ -23,11 +23,21 @@ export function saleLines(sale: any, costs: CostMap, catOf: (item: any) => strin
   const repairSum = items.reduce((t, i, k) => t + (i.repairBill !== undefined ? raw[k] : 0), 0);
   const net = n(sale?.total) - n(sale?.salesTaxValue);
   const f = normalSum > 0 ? Math.max(0, net - repairSum) / normalSum : 1;
-  return items.map((i, k) => {
+  return items.flatMap((i, k) => {
+    // Repair line jis mein parts ke rate likhe hain: har part alag (apni category/cost), baqi "Repair Fee".
+    const pp: any[] = Array.isArray(i.parts) ? i.parts.filter((x: any) => n(x.price) > 0) : [];
+    if (i.repairBill !== undefined && n(i.repairBill) > 0 && pp.length) {
+      const partLines = pp.map((x: any) => {
+        const revenue = n(x.price) * Math.max(1, n(x.qty)); const cost = n(x.cost) * Math.max(1, n(x.qty));
+        return { name: String(x.name || "Part"), category: catOf({ productId: x.productId, name: x.name }), qty: Math.max(1, n(x.qty)), revenue, cost, profit: revenue - cost, productId: String(x.productId || ""), item: i };
+      });
+      const fee = Math.max(0, n(i.repairBill) - partLines.reduce((a, l) => a + l.revenue, 0));
+      return [...partLines, { name: `Repair Fee · ${String(i.name || "")}`, category: "Repair", qty: 1, revenue: fee, cost: 0, profit: fee, productId: "", item: i }];
+    }
     const isRepair = i.repairBill !== undefined && n(i.repairBill) > 0;
     const revenue = isRepair ? n(i.repairBill) : raw[k] * f;
     const cost = isRepair ? n(i.costPrice) : unitCost(i, costs) * n(i.qty);
-    return { name: String(i.name || "Item"), category: catOf(i), qty: n(i.qty), revenue, cost, profit: revenue - cost, productId: String(i.productId || ""), item: i };
+    return [{ name: String(i.name || "Item"), category: catOf(i), qty: n(i.qty), revenue, cost, profit: revenue - cost, productId: String(i.productId || ""), item: i }];
   });
 }
 

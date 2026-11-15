@@ -23,7 +23,7 @@ type SaleItem = {
   stock?: number;
   isMisc?: boolean;
   repairId?: string;
-  parts?: { name: string; qty: number; cost: number; productId?: string; extra?: boolean }[];
+  parts?: { name: string; qty: number; cost: number; price?: number; productId?: string; extra?: boolean }[];
   itemPrice?: number; repairFee?: number;
   category?: string;
 };
@@ -549,17 +549,23 @@ export default function POS() {
     }
     return true;
   };
+  // Repair line ka total = parts ke rate + repair fee. keepTotal: total wahi rakho (fee baqi raqam utha le).
+  const rebuildRepair = (x: Item, parts: any[], opts: { keepTotal?: boolean; fee?: number } = {}): Item => {
+    const sum = parts.reduce((a, q) => a + Number(q.price || 0) * Number(q.qty || 1), 0);
+    const fee = opts.fee !== undefined ? Math.max(0, opts.fee) : opts.keepTotal ? Math.max(0, Number(x.price || 0) - sum) : Number(x.repairFee || 0);
+    return { ...x, parts, itemPrice: sum, repairFee: fee, price: sum + fee };
+  };
   const addRepairToSale = (r: any) => {
     if (items.some((i) => i.repairId === String(r._id))) return;
     const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
     // Repair mein lage har product ko alag line mein (naam, qty, cost) rakhein.
     const parts = (r.parts || []).filter((x: any) => x && x.name).map((x: any) => {
       const prod: any = products.find((p: any) => String(p._id) === String(x.productId));
-      return { name: String(x.name), qty: Math.max(1, Number(x.qty || 1)), cost: Number(prod?.costPrice || 0) };
+      return { name: String(x.name), qty: Math.max(1, Number(x.qty || 1)), cost: Number(prod?.costPrice || 0), price: Number(prod?.price ?? prod?.salePrice ?? prod?.retailPrice ?? 0), ...(prod ? { productId: String(prod._id) } : {}) };
     });
-    // Internal breakdown (customer ko nahi dikhta): item ka price + repair fee = baqi.
-    const itemPrice = Math.min(baqi, (r.parts || []).reduce((a: number, x: any) => { const prod: any = products.find((p: any) => String(p._id) === String(x.productId)); return a + Number(prod?.price ?? prod?.salePrice ?? prod?.retailPrice ?? 0) * Math.max(1, Number(x.qty || 1)); }, 0));
-    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, itemPrice, repairFee: baqi - itemPrice, qty: 1, price: baqi, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
+    const sum0 = parts.reduce((a: number, q: any) => a + q.price * q.qty, 0);
+    const base = baqi < sum0 ? { price: sum0, itemPrice: sum0, repairFee: 0 } : { price: baqi, itemPrice: sum0, repairFee: baqi - sum0 };
+    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, ...base, qty: 1, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
     if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
     notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
   };
@@ -689,10 +695,10 @@ export default function POS() {
                     <input placeholder="➕ Repair mein lagi cheez add karein (panel, flex…)" value={partQ?.idx === index ? partQ.q : ""} onChange={(e) => setPartQ({ idx: index, q: e.target.value })} style={{ width: "100%", fontSize: 12 }} />
                     {partQ?.idx === index && partQ.q.trim().length >= 2 && products.filter((p: any) => `${p.name || p.model} ${p.code ?? p.sku ?? ""}`.toLowerCase().includes(partQ.q.trim().toLowerCase())).slice(0, 6).map((p: any) => <div key={p._id} style={{ fontSize: 12, padding: "3px 6px", cursor: "pointer", background: "#14203d" }} onClick={() => {
                       if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }
-                      setItems((old) => old.map((x, i) => i === index ? { ...x, parts: [...(x.parts || []), { name: String(p.name || p.model), qty: 1, cost: Number(p.costPrice || 0), productId: String(p._id), extra: true }] } : x));
+                      setItems((old) => old.map((x, i) => i === index ? rebuildRepair(x, [...(x.parts || []), { name: String(p.name || p.model), qty: 1, cost: Number(p.costPrice || 0), price: Number(p.price ?? p.salePrice ?? p.retailPrice ?? 0), productId: String(p._id), extra: true }], { keepTotal: true }) : x));
                       setPartQ(null);
                     }}>{p.name || p.model} <span style={{ color: "#9fb3d9" }}>· stock {Number(p.stock || 0)}</span></div>)}
-                  </div>}{item.repairId && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "4px 0", padding: "4px 6px", border: "1px dashed #4b5d8a", borderRadius: 8, fontSize: 12 }} title="Internal only - receipt par nahi chhapta"><span>🔒 Item Price</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.itemPrice || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, itemPrice: v, price: v + Number(x.repairFee || 0) } : x))} /></span><span>+ Repair Fee</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.repairFee || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, repairFee: v, price: Number(x.itemPrice || 0) + v } : x))} /></span><span>= Rs. {money(Number(item.itemPrice || 0) + Number(item.repairFee || 0))}</span><small style={{ color: "#9fb3d9" }}>(customer ko show nahi hota)</small></div>}{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{x.extra && <button type="button" title="Hata dein" style={{ marginLeft: 6 }} onClick={() => setItems((old) => old.map((it, k) => k === index ? { ...it, parts: (it.parts || []).filter((_: any, j: number) => j !== i) } : it))}>✖</button>}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}</div>)}</td>
+                  </div>}{item.repairId && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "4px 0", padding: "4px 6px", border: "1px dashed #4b5d8a", borderRadius: 8, fontSize: 12 }} title="Internal only - receipt par nahi chhapta"><span>🔒 Item Price</span>{(item.parts || []).length > 0 ? <b>Rs. {money(Number(item.itemPrice || 0))}</b> : <span style={{ width: 90, display: "inline-block" }}><NumInput value={item.itemPrice || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, itemPrice: v, price: v + Number(x.repairFee || 0) } : x))} /></span>}<span>+ Repair Fee</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.repairFee || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, repairFee: v, price: Number(x.itemPrice || 0) + v } : x))} /></span><span>= Rs. {money(Number(item.itemPrice || 0) + Number(item.repairFee || 0))}</span><small style={{ color: "#9fb3d9" }}>(customer ko show nahi hota)</small></div>}{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{x.extra && <button type="button" title="Hata dein" style={{ marginLeft: 6 }} onClick={() => setItems((old) => old.map((it, k) => k === index ? rebuildRepair(it, (it.parts || []).filter((_: any, j: number) => j !== i), { keepTotal: true }) : it))}>✖</button>}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}{item.repairId && <span style={{ marginLeft: 8 }}>· Rate Rs. <span style={{ width: 80, display: "inline-block" }}><NumInput value={Number(x.price || 0)} onValue={(v) => setItems((old) => old.map((it, k) => k === index ? rebuildRepair(it, (it.parts || []).map((q: any, j: number) => j === i ? { ...q, price: v } : q)) : it))} /></span></span>}</div>)}</td>
                   <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
                   <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
                   <td><NumInput onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchRef.current?.focus(); } }} aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>

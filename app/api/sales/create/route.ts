@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     discountAmount: num(i.qty) * num(i.price) * num(i.discountPct) / 100,
     total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100),
     ...(i.repairId && (num(i.itemPrice) || num(i.repairFee)) ? { itemPrice: num(i.itemPrice), repairFee: num(i.repairFee) } : {}),
-    ...(Array.isArray(i.parts) ? { parts: i.parts.slice(0, 30).map((x:any) => ({ name: String(x?.name || "").slice(0, 160), qty: Math.max(1, num(x?.qty) || 1), cost: num(x?.cost), ...(x?.extra && ObjectId.isValid(String(x?.productId)) ? { extra: true, productId: String(x.productId) } : {}) })) } : {}),
+    ...(Array.isArray(i.parts) ? { parts: i.parts.slice(0, 30).map((x:any) => ({ name: String(x?.name || "").slice(0, 160), qty: Math.max(1, num(x?.qty) || 1), cost: num(x?.cost), price: num(x?.price), ...(ObjectId.isValid(String(x?.productId)) ? { productId: String(x.productId) } : {}), ...(x?.extra ? { extra: true } : {}) })) } : {}),
   }));
 
   body.invoiceNo = await nextNumber(d, "sale");
