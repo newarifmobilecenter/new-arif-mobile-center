@@ -23,7 +23,7 @@ type SaleItem = {
   stock?: number;
   isMisc?: boolean;
   repairId?: string;
-  parts?: { name: string; qty: number; cost: number }[];
+  parts?: { name: string; qty: number; cost: number; productId?: string; extra?: boolean }[];
   itemPrice?: number; repairFee?: number;
   category?: string;
 };
@@ -215,6 +215,7 @@ export default function POS() {
   const paidAmount = saleType === "CASH" ? netTotal : Number(paid || 0);
   const remaining = Math.max(0, netTotal - paidAmount);
 
+  const [partQ, setPartQ] = useState<{ idx: number; q: string } | null>(null);
   const [costIdx, setCostIdx] = useState<number | null>(null);
   const costItem = useMemo(() => {
     const row: any = items[costIdx !== null && costIdx < items.length ? costIdx : items.length - 1];
@@ -684,7 +685,14 @@ export default function POS() {
               {items.map((item, index) => (
                 <tr key={`${item.productId || "misc"}-${index}`} onFocusCapture={() => setCostIdx(index)} onClick={() => setCostIdx(index)}>
                   <td>{index + 1}</td>
-                  <td><b>{item.name}</b>{item.repairId && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "4px 0", padding: "4px 6px", border: "1px dashed #4b5d8a", borderRadius: 8, fontSize: 12 }} title="Internal only - receipt par nahi chhapta"><span>🔒 Item Price</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.itemPrice || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, itemPrice: v, price: v + Number(x.repairFee || 0) } : x))} /></span><span>+ Repair Fee</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.repairFee || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, repairFee: v, price: Number(x.itemPrice || 0) + v } : x))} /></span><span>= Rs. {money(Number(item.itemPrice || 0) + Number(item.repairFee || 0))}</span><small style={{ color: "#9fb3d9" }}>(customer ko show nahi hota)</small></div>}{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}</div>)}</td>
+                  <td><b>{item.name}</b>{item.repairId && <div style={{ margin: "4px 0" }}>
+                    <input placeholder="➕ Repair mein lagi cheez add karein (panel, flex…)" value={partQ?.idx === index ? partQ.q : ""} onChange={(e) => setPartQ({ idx: index, q: e.target.value })} style={{ width: "100%", fontSize: 12 }} />
+                    {partQ?.idx === index && partQ.q.trim().length >= 2 && products.filter((p: any) => `${p.name || p.model} ${p.code ?? p.sku ?? ""}`.toLowerCase().includes(partQ.q.trim().toLowerCase())).slice(0, 6).map((p: any) => <div key={p._id} style={{ fontSize: 12, padding: "3px 6px", cursor: "pointer", background: "#14203d" }} onClick={() => {
+                      if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }
+                      setItems((old) => old.map((x, i) => i === index ? { ...x, parts: [...(x.parts || []), { name: String(p.name || p.model), qty: 1, cost: Number(p.costPrice || 0), productId: String(p._id), extra: true }] } : x));
+                      setPartQ(null);
+                    }}>{p.name || p.model} <span style={{ color: "#9fb3d9" }}>· stock {Number(p.stock || 0)}</span></div>)}
+                  </div>}{item.repairId && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "4px 0", padding: "4px 6px", border: "1px dashed #4b5d8a", borderRadius: 8, fontSize: 12 }} title="Internal only - receipt par nahi chhapta"><span>🔒 Item Price</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.itemPrice || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, itemPrice: v, price: v + Number(x.repairFee || 0) } : x))} /></span><span>+ Repair Fee</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.repairFee || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, repairFee: v, price: Number(x.itemPrice || 0) + v } : x))} /></span><span>= Rs. {money(Number(item.itemPrice || 0) + Number(item.repairFee || 0))}</span><small style={{ color: "#9fb3d9" }}>(customer ko show nahi hota)</small></div>}{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{x.extra && <button type="button" title="Hata dein" style={{ marginLeft: 6 }} onClick={() => setItems((old) => old.map((it, k) => k === index ? { ...it, parts: (it.parts || []).filter((_: any, j: number) => j !== i) } : it))}>✖</button>}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}</div>)}</td>
                   <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
                   <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
                   <td><NumInput onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchRef.current?.focus(); } }} aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>

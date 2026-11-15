@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     discountAmount: num(i.qty) * num(i.price) * num(i.discountPct) / 100,
     total: num(i.qty) * num(i.price) * (1 - num(i.discountPct) / 100),
     ...(i.repairId && (num(i.itemPrice) || num(i.repairFee)) ? { itemPrice: num(i.itemPrice), repairFee: num(i.repairFee) } : {}),
-    ...(Array.isArray(i.parts) ? { parts: i.parts.slice(0, 30).map((x:any) => ({ name: String(x?.name || "").slice(0, 160), qty: Math.max(1, num(x?.qty) || 1), cost: num(x?.cost) })) } : {}),
+    ...(Array.isArray(i.parts) ? { parts: i.parts.slice(0, 30).map((x:any) => ({ name: String(x?.name || "").slice(0, 160), qty: Math.max(1, num(x?.qty) || 1), cost: num(x?.cost), ...(x?.extra && ObjectId.isValid(String(x?.productId)) ? { extra: true, productId: String(x.productId) } : {}) })) } : {}),
   }));
 
   body.invoiceNo = await nextNumber(d, "sale");
@@ -114,6 +114,17 @@ export async function POST(req: NextRequest) {
           if (!prod) continue;
           item.costPrice = Number(item.costPrice || 0) + Number(prod.costPrice || 0) * q;
           await products.updateOne({ _id: prod._id }, { $set: { stock: Math.max(0, Number(prod.stock || 0) - q), updatedAt: new Date() } }, { session });
+          await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
+        }
+        // Sale ke waqt repair mein add ki gayi cheezein: stock se minus.
+        for (const part of Array.isArray(item.parts) ? item.parts : []) {
+          if (!part.extra || !ObjectId.isValid(String(part.productId))) continue;
+          const q = Math.max(1, Number(part.qty || 1));
+          const prod = await products.findOne({ _id: new ObjectId(String(part.productId)) }, { session });
+          if (!prod) continue;
+          if (Number(prod.stock || 0) < q) throw new Error(`"${prod.name || prod.model}" ka stock kam hai.`);
+          item.costPrice = Number(item.costPrice || 0) + Number(prod.costPrice || 0) * q;
+          await products.updateOne({ _id: prod._id }, { $set: { stock: Number(prod.stock || 0) - q, updatedAt: new Date() } }, { session });
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
         }
         billedRemaining[String(repair._id)] = Math.max(0, Number(repair.remaining || 0));

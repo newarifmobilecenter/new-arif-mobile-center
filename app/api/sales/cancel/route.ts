@@ -38,6 +38,13 @@ export async function POST(req: NextRequest) {
             await d.collection("products").updateOne({ _id: new ObjectId(String(part.productId)) }, { $inc: { stock: q }, $set: { updatedAt: new Date() } }, { session });
             await d.collection("stockMovements").insertOne({ type: "IN", productId: String(part.productId), qty: q, reason: `Sale cancelled: repair ${repair.tokenNo}`, ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
           }
+          // Sale ke waqt add ki gayi cheezon ka stock wapas.
+          for (const part of Array.isArray(item.parts) ? item.parts : []) {
+            if (!part?.extra || !ObjectId.isValid(String(part.productId))) continue;
+            const q = Math.max(1, Number(part.qty || 1));
+            await d.collection("products").updateOne({ _id: new ObjectId(String(part.productId)) }, { $inc: { stock: q }, $set: { updatedAt: new Date() } }, { session });
+            await d.collection("stockMovements").insertOne({ type: "IN", productId: String(part.productId), qty: q, reason: `Sale cancelled: repair ${repair.tokenNo}`, ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
+          }
           await d.collection(REPAIR_COLLECTION).updateOne({ _id: repair._id }, { $set: { billedSaleId: null, billedInvoiceNo: null, ...(Number(repair.billedRemaining || 0) > 0 ? { remaining: Number(repair.billedRemaining) } : {}), ...(Number(repair.billedPaidAdd || 0) > 0 ? { paymentStatus: "PAYMENT_DUE" } : {}) }, ...(Number(repair.billedPaidAdd || 0) > 0 ? { $inc: { paid: -Number(repair.billedPaidAdd) } } : {}), $unset: { billedAt: "", billedRemaining: "", billedPaidAdd: "" } }, { session });
         }
         const paid = Number(sale.paid || 0);
