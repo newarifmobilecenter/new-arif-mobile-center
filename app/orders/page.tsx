@@ -39,13 +39,17 @@ async function copyToClipboard(text: string) {
 }
 
 export default function OrderBook() {
-  const [tab, setTab] = useState<"urgent" | "stock">("urgent");
+  const [tab, setTab] = useState<"urgent" | "stock" | "low">("urgent");
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [q, setQ] = useState("");
   const [name, setName] = useState("");
   const [cat, setCat] = useState(CATS[0]);
   const [busy, setBusy] = useState(false);
+  const [mqty, setMqty] = useState("1");
+  const [pq, setPq] = useState("");
+  const [minDraft, setMinDraft] = useState<Record<string, string>>({});
+  const [qtyDraft, setQtyDraft] = useState<Record<string, string>>({});
 
   const [optCats, setOptCats] = useState<string[]>([]);
   const load = async () => {
@@ -67,6 +71,18 @@ export default function OrderBook() {
   const needle = q.trim().toLowerCase();
   const urgent = useMemo(() => orders.filter((o) => !needle || `${o.name} ${o.token} ${o.customerName} ${o.category}`.toLowerCase().includes(needle)), [orders, needle]);
   const outOfStock = useMemo(() => products.filter((p) => Number(p.stock || 0) <= 0 && (!needle || `${p.name} ${p.code} ${p.brand} ${p.category}`.toLowerCase().includes(needle))), [products, needle]);
+  const lowList = useMemo(() => products.filter((p) => Number(p.minStock || 0) > 0 && Number(p.stock || 0) <= Number(p.minStock || 0) && (!needle || `${p.name} ${p.code} ${p.brand} ${p.category}`.toLowerCase().includes(needle))), [products, needle]);
+  const allLow = products.filter((p) => Number(p.minStock || 0) > 0 && Number(p.stock || 0) <= Number(p.minStock || 0)).length;
+  const pickMatches = useMemo(() => { const n = pq.trim().toLowerCase(); return n.length < 2 ? [] : products.filter((p) => `${p.name} ${p.code} ${p.brand}`.toLowerCase().includes(n)).slice(0, 8); }, [pq, products]);
+  async function saveMin(p: any, v: number) {
+    setBusy(true);
+    try {
+      const r = await fetch("/api/data", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "products", id: String(p._id), minStock: Math.max(0, Math.floor(v)) }) });
+      if (!r.ok) throw new Error("Min Stock save nahi hua.");
+      await load();
+      notify(v > 0 ? `Min Stock ${v} set ho gaya.` : "Min Stock hata diya.", { kind: "success" });
+    } catch (e: any) { notify(e?.message || "Save nahi hua.", { kind: "danger" }); } finally { setBusy(false); }
+  }
   const allOut = products.filter((p) => Number(p.stock || 0) <= 0).length;
   const inBook = (p: any) => orders.some((o) => (o.productId && String(o.productId) === String(p._id)) || nameCovers(String(p.name || ""), String(o.name || "")) && nameCovers(String(o.name || ""), String(p.name || "")));
 
@@ -92,7 +108,12 @@ export default function OrderBook() {
     const text = copyText(blocks);
     notify(await copyToClipboard(text) ? "Copy ho gaya — ab WhatsApp mein paste karein." : "Copy nahi hua.", { kind: "success" });
   };
-  const addManual = () => { const n = name.trim(); if (!n) { notify("Cheez ka naam likhein (jaise VIVO Y100 BACK RING).", { kind: "warning" }); return; } void post([{ name: n.toUpperCase(), category: cat, qty: 1 }]).then(() => setName("")); };
+  const addManual = () => {
+    const n = name.trim(); if (!n) { notify("Cheez ka naam likhein (jaise VIVO Y100 BACK RING).", { kind: "warning" }); return; }
+    const qty = Math.max(1, Math.floor(Number(mqty) || 1));
+    const prod = products.find((p) => String(p.name || "").trim().toLowerCase() === n.toLowerCase());
+    void post([{ name: n.toUpperCase(), category: prod ? categoryOf(String(prod.name || ""), String(prod.category || "").trim()) : cat, qty, productId: prod ? String(prod._id) : undefined }]).then(() => { setName(""); setMqty("1"); });
+  };
 
   return <main className={styles.page}>
     <div className={styles.top}>
@@ -100,12 +121,15 @@ export default function OrderBook() {
       <div className={styles.tabs}>
         <button type="button" className={`${styles.tab} ${tab === "urgent" ? styles.tabOn : ""}`} onClick={() => setTab("urgent")}>🔥 Urgent Order Book<span className={styles.badge}>{orders.length}</span></button>
         <button type="button" className={`${styles.tab} ${tab === "stock" ? styles.tabOn : ""}`} onClick={() => setTab("stock")}>📦 Out of Stock<span className={styles.badge}>{allOut}</span></button>
+        <button type="button" className={`${styles.tab} ${tab === "low" ? styles.tabOn : ""}`} onClick={() => setTab("low")}>⚠ Kam Stock<span className={styles.badge}>{allLow}</span></button>
       </div>
     </div>
     <div className={styles.bar}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: naam / C1400 / customer…" style={{ minWidth: 240 }} />
       {tab === "urgent" && <>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: e.g. VIVO Y100 BACK RING" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addManual(); } }} />
+        <input list="ob-products" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: product chunein ya likhein" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addManual(); } }} />
+        <datalist id="ob-products">{products.slice(0, 3000).map((p) => <option key={p._id} value={String(p.name || "")} />)}</datalist>
+        <input type="number" min="1" value={mqty} onChange={(e) => setMqty(e.target.value)} title="Quantity" placeholder="Qty" style={{ width: 70 }} />
         <select value={cat} onChange={(e) => setCat(e.target.value)}>{catList.map((c) => <option key={c}>{c}</option>)}</select>
         <button type="button" disabled={busy} onClick={addManual}>＋ Order Book mein daalein</button>
       </>}
@@ -135,6 +159,27 @@ export default function OrderBook() {
             <button type="button" className={styles.btn} disabled={busy || inBook(p)} onClick={() => void post([{ name: String(p.name || "").toUpperCase(), category: categoryOf(String(p.name || ""), String(p.category || "").trim()), productId: String(p._id), qty: 1 }])}>{inBook(p) ? "✔ Order Book mein" : "📒 Order Book"}</button>
           </div>)}
         </section>))}
+
+      {tab === "low" && <>
+        <section className={styles.group}><h3><span>⚙ Aham item ka Min Stock set karein</span></h3>
+          <div className={styles.row}><input value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Product search (kam az kam 2 harf): e.g. A15 panel" style={{ minWidth: 260 }} /></div>
+          {pickMatches.map((p) => <div key={p._id} className={styles.row}>
+            <b>{p.name}<span className={styles.sub}>Stock {Number(p.stock || 0)}{Number(p.minStock || 0) > 0 ? ` · Min ${p.minStock}` : ""}</span></b>
+            <input type="number" min="0" style={{ width: 70 }} placeholder="Min" value={minDraft[String(p._id)] ?? String(p.minStock || "")} onChange={(e) => setMinDraft((m) => ({ ...m, [String(p._id)]: e.target.value }))} />
+            <button type="button" className={styles.btn} disabled={busy} onClick={() => void saveMin(p, Number(minDraft[String(p._id)] ?? p.minStock ?? 0) || 0)}>Min Stock save</button>
+          </div>)}
+        </section>
+        {lowList.length === 0 ? <div className={styles.empty}>Koi aham item kam stock mein nahi. Upar se Min Stock set karein, jaise Oppo A15 panel = 3.</div>
+          : group(lowList, (p) => categoryOf(String(p.name || ""), String(p.category || "").trim())).map(([c, list]) => <section key={c} className={styles.group}><h3><span>{c}</span><span>{list.length}</span></h3>
+            {list.map((p) => { const id = String(p._id); const need = Math.max(1, Number(p.minStock || 0) - Number(p.stock || 0)); return <div key={id} className={styles.row}>
+              <b>{p.name}<span className={styles.sub}>Stock {Number(p.stock || 0)} / Min {p.minStock}</span></b>
+              <span className={`${styles.chip} ${styles.open}`}>Kam Stock</span>
+              <input type="number" min="1" style={{ width: 70 }} value={qtyDraft[id] ?? String(need)} onChange={(e) => setQtyDraft((m) => ({ ...m, [id]: e.target.value }))} title="Kitna order karna hai" />
+              <button type="button" className={styles.btn} disabled={busy || inBook(p)} onClick={() => void post([{ name: String(p.name || "").toUpperCase(), category: categoryOf(String(p.name || ""), String(p.category || "").trim()), productId: id, qty: Math.max(1, Math.floor(Number(qtyDraft[id] ?? need) || 1)) }])}>{inBook(p) ? "Order Book mein hai" : "Order lagao"}</button>
+              <button type="button" className={styles.btn} disabled={busy} title="Min Stock hata dein" onClick={() => void saveMin(p, 0)}>✖</button>
+            </div>; })}
+          </section>)}
+      </>}
     </div>
   </main>;
 }
