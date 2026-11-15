@@ -550,7 +550,7 @@ export default function POS() {
     return true;
   };
   // Repair line ka total = parts ke rate + repair fee. keepTotal: total wahi rakho (fee baqi raqam utha le).
-  const rebuildRepair = (x: Item, parts: any[], opts: { keepTotal?: boolean; fee?: number } = {}): Item => {
+  const rebuildRepair = (x: SaleItem, parts: any[], opts: { keepTotal?: boolean; fee?: number } = {}): SaleItem => {
     const sum = parts.reduce((a, q) => a + Number(q.price || 0) * Number(q.qty || 1), 0);
     const fee = opts.fee !== undefined ? Math.max(0, opts.fee) : opts.keepTotal ? Math.max(0, Number(x.price || 0) - sum) : Number(x.repairFee || 0);
     return { ...x, parts, itemPrice: sum, repairFee: fee, price: sum + fee };
