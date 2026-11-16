@@ -302,7 +302,7 @@
 @media print {
   @page { size: A4 portrait; margin: 5mm; }
   @page receivingSlipPage { size: auto; margin: 0; }
-  @page mobileTagPage { size: 76mm 28mm; margin: 0; }
+  @page mobileTagPage { size: 76mm 32mm; margin: 0; }
   .noPrint { display: none !important; }
   .page { max-width: none !important; margin: 0 !important; padding: 0 !important; color: #111; }
   .repairDetailPage > :not(.receivingSlip):not(.mobileTag), .notebookDetailPage > :not(.notebookVoucher) { display: none !important; }
@@ -330,7 +330,7 @@
   }
   .mobileTag {
     page: mobileTagPage; break-before: page; display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5mm; align-items: start;
-    width: 52mm; margin: 0 !important; padding: 1.5mm 2mm !important; box-sizing: border-box; background: #fff !important; color: #000 !important;
+    width: 54mm; margin: 0 auto !important; padding: 1.5mm 2mm !important; box-sizing: border-box; background: #fff !important; color: #000 !important;
     border: 0 !important; font: 700 8pt/1.25 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
   .mobileTag * { color: #000 !important; }
