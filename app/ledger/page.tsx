@@ -43,11 +43,15 @@ function LedgerContent() {
   const mySales = sales.filter((s) => String(s.customerId || "") === customerId).sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
   const myRepairs = repairs.filter((r) => String(r.customerId || "") === customerId);
   const myPay = tx.filter((t) => String(t.customerId || "") === customerId && t.type === "IN").sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  const billed = mySales.reduce((a, s) => a + n(s.total), 0) + myRepairs.reduce((a, r) => a + n(r.totalBill), 0);
-  const paid = mySales.reduce((a, s) => a + n(s.paid), 0) + myRepairs.reduce((a, r) => a + n(r.paid), 0);
   const bal = customer?.bal || 0;
+  // Side ke teen dabbe statement ke saath barabar: sab entries (date range se qat-e-nazar) ka jod, deliver na hui repair alag.
+  const allRows = useMemo(() => customer ? buildLedgerRows(customerId, { sales, repairs, tx, returns, localBuys }, bal) : [], [customer, customerId, sales, repairs, tx, returns, localBuys, bal]);
+  const billed = allRows.reduce((a, r) => a + r.debit, 0);
+  const paid = allRows.reduce((a, r) => a + r.credit, 0);
+  const pendingRep = allRows.filter((r) => r.kind === "PENDING").reduce((a, r) => a + n(r.pending), 0);
+  const ledgerBal = billed - paid;
 
-  const docHtml = useMemo(() => customer ? ledgerHtml({ name: String(customer.name || ""), phone: String(customer.phoneNo || customer.phone || ""), code: String(customer.code || ""), from, to, rows: buildLedgerRows(customerId, { sales, repairs, tx, returns, localBuys }, bal) }) : "", [customer, customerId, from, to, sales, repairs, tx, returns, localBuys, bal]);
+  const docHtml = useMemo(() => customer ? ledgerHtml({ name: String(customer.name || ""), phone: String(customer.phoneNo || customer.phone || ""), code: String(customer.code || ""), from, to, rows: allRows }) : "", [customer, customerId, from, to, allRows]);
   const act = async (mode: "pdf" | "png" | "whatsapp") => {
     setWorking(true);
     try {
@@ -80,7 +84,8 @@ function LedgerContent() {
           <div className={styles.card}><div style={{ display: "grid", gap: 8 }}>
             <div className={styles.stat}><small>Kul bill (sale + repair)</small><b>Rs. {money(billed)}</b></div>
             <div className={styles.stat}><small>Wasool / Paid</small><b>Rs. {money(paid)}</b></div>
-            <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}{bal < 0 ? " (humein dene)" : ""}</b></div>
+            <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: ledgerBal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(Math.abs(ledgerBal))}{ledgerBal < 0 ? " (humein dene)" : ""}</b></div>
+            {pendingRep > 0 && <div style={{ fontSize: 12, color: "#facc15" }}>⏳ + Rs. {money(pendingRep)} repair abhi deliver nahi hui (is mein shamil nahi)</div>}
           </div></div>
           <div className={styles.card}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -94,7 +99,7 @@ function LedgerContent() {
             <button className={styles.alt} disabled={working} onClick={() => void act("pdf")}>📄 Generate PDF</button>
             <button className={styles.alt} disabled={working} onClick={() => void act("whatsapp")}>📲 WhatsApp</button>
             <button className={styles.alt} disabled={working} onClick={() => void act("png")}>🖼 PNG</button>
-            {bal > 0 && <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
+            {ledgerBal > 0 && <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
             <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
           </div>
           <button className={styles.alt} style={{ width: "100%" }} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
