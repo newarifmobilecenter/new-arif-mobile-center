@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import SearchSelect from "@/app/components/SearchSelect";
 import Link from "next/link";
 import styles from "./orders.module.css";
 import { categoryOf, nameCovers } from "@/lib/orderBook";
@@ -130,7 +131,7 @@ export default function OrderBook() {
         <input list="ob-products" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: product chunein ya likhein" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addManual(); } }} />
         <datalist id="ob-products">{products.slice(0, 3000).map((p) => <option key={p._id} value={String(p.name || "")} />)}</datalist>
         <input type="number" min="1" value={mqty} onChange={(e) => setMqty(e.target.value)} title="Quantity" placeholder="Qty" style={{ width: 70 }} />
-        <select value={cat} onChange={(e) => setCat(e.target.value)}>{catList.map((c) => <option key={c}>{c}</option>)}</select>
+        <SearchSelect value={cat} onChange={setCat} options={catList} />
         <button type="button" disabled={busy} onClick={addManual}>＋ Order Book mein daalein</button>
       </>}
       <button type="button" onClick={() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { SHOP } from "@/lib/shop";
+import SearchSelect from "@/app/components/SearchSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./admin.module.css";
@@ -37,7 +38,7 @@ function Field({ label, value, onChange, type = "text", className = "" }: { labe
 }
 
 function Select({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
-  return <label className={styles.field}><span>{label}</span><select value={value} onChange={e => onChange(e.target.value)}><option value="">Select {label}</option>{options.map(x => <option key={x} value={x}>{x}</option>)}</select></label>;
+  return <label className={styles.field}><span>{label}</span><SearchSelect value={value} onChange={onChange} emptyLabel={`Select ${label}`} options={options} /></label>;
 }
 
 function SelectWithN({ label, value, options, onChange, onAdd }: { label: string; value: string; options: string[]; onChange: (value: string) => void; onAdd: () => void }) {

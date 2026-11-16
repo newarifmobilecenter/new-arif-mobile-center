@@ -1,6 +1,7 @@
 "use client";
 
 import { SHOP } from "@/lib/shop";
+import SearchSelect from "@/app/components/SearchSelect";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -182,8 +183,8 @@ export default function Settings() {
     <div className="panel"><h2>🧩 Do Categories ko Aik Karein</h2>
       <p style={{ color: "#94a3b8", fontSize: 13 }}>Agar aik hi category do naam se ban gayi ho (jaise "Displays OLED" aur "Displays / OLED"), to pehli (jo khatam karni hai) aur doosri (jo rakhni hai) chunein. Pehli ke sab products doosri mein chale jayenge. Koi product delete nahi hota. Sirf Admin kar sakta hai.</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <select className="input" style={{ flex: "1 1 220px" }} value={mFrom} onChange={e => setMFrom(e.target.value)}><option value="">— Khatam karni hai —</option>{catListAll.map(c => <option key={c} value={c}>{c}</option>)}</select>
-        <select className="input" style={{ flex: "1 1 220px" }} value={mTo} onChange={e => setMTo(e.target.value)}><option value="">— Rakhni hai —</option>{catListAll.map(c => <option key={c} value={c}>{c}</option>)}</select>
+        <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mFrom} onChange={setMFrom} emptyLabel="— Khatam karni hai —" options={catListAll} />
+        <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mTo} onChange={setMTo} emptyLabel="— Rakhni hai —" options={catListAll} />
         <button className="btn green" type="button" onClick={() => void mergeCats()}>Aik Karein</button>
       </div>
       {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}

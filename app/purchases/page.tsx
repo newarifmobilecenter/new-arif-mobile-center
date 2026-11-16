@@ -1,6 +1,7 @@
 "use client";
 
 import { SHOP } from "@/lib/shop";
+import SearchSelect from "@/app/components/SearchSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./purchaseWin.module.css";
@@ -186,7 +187,7 @@ export default function Purchases() {
       <div className={styles.headBox}>
         <div className={styles.grid}>
           <label>Purchase No:<input className={styles.code} value={purchaseNo} readOnly /></label>
-          <label>Supplier:<select value={supplier} onChange={e => setSupplier(e.target.value)}><option value="">Select Supplier</option>{suppliers.map(s => <option key={s._id} value={s._id}>{s.name}{s.phone ? ` — ${s.phone}` : ""}</option>)}</select></label>
+          <label>Supplier:<SearchSelect value={supplier} onChange={setSupplier} emptyLabel="Select Supplier" options={suppliers.map((s: any) => ({ value: String(s._id), label: `${s.name}${s.phone ? ` — ${s.phone}` : ""}` }))} /></label>
           <label>Current Balance:<input value={supplier ? money(supplierBalance) : ""} readOnly /></label>
           <label>Supp Ref:<input value={suppRef} onChange={e => setSuppRef(e.target.value)} /></label>
           <label>Remarks:<input value={remarks} onChange={e => setRemarks(e.target.value)} /></label>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import SearchSelect from "@/app/components/SearchSelect";
 import ShareBtns from "@/app/components/ShareBtns";
 import { useThermalFit } from "@/lib/thermalFit";
 import Link from "next/link";
@@ -678,8 +679,8 @@ export default function POS() {
 
         <section className={styles.productSearch}>
           <div className={styles.productFilters}>
-            <label>Category<select value={categoryFilter} onChange={(e) => { setCategoryFilter(e.target.value); setBrandTypeFilter(""); }}><option value="">All Categories</option>{productCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
-            <label>Brand Type<select value={brandTypeFilter} onChange={(e) => setBrandTypeFilter(e.target.value)}><option value="">All Brand Types</option>{brandTypes.map((brandType) => <option key={brandType} value={brandType}>{brandType}</option>)}</select></label>
+            <label>Category<SearchSelect value={categoryFilter} onChange={(v) => { setCategoryFilter(v); setBrandTypeFilter(""); }} emptyLabel="All Categories" options={productCategories} /></label>
+            <label>Brand Type<SearchSelect value={brandTypeFilter} onChange={setBrandTypeFilter} emptyLabel="All Brand Types" options={brandTypes} /></label>
           </div>
         </section>
 
