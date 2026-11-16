@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { getSession, hasRole } from "@/lib/auth";
+import { getSession, hasRole, can } from "@/lib/auth";
 import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 
 const allowed = ["products","productOptions","customers","sales","purchases","transactions","expenses","salaries","stockMovements","suppliers","invoices","warranties","settings","backupLogs","quotations","employees","auditLogs","returns","walkingCustomers","vouchers"];
@@ -9,6 +9,16 @@ const oid = (id:string) => ObjectId.isValid(id) ? new ObjectId(id) : null;
 const adminOnly = new Set(["settings","employees","auditLogs","backupLogs","salaries"]);
 // Money/stock records are only ever changed by their own APIs; direct PATCH is admin-only.
 const patchAdminOnly = new Set(["sales","purchases","transactions","returns","stockMovements","expenses","invoices"]);
+// Staff ke liye collection-wise likhne ki ijazat (Admin ko sab kuch).
+function writeBlocked(session: any, c: string, method: "POST" | "PATCH") {
+  if (hasRole(session, "ADMIN")) return false;
+  if (c === "products") return !(method === "POST" ? can(session, "sale", "products") : can(session, "products"));
+  if (c === "productOptions") return !can(session, "products", "orders", "sale");
+  if (c === "suppliers") return !can(session, "purchases");
+  if (c === "customers") return !can(session, "sale", "customers", "vouchers");
+  if (c === "quotations") return !can(session, "sale");
+  return false;
+}
 const dbError = (e: unknown) => { console.error("api/data error:", e); return NextResponse.json({ error: "Database error. Dobara koshish karein." }, { status: 500 }); };
 
 export async function GET(req: NextRequest) {
@@ -36,6 +46,7 @@ export async function POST(req: NextRequest) {
     const {collection, ...doc} = body;
     if (!allowed.includes(collection)) return NextResponse.json({error:"Invalid collection"}, {status:400});
     if (adminOnly.has(collection) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
+    if (writeBlocked(session, collection, "POST")) return NextResponse.json({error:"Is kaam ki ijazat nahi hai. Admin se access maangein."},{status:403});
     const d = await db();
     doc.createdAt = new Date();
     doc.updatedAt = new Date();
@@ -54,6 +65,7 @@ export async function PATCH(req: NextRequest) {
     const _id = oid(id);
     if (!allowed.includes(collection) || !_id) return NextResponse.json({error:"Invalid collection/id"}, {status:400});
     if ((adminOnly.has(collection) || patchAdminOnly.has(collection)) && !hasRole(session, "ADMIN")) return NextResponse.json({error:"Admin access required."},{status:403});
+    if (writeBlocked(session, collection, "PATCH")) return NextResponse.json({error:"Is kaam ki ijazat nahi hai. Admin se access maangein."},{status:403});
     delete changes._id; delete changes.createdAt; changes.updatedAt = new Date();
     const d = await db();
     const r = await d.collection(collection).findOneAndUpdate({_id}, {$set:changes}, {returnDocument:"after"});

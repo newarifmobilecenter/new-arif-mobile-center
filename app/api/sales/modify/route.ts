@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
-import { getSession, hasRole } from "@/lib/auth";
+import { getSession, can } from "@/lib/auth";
 import { customerBalance } from "@/lib/vouchers";
 import { REPAIR_COLLECTION } from "@/lib/repairs";
 
@@ -11,7 +11,7 @@ const num = (v: any) => { const n = Number(v); return Number.isFinite(n) ? n : 0
 export async function POST(req: NextRequest) {
   const user = await getSession();
   if (!user) return NextResponse.json({ error: "Login required." }, { status: 401 });
-  if (!hasRole(user, "ADMIN")) return NextResponse.json({ error: "Invoice modify karne ke liye Admin access chahiye." }, { status: 403 });
+  if (!can(user, "sale_modify")) return NextResponse.json({ error: "Invoice modify karne ke liye Admin access chahiye." }, { status: 403 });
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const saleId = String(body.saleId || "");

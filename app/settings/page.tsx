@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS, withNewDefaults, catKey } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
+import UsersPanel from "./UsersPanel";
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
 const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", category: "", brand: "", brandType: "Parts", productGroup: "Mobile Parts", itemType: "Part" });
@@ -121,6 +122,7 @@ export default function Settings() {
     <div className="nav"><Link href="/">← Dashboard</Link><Link href="/backup">Backup</Link></div>
     <h1>⚙️ Settings</h1>
 
+    <UsersPanel />
     <div className="panel"><h2>⌨️ Keyboard Shortcuts</h2>
       <table style={{ width: "100%", maxWidth: 520 }}><tbody>
         {ALT_ROUTES.map((r) => <tr key={r.code}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>Alt + {r.key}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}

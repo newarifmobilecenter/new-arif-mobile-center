@@ -62,13 +62,15 @@ async function sign(value: string) {
 
 export async function createSession(
   username: string,
-  role: "ADMIN" | "STAFF"
+  role: "ADMIN" | "STAFF",
+  perms?: string[]
 ) {
   const payload = base64url(
     new TextEncoder().encode(
       JSON.stringify({
         u: username,
         r: role,
+        ...(role === "STAFF" && perms ? { p: perms } : {}),
         exp: Math.floor(Date.now() / 1000) + SESSION_TTL,
       })
     )
@@ -107,6 +109,7 @@ export async function verifySession(token: string | undefined) {
     return data as {
       u: string;
       r: "ADMIN" | "STAFF";
+      p?: string[];
       exp: number;
     };
   } catch {
@@ -128,3 +131,5 @@ export function hasRole(
 ) {
   return !!session && roles.includes(session.r);
 }
+
+export { can } from "./perms";

@@ -1,12 +1,13 @@
 "use client";
 
 import { SHOP } from "@/lib/shop";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { pageAllowed } from "@/lib/perms";
 import Link from "next/link";
 import RepairReminderSummary from "./components/RepairReminderSummary";
 import DashboardSearch from "./components/DashboardSearch";
 
-const categories = [
+const allCategories = [
   { id:"file", title:"File", icon:"📁", items:[
     ["1. Add Product","Naya product aur uski details darj karein","/admin"],
     ["2. Add Customer","Customer ka naam aur contact add karein","/customers"],
@@ -107,19 +108,26 @@ const categories = [
 
 export default function Home(){
  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+ const [sess, setSess] = useState<{ r: "ADMIN" | "STAFF"; p?: string[] } | null>(null);
+ useEffect(() => { fetch("/api/auth/session", { cache: "no-store" }).then((r) => r.json()).then((d) => { if (d?.authenticated) setSess({ r: d.role, p: Array.isArray(d.perms) ? d.perms : undefined }); }).catch(() => {}); }, []);
+ const [blocked, setBlocked] = useState(false);
+ useEffect(() => { try { setBlocked(new URLSearchParams(window.location.search).get("blocked") === "1"); } catch {} }, []);
+ const ok = (href: string) => !sess || pageAllowed(sess, href.split("?")[0]);
+ const categories = allCategories.map((c) => ({ ...c, items: c.items.filter((i: readonly string[]) => ok(i[2])) })).filter((c) => c.items.length > 0);
  const selected = categories.find(category => category.id === activeCategory);
 
  return <main className="shell dashboardHome">
   <section className="hero dashboardHero"><div><div className="eyebrow">{SHOP.nameUpper}</div><h1>Business Dashboard</h1><p className="muted">Kaam ki category chunein, phir uska option kholen</p></div><div className="icon">📱</div></section>
+  {blocked && <p role="alert" style={{ background: "#7f1d1d", color: "#fff", padding: "10px 14px", borderRadius: 10, fontWeight: 700 }}>🚫 Ye page aap ke account ke liye band hai. Zaroorat ho to Admin se access maangein.</p>}
   <DashboardSearch />
   <nav className="dashboardMenu" aria-label="Main menu">{categories.map(category=><button type="button" key={category.id} className={activeCategory===category.id?"dashboardMenuButton active":"dashboardMenuButton"} aria-expanded={activeCategory===category.id} aria-controls="dashboardCategoryPanel" onClick={()=>setActiveCategory(activeCategory===category.id?null:category.id)}><span aria-hidden="true">{category.icon}</span>{category.title}</button>)}</nav>
   {selected&&<section className="panel dashboardCategoryPanel" id="dashboardCategoryPanel"><div className="dashboardCategoryHeading"><h2>{selected.icon} {selected.title}</h2><button type="button" className="dashboardClose" onClick={()=>setActiveCategory(null)} aria-label="Close menu">×</button></div><div className="dashboardActionGrid">{selected.items.map(([title,description,href])=><Link href={href} target={href==="/product-cost"?"_blank":undefined} rel={href==="/product-cost"?"noreferrer":undefined} className="dashboardAction" key={title}><span className="dashboardActionTitle">{title}</span><span className="muted">{description}</span><span className="go">Open →</span></Link>)}</div>{selected.id==="slips"&&<RepairReminderSummary/>}</section>}
   {!selected&&<p className="dashboardHint">Upar category par click karein; us category ke options yahin khulenge.</p>}
  <footer className="dashFoot" aria-label="Quick links">
-  <Link href="/daily-summary">📅 Daily Summary</Link>
+  {ok("/daily-summary") && <Link href="/daily-summary">📅 Daily Summary</Link>}
   <span className="dashFootHelp">📞 Helpline: {SHOP.helpline}</span>
-  <Link href="/orders">📒 Order Book</Link>
-  <Link href="/orders?tab=stock">📦 Out of Stock</Link>
+  {ok("/orders") && <Link href="/orders">📒 Order Book</Link>}
+  {ok("/orders") && <Link href="/orders?tab=stock">📦 Out of Stock</Link>}
  </footer>
  </main>
 }

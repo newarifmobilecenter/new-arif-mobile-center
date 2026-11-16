@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
-import { getSession, hasRole } from "@/lib/auth";
+import { getSession, can } from "@/lib/auth";
 
 const r2 = (x: number) => Math.round(x * 100) / 100;
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -11,7 +11,7 @@ const fail = (error: string, status = 400) => NextResponse.json({ error }, { sta
 export async function POST(req: NextRequest) {
   const user = await getSession();
   if (!user) return fail("Login required.", 401);
-  if (!hasRole(user, "ADMIN")) return fail("Purchase modify sirf Admin kar sakta hai.", 403);
+  if (!can(user, "purchase_modify")) return fail("Purchase modify sirf Admin kar sakta hai.", 403);
   try {
     const body = await req.json();
     const id = String(body.id || "");

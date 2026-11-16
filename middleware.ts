@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE, verifySession } from "@/lib/auth";
+import { apiAllowed, pageAllowed } from "@/lib/perms";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -20,6 +21,14 @@ export async function middleware(req: NextRequest) {
     url.pathname = "/login";
     url.search = "";
     url.searchParams.set("next", `${pathname}${req.nextUrl.search}`);
+    return NextResponse.redirect(url);
+  }
+  if (pathname.startsWith("/api/")) {
+    if (!apiAllowed(session, pathname, req.method)) return NextResponse.json({ error: "Is kaam ki ijazat nahi hai. Admin se access maangein." }, { status: 403 });
+  } else if (!pageAllowed(session, pathname)) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/";
+    url.search = "?blocked=1";
     return NextResponse.redirect(url);
   }
   return NextResponse.next();
