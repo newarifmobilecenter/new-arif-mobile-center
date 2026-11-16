@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import ReceivingSlip from "../ReceivingSlip";
+import MobileTag from "../MobileTag";
 import { useThermalFit } from "@/lib/thermalFit";
 import NotebookEntryForm, { type NotebookEntry } from "../NotebookEntryForm";
 import NotebookVoucher from "../NotebookVoucher";
@@ -23,6 +24,7 @@ const localDateTime = (value: string) => {
 function RepairDetailPage() {
   const { id } = useParams<{ id: string }>();
   useThermalFit("article[aria-label=\"Customer copy mobile receiving slip\"]", "receivingSlipPage", 76);
+  useThermalFit("article[aria-label=\"Mobile tag small label\"]", "mobileTagPage", 76);
   const [repair, setRepair] = useState<any>(null);
   const [customerBalance, setCustomerBalance] = useState(0);
   const [reminders, setReminders] = useState<any[]>([]);
@@ -242,6 +244,7 @@ function RepairDetailPage() {
     </>}
 
     {!editing && <ReceivingSlip repair={repair} />}
+    {!editing && <MobileTag repair={repair} />}
     {reminderType && <div className={styles.reminderModal} role="presentation"><section className={styles.reminderDialog} role="dialog" aria-modal="true" aria-labelledby="reminder-title"><h2 id="reminder-title">Review WhatsApp message</h2><label className={styles.field}>Message<textarea value={reminderMessage} onChange={(event) => setReminderMessage(event.target.value)} rows={7} /></label><p className={styles.muted}>This prepares an editable WhatsApp draft. It will not send automatically, and the app cannot verify that it was opened or sent.</p><div className={styles.actions}><button className={styles.buttonSecondary} onClick={() => setReminderType("")}>Cancel</button><button className={styles.button} onClick={() => void openWhatsApp()}>Prepare WhatsApp Draft</button></div></section></div>}
   </main>;
 }

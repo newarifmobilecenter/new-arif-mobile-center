@@ -296,15 +296,16 @@
 
 /* Keep print-only slips and vouchers out of the on-screen page flow. */
 @media screen {
-  .receivingSlip, .notebookVoucher { display: none; }
+  .receivingSlip, .notebookVoucher, .mobileTag { display: none; }
 }
 
 @media print {
   @page { size: A4 portrait; margin: 5mm; }
   @page receivingSlipPage { size: auto; margin: 0; }
+  @page mobileTagPage { size: 76mm 28mm; margin: 0; }
   .noPrint { display: none !important; }
   .page { max-width: none !important; margin: 0 !important; padding: 0 !important; color: #111; }
-  .repairDetailPage > :not(.receivingSlip), .notebookDetailPage > :not(.notebookVoucher) { display: none !important; }
+  .repairDetailPage > :not(.receivingSlip):not(.mobileTag), .notebookDetailPage > :not(.notebookVoucher) { display: none !important; }
   .receivingSlip {
     page: receivingSlipPage;
     display: block !important;
@@ -327,6 +328,21 @@
     box-shadow: none !important;
     font: 10pt/1.3 Arial, Helvetica, sans-serif !important;
   }
+  .mobileTag {
+    page: mobileTagPage; break-before: page; display: grid !important; grid-template-columns: minmax(0, 1fr) auto; gap: 1.5mm; align-items: start;
+    width: 52mm; margin: 0 !important; padding: 1.5mm 2mm !important; box-sizing: border-box; background: #fff !important; color: #000 !important;
+    border: 0 !important; font: 700 8pt/1.25 Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .mobileTag * { color: #000 !important; }
+  .mtShop { font-size: 9pt; font-weight: 900; letter-spacing: .2px; border-bottom: 1px solid #000; padding-bottom: .5mm; white-space: nowrap; }
+  .mtToken { font-size: 9pt; margin-top: .6mm; }
+  .mtToken b { font-size: 11pt; font-weight: 900; }
+  .mtLine { margin-top: .3mm; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .mtFault { -webkit-line-clamp: 2; }
+  .mtBoxes { display: grid; gap: .8mm; padding-top: .3mm; }
+  .mtBoxRow { display: flex; align-items: center; justify-content: flex-end; gap: 1mm; font-size: 6.5pt; font-weight: 900; }
+  .mtBox { display: inline-block; width: 3.4mm; height: 3.4mm; border: 1.2px solid #000; box-sizing: border-box; }
+  .mtBox svg { width: 100%; height: 100%; display: block; }
   .receivingSlip * { color: #000 !important; box-shadow: none !important; }
   .receivingSlip { -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 2mm 5mm 2mm 6mm !important; font-weight: 900 !important; }
   .receivingSlip, .receivingSlip * { -webkit-text-stroke: .25px #000; }
