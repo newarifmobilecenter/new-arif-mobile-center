@@ -63,7 +63,7 @@ function LedgerContent() {
 
   return <main className={styles.win}>
     <div className={styles.titlebar}><span>▣ Customer Ledger — {SHOP.name}</span><span><Link href="/">← Dashboard</Link><Link href="/customers">Customers</Link><Link href="/walking-customers">Walking Customers</Link><Link href="/vouchers?tab=due">Voucher</Link><Link href="/accounts">Bank Ledger</Link></span></div>
-    <BrandBanner title="Customer Ledger" subtitle={customer ? `${customer.name}${customer.phone || customer.phoneNo ? " · " + (customer.phoneNo || customer.phone) : ""}` : "Sab customers ka hisaab"} right={<div style={{ fontSize: 12, color: "#cbd5e1" }}>Date: {day(new Date())}</div>} />
+    {!customer && <BrandBanner title="Customer Ledger" subtitle={customer ? `${customer.name}${customer.phone || customer.phoneNo ? " · " + (customer.phoneNo || customer.phone) : ""}` : "Sab customers ka hisaab"} right={<div style={{ fontSize: 12, color: "#cbd5e1" }}>Date: {day(new Date())}</div>} />}
     <section className={styles.body} style={{ gridTemplateColumns: "minmax(0, 1fr)" }}>
       {!customer && <div className={styles.card}>
         <h2>Customers ka Hisaab {loading && <small style={{ color: "#94a3b8" }}>load ho raha hai…</small>}</h2>
@@ -73,28 +73,33 @@ function LedgerContent() {
           {list.map((c) => <tr key={c._id}><td>{c.code || "-"}</td><td>{c.name}</td><td>{c.phoneNo || c.phone || "-"}</td><td className={styles.num}><span className={`${styles.pill} ${c.bal > 0 ? styles.pDue : styles.pPaid}`}>Rs. {money(c.bal)}</span></td><td><button className={styles.alt} onClick={() => { setCustomerId(String(c._id)); window.history.replaceState(null, "", `/ledger?customer=${c._id}`); }}>Ledger kholen</button></td></tr>)}
           {!list.length && <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: 16 }}>Koi customer nahi.</td></tr>}</tbody></table></div>
       </div>}
-      {customer && <>
-        <div className={styles.card}>
-          <div className={styles.stats}>
+      {customer && <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "flex-start" }}>
+        <div className={styles.card} style={{ overflowX: "auto", background: "#fff", padding: 0, flex: "0 1 900px", minWidth: 0, maxWidth: "100%" }}><style>{LEDGER_CSS}</style><div dangerouslySetInnerHTML={{ __html: docHtml }} /></div>
+        <div style={{ flex: "1 1 280px", maxWidth: 380, display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className={styles.card}><div className={styles.stat}><small>{String(customer.name || "")}</small><b style={{ fontSize: 15 }}>{String(customer.phoneNo || customer.phone || "")}{customer.code ? ` · Code ${customer.code}` : ""}</b></div></div>
+          <div className={styles.card}><div style={{ display: "grid", gap: 8 }}>
             <div className={styles.stat}><small>Kul bill (sale + repair)</small><b>Rs. {money(billed)}</b></div>
             <div className={styles.stat}><small>Wasool / Paid</small><b>Rs. {money(paid)}</b></div>
             <div className={styles.stat}><small>Maujooda baqi</small><b style={{ color: bal > 0 ? "#f87171" : "#4ade80" }}>Rs. {money(bal)}{bal < 0 ? " (humein dene)" : ""}</b></div>
+          </div></div>
+          <div className={styles.card}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <label>From <input className={styles.in} type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: "100%" }} /></label>
+              <label>To <input className={styles.in} type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: "100%" }} /></label>
+            </div>
+            <button className={styles.alt} style={{ marginTop: 8, width: "100%" }} onClick={() => { setFrom("2000-01-01"); setTo(ledgerToday()); }}>Sab</button>
           </div>
-          <div className={styles.bar} style={{ marginTop: 0, flexWrap: "wrap" }}>
-            <button className={styles.alt} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
-            <label>From <input className={styles.in} type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 150 }} /></label>
-            <label>To <input className={styles.in} type="date" value={to} onChange={(e) => setTo(e.target.value)} style={{ width: 150 }} /></label>
-            <button className={styles.alt} onClick={() => { setFrom("2000-01-01"); setTo(ledgerToday()); }}>Sab</button>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <button className={styles.alt} disabled={working} onClick={() => printHtml(docHtml, LEDGER_CSS, `Ledger ${customer.name}`)}>🖨 Print</button>
             <button className={styles.alt} disabled={working} onClick={() => void act("pdf")}>📄 Generate PDF</button>
             <button className={styles.alt} disabled={working} onClick={() => void act("whatsapp")}>📲 WhatsApp</button>
             <button className={styles.alt} disabled={working} onClick={() => void act("png")}>🖼 PNG</button>
-            {bal > 0 && <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
-            <Link className={styles.alt} style={{ textDecoration: "none" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
+            {bal > 0 && <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
+            <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
           </div>
+          <button className={styles.alt} style={{ width: "100%" }} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
         </div>
-        <div className={styles.card} style={{ overflowX: "auto", background: "#fff", padding: 0 }}><style>{LEDGER_CSS}</style><div dangerouslySetInnerHTML={{ __html: docHtml }} /></div>
-      </>}
+      </div>}
     </section>
   </main>;
 }
