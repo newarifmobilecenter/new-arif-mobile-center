@@ -43,3 +43,37 @@
 .err { color: #f87171; }
 .sub { margin: 12px 0 0; }
 @media (max-width: 800px) { .head { grid-template-columns: 1fr 1fr; } .wide { grid-column: span 2; } }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .page{background:#ffffff;color:#0c2031}
+html[data-theme="light"] .win{background:#ffffff;border:1px solid #a8ccde}
+html[data-theme="light"] .top{background:#ecf2f5;border-bottom:1px solid #a8ccde}
+html[data-theme="light"] .top h1{color:#0c2031}
+html[data-theme="light"] .top a{color:#0369a0}
+html[data-theme="light"] .head{border-bottom:1px solid #accedf}
+html[data-theme="light"] .head label,html[data-theme="light"] .field{color:#0369a0}
+html[data-theme="light"] .head input,html[data-theme="light"] .head select,html[data-theme="light"] .entry,html[data-theme="light"] .field input,html[data-theme="light"] .field select{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .custList,html[data-theme="light"] .prodList{background:#ffffff;border:1px solid #20aaee}
+html[data-theme="light"] .opt{border-bottom:1px solid #bbd7e5;color:#0c2031}
+html[data-theme="light"] .opt:hover,html[data-theme="light"] .optOn{background:#20aaee}
+html[data-theme="light"] .opt small{color:#6c869d}
+html[data-theme="light"] .none{color:#6c869d}
+html[data-theme="light"] .balBox{background:#ffffff;border-bottom:1px solid #accedf}
+html[data-theme="light"] .neg{color:#18813e}
+html[data-theme="light"] .pos{color:#920707}
+html[data-theme="light"] .entryRow{background:#ffffff;border-bottom:1px solid #accedf}
+html[data-theme="light"] .chips{border-bottom:1px solid #accedf}
+html[data-theme="light"] .chip{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .chip:hover{background:#20aaee}
+html[data-theme="light"] .tbl th{background:#e9eff3;color:#0c2031}
+html[data-theme="light"] .tbl td{border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tbl tr.on td{background:#eaf1f4}
+html[data-theme="light"] .tbl input{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .empty{color:#0369a0}
+html[data-theme="light"] .hist{background:#ffffff;border-top:1px solid #accedf}
+html[data-theme="light"] .hist h3{color:#0369a0}
+html[data-theme="light"] .foot{background:#ffffff;border-top:1px solid #accedf}
+html[data-theme="light"] .sums div{color:#0369a0}
+html[data-theme="light"] .sums b{color:#0c2031}
+html[data-theme="light"] .ok{color:#18813e}
+html[data-theme="light"] .err{color:#920707}

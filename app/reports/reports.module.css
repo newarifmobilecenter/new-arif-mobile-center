@@ -35,3 +35,36 @@
 .empty { padding: 24px; text-align: center; color: #94a3b8; }
 @media print { .menu, .filters, .titlebar { display: none !important; } .main { display: block; } .win { border: 0; background: #fff; color: #000; } .tbl th { background: #ddd; color: #000; } .tbl td { color: #000; } .tblWrap { overflow: visible; border: 0; } .cardx { border-color: #999; background: #fff; } }
 @media (max-width: 800px) { .main { grid-template-columns: 1fr; } .menu { grid-auto-flow: column; overflow-x: auto; border-right: 0; border-bottom: 1px solid #26304a; } }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .win{background:#ffffff;border:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .titlebar{background:#ffffff;border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .titlebar a{color:#0369a0}
+html[data-theme="light"] .menu{background:#ffffff;border-right:1px solid #b7d5e4}
+html[data-theme="light"] .menu h3{color:#0369a0}
+html[data-theme="light"] .mbtn{color:#3c4c5a}
+html[data-theme="light"] .mbtn:hover{background:#ebf1f4}
+html[data-theme="light"] .mon{background:linear-gradient(90deg, #e7eff2, #e4ecf1);border-color:rgba(32,170,238,0.4);color:#0c2031}
+html[data-theme="light"] .filters{background:#eef3f6;border:1px solid #b7d5e4}
+html[data-theme="light"] .filters label{color:#6c869d}
+html[data-theme="light"] .in{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .in:focus{outline:2px solid #20aaee}
+html[data-theme="light"] .chipb{background:#ffffff;border:1px solid #b4d3e2;color:#3c4c5a}
+html[data-theme="light"] .chipb:hover{border-color:#20aaee;color:#0369a0}
+html[data-theme="light"] .act{background:#20aaee;border:1px solid rgba(32,170,238,0.533)}
+html[data-theme="light"] .cardx{background:#eef3f6;border:1px solid #b7d5e4}
+html[data-theme="light"] .cardx small{color:#6c869d}
+html[data-theme="light"] .tblWrap{border:1px solid #b7d5e4}
+html[data-theme="light"] .tbl th{background:#20aaee}
+html[data-theme="light"] .tbl td{border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tbl tbody tr:nth-child(even){background:#ffffff}
+html[data-theme="light"] .tbl tbody tr:hover{background:#ebf1f4}
+html[data-theme="light"] .tbl tfoot td{background:#e7eff2}
+html[data-theme="light"] .pos{color:#18813e}
+html[data-theme="light"] .neg{color:#920707}
+html[data-theme="light"] .warn{color:#966d03}
+html[data-theme="light"] .hint{color:#6c869d}
+html[data-theme="light"] .empty{color:#6c869d}
+@media (max-width: 800px){
+html[data-theme="light"] .menu{border-bottom:1px solid #b7d5e4}
+}

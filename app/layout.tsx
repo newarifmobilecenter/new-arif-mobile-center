@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
 import Toaster from "./components/Toaster";
 import "./globals.css";
+import "./light-theme.css";
 import { THEME_BOOT_SCRIPT } from "@/lib/themes";
 
 export const metadata: Metadata = {

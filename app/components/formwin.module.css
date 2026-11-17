@@ -42,3 +42,37 @@
 .pick button:hover { background: #12224a; }
 @media (max-width: 900px) { .body { grid-template-columns: minmax(0, 1fr); } .row { grid-template-columns: 100px minmax(0, 1fr); } }
 @media print { .titlebar, .tabs { display: none; } .win { background: #fff; color: #000; } }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .win{background:#ffffff;border:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .titlebar{background:#ffffff;border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .titlebar a{color:#0369a0}
+html[data-theme="light"] .tabs{background:#ffffff;border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tab{color:#3c4c5a}
+html[data-theme="light"] .tabOn{background:#eef3f6;border-color:#b7d5e4;border-bottom-color:#bed9e6;color:#0369a0}
+html[data-theme="light"] .card{background:#eef3f6;border:1px solid #b7d5e4}
+html[data-theme="light"] .card h2{color:#0c2031}
+html[data-theme="light"] .row{color:#3c4c5a}
+html[data-theme="light"] .in{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .in:focus{outline:2px solid #20aaee}
+html[data-theme="light"] .ro{background:#e6eef2}
+html[data-theme="light"] .nbtn{background:#ffffff;border:1px solid #b4d3e2;color:#0369a0}
+html[data-theme="light"] .save{background:#20aaee;border:1px solid #20aaee}
+html[data-theme="light"] .alt{background:#20aaee;border:1px solid rgba(32,170,238,0.533)}
+html[data-theme="light"] .msg{color:#920707}
+html[data-theme="light"] .ok{color:#18813e}
+html[data-theme="light"] .hint{color:#6c869d}
+html[data-theme="light"] .stat{background:rgba(244,247,249,0.6);border:1px solid #b7d5e4}
+html[data-theme="light"] .stat small{color:#6c869d}
+html[data-theme="light"] .stat b{color:#0369a0}
+html[data-theme="light"] .tbl th{background:#20aaee}
+html[data-theme="light"] .tbl td{border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tbl tbody tr:nth-child(even){background:#ffffff}
+html[data-theme="light"] .wrap{border:1px solid #b7d5e4}
+html[data-theme="light"] .pPaid{background:rgba(233,240,243,0.4);color:#12873c}
+html[data-theme="light"] .pPart{background:rgba(229,237,241,0.4);color:#967403}
+html[data-theme="light"] .pDue{color:#940505}
+html[data-theme="light"] .lines th{background:#20aaee}
+html[data-theme="light"] .pick{background:#ffffff;border:1px solid #20aaee}
+html[data-theme="light"] .pick button{background:#ffffff;color:#0c2031}
+html[data-theme="light"] .pick button:hover{background:#ebf1f4}

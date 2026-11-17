@@ -60,3 +60,49 @@
 .tbl tbody tr:hover { background: #12224a; }
 .debtPill { padding: 2px 10px; border-radius: 999px; background: #7f1d1d55; color: #fca5a5; font-weight: 700; }
 .clearPill { padding: 2px 10px; border-radius: 999px; background: #14532d55; color: #86efac; font-weight: 700; }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .win{background:#ffffff;border:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .titlebar{background:#ffffff;border-bottom:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .titlebar a{color:#0369a0}
+html[data-theme="light"] .tabs{background:#ffffff;border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tab{color:#3c4c5a}
+html[data-theme="light"] .tabActive{background:#eef3f6;border-color:#b7d5e4;border-bottom-color:#bed9e6;color:#0369a0}
+html[data-theme="light"] .body{background:#ffffff}
+html[data-theme="light"] .head h1{color:#0c2031}
+html[data-theme="light"] .head input{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .panel{background:#eef3f6;border:1px solid #b7d5e4}
+html[data-theme="light"] .row{color:#3c4c5a}
+html[data-theme="light"] .in{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .in:focus{outline:2px solid #20aaee}
+html[data-theme="light"] .code{background:#e6eef2}
+html[data-theme="light"] .search{background:#e6eef1;border-color:#20aaee}
+html[data-theme="light"] .nbtn{background:#ffffff;border:1px solid #b4d3e2;color:#0369a0}
+html[data-theme="light"] .bar{background:#ffffff;border:1px solid #b7d5e4}
+html[data-theme="light"] .ico{color:#0c2031}
+html[data-theme="light"] .save{background:#20aaee}
+html[data-theme="light"] .edit{background:#20aaee}
+html[data-theme="light"] .msg{color:#920707}
+html[data-theme="light"] .ok{color:#18813e}
+html[data-theme="light"] .list{background:#ffffff}
+html[data-theme="light"] .listTop h2{color:#0c2031}
+html[data-theme="light"] .tbl{color:#0c2031}
+html[data-theme="light"] .tbl th{background:#20aaee}
+html[data-theme="light"] .tbl td{border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .tbl a{color:#0369a0}
+html[data-theme="light"] .tbl button{background:#ffffff;border:1px solid #b4d3e2;color:#0369a0}
+html[data-theme="light"] .debt{color:#920707}
+html[data-theme="light"] .clear{color:#18813e}
+html[data-theme="light"] .banner{background:linear-gradient(90deg, #ebf1f4, #e4ecf1 60%, #eef3f6);border:1px solid rgba(32,170,238,0.333)}
+html[data-theme="light"] .bannerTitle{color:#0c2031}
+html[data-theme="light"] .bannerSub{color:#0369a0}
+html[data-theme="light"] .chip{background:rgba(244,247,249,0.6);border:1px solid #b7d5e4}
+html[data-theme="light"] .chip small{color:#6c869d}
+html[data-theme="light"] .chip b{color:#0369a0}
+html[data-theme="light"] .count{color:#6c869d}
+html[data-theme="light"] .tblWrap{border:1px solid #b7d5e4}
+html[data-theme="light"] .avatar{background:linear-gradient(135deg, #20aaee, #20aaee)}
+html[data-theme="light"] .tbl tbody tr:nth-child(even){background:#ffffff}
+html[data-theme="light"] .tbl tbody tr:hover{background:#ebf1f4}
+html[data-theme="light"] .debtPill{color:#940505}
+html[data-theme="light"] .clearPill{background:rgba(233,240,243,0.333);color:#12873c}

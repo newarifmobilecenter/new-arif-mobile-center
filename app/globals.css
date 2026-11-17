@@ -347,31 +347,103 @@ html[data-theme="rose"] [class*="Success"],
 html[data-theme="rose"] [class*="warning"],
 html[data-theme="rose"] [class*="Warning"],
 html[data-theme="rose"] [class*="toast_"]{filter:hue-rotate(-130deg)}
-html[data-theme="light"]{--hr:180deg;filter:invert(1) hue-rotate(180deg)}
-html[data-theme="light"] body{background:radial-gradient(1100px 520px at 12% -8%,#0e1a32,transparent 62%),radial-gradient(900px 480px at 100% 0,#0e1a3288,transparent 60%),#080d14}
-html[data-theme="light"] .panel,html[data-theme="light"] .card,html[data-theme="light"] .hero,html[data-theme="light"] .dashboardMenu,html[data-theme="light"] .dashFoot,html[data-theme="light"] .appAuthBar{background:#000000;border-color:#273344}
-html[data-theme="light"] .hero{background:linear-gradient(135deg,#05090f,#000000)}
-html[data-theme="light"] .input,html[data-theme="light"] select,html[data-theme="light"] textarea{background:#05090f;border-color:#273344}
-html[data-theme="light"] .card:hover,html[data-theme="light"] .dashboardAction:hover{border-color:#53b9f1}
-html[data-theme="light"] .eyebrow,html[data-theme="light"] .go,html[data-theme="light"] .nav a,html[data-theme="light"] .dashFoot a,html[data-theme="light"] .dashFootHelp,html[data-theme="light"] .table a{color:#53b9f1}
-html[data-theme="light"] .btn{background:linear-gradient(135deg,#65a3ff,#a79eff)}
-html[data-theme="light"] .appAuthButton{border-color:#53b9f1;background:#05090f}
-html[data-theme="light"] .dashboardShortcuts{background:linear-gradient(110deg,#05090f,#65a3ff66)}
-html[data-theme="light"] .dashboardAction{background:#05090f;border-color:#273344}
-html[data-theme="light"] .table thead th,html[data-theme="light"] table thead th{background:#000000}
-html[data-theme="light"]
-html[data-theme="light"] img,html[data-theme="light"] video{filter:invert(1) hue-rotate(180deg)}
-html[data-theme="light"] .btn.green,
-html[data-theme="light"] .btn.red,
-html[data-theme="light"] [class*="Green"],
-html[data-theme="light"] [class*="_green"],
-html[data-theme="light"] [class*="Red"],
-html[data-theme="light"] [class*="_red"],
-html[data-theme="light"] [class*="danger"],
-html[data-theme="light"] [class*="Danger"],
-html[data-theme="light"] [class*="success"],
-html[data-theme="light"] [class*="Success"],
-html[data-theme="light"] [class*="warning"],
-html[data-theme="light"] [class*="Warning"],
-html[data-theme="light"] [class*="toast_"]{filter:invert(1) hue-rotate(180deg)}
 @media print{html[data-theme]{filter:none!important}}
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] body{background:#ffffff;color:#0c2031}
+html[data-theme="light"] .hero{background:linear-gradient(135deg,#ffffff,#ffffff);border:1px solid #b7d5e4}
+html[data-theme="light"] .eyebrow{color:#0369a0}
+html[data-theme="light"] .muted{color:#546a7e}
+html[data-theme="light"] .card{background:#ffffff;border:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .card:hover{border-color:#20aaee}
+html[data-theme="light"] .go{color:#0369a0}
+html[data-theme="light"] .btn{background:linear-gradient(135deg,#20aaee,#20aaee)}
+html[data-theme="light"] .panel{background:#ffffff;border:1px solid #b7d5e4}
+html[data-theme="light"] .input,html[data-theme="light"] select,html[data-theme="light"] textarea{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .nav a{color:#0369a0}
+html[data-theme="light"] .table th,html[data-theme="light"] .table td{border-bottom:1px solid #b7d5e4}
+html[data-theme="light"] .total{color:#966d03}
+html[data-theme="light"] .appAuthBar{background:#ffffff;border-bottom:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .appAuthDua{color:#836416}
+html[data-theme="light"] .appAuthBrand{color:#0c2031}
+html[data-theme="light"] .appAuthUser{color:#546a7e}
+html[data-theme="light"] .appAuthButton{background:#edf3f5;border:1px solid #20aaee;color:#0c2031}
+html[data-theme="light"] .appAuthError{background:#ffffff;border:1px solid #b1d1e1;color:#0c2031}
+html[data-theme="light"] .dashboardMenu{background:#ffffff;border:1px solid #b7d5e4}
+html[data-theme="light"] .dashboardMenuButton{color:#3c4c5a}
+html[data-theme="light"] .dashboardMenuButton:hover,html[data-theme="light"] .dashboardMenuButton:focus-visible{background:#edf2f4;color:#0369a0}
+html[data-theme="light"] .dashboardMenuButton.active{background:#eaf1f4;color:#0369a0}
+html[data-theme="light"] .dashboardShortcuts{background:linear-gradient(110deg,#eaf1f4,#e5edf1 52%,#e7eef2);border:1px solid #b2d2e2}
+html[data-theme="light"] .dashboardShortcut{background:rgba(0,0,0,0.051);border:1px solid rgba(0,0,0,0.125);color:#0c2031}
+html[data-theme="light"] .dashboardShortcut:hover{background:rgba(0,0,0,0.11);border-color:#20aaee}
+html[data-theme="light"] .dashboardClose{background:#ffffff;border:1px solid #b4d3e2;color:#3c4c5a}
+html[data-theme="light"] .dashboardClose:hover{border-color:#20aaee;color:#0369a0}
+html[data-theme="light"] .dashboardAction{background:#ffffff;border:1px solid #b7d5e4;color:#0c2031}
+html[data-theme="light"] .dashboardAction:hover,html[data-theme="light"] .dashboardAction:focus-visible{background:#ffffff;border-color:#20aaee}
+html[data-theme="light"] .dashboardHint{color:#546a7e}
+@media screen and (min-width: 900px){
+html[data-theme="light"] .table thead th,html[data-theme="light"] table thead th{background:#ffffff}
+html[data-theme="light"] .table a,html[data-theme="light"] table a{color:#0369a0}
+}
+html[data-theme="light"] .dashSearchInput{background:#ffffff;border:1px solid #aed0e0;color:#0c2031}
+html[data-theme="light"] .dashSearchResults{background:#ffffff;border:1px solid #b4d3e2}
+html[data-theme="light"] .dashSearchGroup h3{color:#0369a0}
+html[data-theme="light"] .dashSearchItem{color:#0c2031}
+html[data-theme="light"] .dashSearchItem:hover,html[data-theme="light"] .dashSearchItem:focus{background:#edf1f3}
+html[data-theme="light"] .dashSearchItem span{color:#6c879d}
+html[data-theme="light"] .dashSearchNote{color:#6c879d}
+html[data-theme="light"] .loginWall{background:#ffffff}
+html[data-theme="light"] .loginBrand{background:rgba(244,247,249,0.82);border:1px solid rgba(32,170,238,0.25);color:#0c2031}
+html[data-theme="light"] .loginBrand span{color:#0369a0}
+html[data-theme="light"] .loginCard{background:rgba(243,246,248,0.78);border:1px solid rgba(32,170,238,0.35)}
+html[data-theme="light"] .loginCard h1{color:#0c2031}
+html[data-theme="light"] .loginCard p{color:#69849b}
+html[data-theme="light"] .loginCard label{color:#3c4c5a}
+html[data-theme="light"] .loginCard input{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .loginCard input:focus{outline:2px solid #20aaee;border-color:#20aaee}
+html[data-theme="light"] .loginCard .loginError{color:#920707}
+html[data-theme="light"] .loginCard button{background:linear-gradient(90deg,#20aaee,#20aaee)}
+html[data-theme="light"] .helplineMark span{background:rgba(243,246,248,0.85);border:1px solid #b7d5e4;color:#0369a0}
+html[data-theme="light"] .toastCard{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .toastClose{color:#6c869d}
+html[data-theme="light"] .toast_danger{background:linear-gradient(90deg,#edf3f5,#ffffff 60%);border-color:#b1d1e1}
+html[data-theme="light"] .toast_danger .toastIcon{color:#0c2031}
+html[data-theme="light"] .toast_danger b{color:#940505}
+html[data-theme="light"] .toast_warning{background:linear-gradient(90deg,#eff4f6,#ffffff 60%)}
+html[data-theme="light"] .toast_warning b{color:#967403}
+html[data-theme="light"] .toast_success{background:linear-gradient(90deg,#ffffff,#ffffff 60%)}
+html[data-theme="light"] .toast_success b{color:#12873c}
+html[data-theme="light"] .toast_info{background:linear-gradient(90deg,#ffffff,#ffffff 60%);border-left-color:#20aaee}
+html[data-theme="light"] .toast_info .toastIcon{background:#20aaee}
+html[data-theme="light"] .toast_info b{color:#0369a0}
+html[data-theme="light"] .toast_info .toastTimer{background:#20aaee}
+html[data-theme="light"] .dashFoot{background:#ffffff;border:1px solid #b7d5e4}
+html[data-theme="light"] .dashFoot a{color:#0369a0}
+html[data-theme="light"] .dashFoot a:hover{background:#edf2f4}
+html[data-theme="light"] .dashFootHelp{color:#0369a0}
+html[data-theme="light"] .glassWall{background:linear-gradient(160deg,#ffffff 0%,#eef3f6 35%,#e7eff2 70%,#20aaee 100%)}
+html[data-theme="light"] .gOrb1{background:radial-gradient(circle at 35% 35%,#20aaee,#20aaee 60%,transparent 70%)}
+html[data-theme="light"] .gOrb2{background:radial-gradient(circle at 40% 40%,#20aaee,#20aaee 60%,transparent 70%)}
+html[data-theme="light"] .gOrb3{background:radial-gradient(circle at 50% 50%,#20aaee,#20aaee 60%,transparent 70%)}
+html[data-theme="light"] .gOrb4{background:radial-gradient(circle at 50% 50%,#20aaee,#20aaee 60%,transparent 70%)}
+html[data-theme="light"] .glassBrand{background:rgba(0,0,0,0.16);border:1px solid rgba(0,0,0,0.4);color:#0c2031}
+html[data-theme="light"] .glassCard{background:linear-gradient(145deg,rgba(32,170,238,0.24),rgba(0,0,0,0.06));color:#0c2031}
+html[data-theme="light"] .glassCard::before{background:linear-gradient(115deg,rgba(0,0,0,0.35) 0%,rgba(0,0,0,0) 38%)}
+html[data-theme="light"] .glassLogo{background:linear-gradient(145deg,rgba(0,0,0,0.45),rgba(0,0,0,0.12));color:#0c2031}
+html[data-theme="light"] .glassCard h1{color:#0c2031}
+html[data-theme="light"] .glassCard p{color:rgba(12,32,49,0.85)}
+html[data-theme="light"] .glassCard label{color:rgba(12,32,49,0.92)}
+html[data-theme="light"] .glassCard input{background:rgba(0,0,0,0.16);border:1px solid rgba(0,0,0,0.4);color:#0c2031}
+html[data-theme="light"] .glassCard input::placeholder{color:rgba(12,32,49,0.6)}
+html[data-theme="light"] .glassCard input:focus{background:rgba(0,0,0,0.26)}
+html[data-theme="light"] .glassPass button{background:rgba(0,0,0,0.2);border:1px solid rgba(0,0,0,0.4);color:#0c2031}
+html[data-theme="light"] .glassError{color:#0c2031!important}
+html[data-theme="light"] .glassBtn{background:linear-gradient(145deg,rgba(255,255,255,.55),rgba(0,0,0,0.22))}
+html[data-theme="light"] .glassBtn:hover{background:linear-gradient(145deg,rgba(255,255,255,.7),rgba(0,0,0,0.32))}
+html[data-theme="light"] .glassTile{background:linear-gradient(145deg,rgba(32,170,238,0.26),rgba(0,0,0,0.07));color:#0c2031}
+html[data-theme="light"] .shopBrands{background:rgba(236,242,245,0.45);color:#0c2031}
+html[data-theme="light"] .shopBrands .sbMain{color:#0c2031}
+html[data-theme="light"] .shopBrands .sbSep{background:rgba(0,0,0,0.4)}
+html[data-theme="light"] .ruleCard{background:rgba(239,244,246,0.6);border:1px solid #b4d3e2}
+html[data-theme="light"] .ruleHead button{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .ruleCard label{color:#6c869d}

@@ -453,3 +453,47 @@
   .repairDetailPage > :nth-child(-n+3) { grid-column: 1 / -1; }
   .repairDetailPage > section { margin-top: 8px; align-self: start; }
 }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .page{--surface:#ffffff;--line:#b6d4e3;--ink:#0c2031;--muted:#546a7e;--accent:#0369a0}
+html[data-theme="light"] .tab,html[data-theme="light"] .activeTab{background:#ffffff}
+html[data-theme="light"] .activeTab{background:#edf3f5}
+html[data-theme="light"] .field input,html[data-theme="light"] .field select,html[data-theme="light"] .field textarea{background:#ffffff;border:1px solid #b2d2e2}
+html[data-theme="light"] .readonly{background:#ffffff}
+html[data-theme="light"] .button,html[data-theme="light"] .buttonSecondary,html[data-theme="light"] .buttonDanger{color:#0c2031}
+html[data-theme="light"] .button{background:#20aaee}
+html[data-theme="light"] .buttonSecondary{background:#ffffff;border-color:#b1d1e2}
+html[data-theme="light"] .status{background:#ebeff1}
+html[data-theme="light"] .status[data-status="PAID"]{background:#e9f0f3;color:#0c2031}
+html[data-theme="light"] .notice{color:#940505}
+html[data-theme="light"] .reminderModal{background:#ffffff}
+html[data-theme="light"] .reminderDialog{background:#ffffff}
+html[data-theme="light"] .historyItem{background:#ffffff}
+html[data-theme="light"] .textButton{color:#940505}
+html[data-theme="light"] .receivingServices i{background:#ffffff}
+html[data-theme="light"] .brandLogos{border-top:1px solid #bed9e6;border-bottom:1px solid #bed9e6}
+html[data-theme="light"] .receivingTitle{border:2px solid #c3dce8}
+html[data-theme="light"] .receivingTokenRow{border:2px solid #c3dce8}
+html[data-theme="light"] .receivingDates > div,html[data-theme="light"] .receivingCustomer,html[data-theme="light"] .receivingFieldBox,html[data-theme="light"] .receivingTextBox,html[data-theme="light"] .receivingAccessories{border:1px solid #a6cbdd}
+html[data-theme="light"] .accessoryOptions i{border:1px solid #b9d6e4}
+html[data-theme="light"] .receivingReady{border:2px solid #c3dce8}
+html[data-theme="light"] .receivingConfirmation{border:1px dashed #b9d6e4}
+html[data-theme="light"] .customerCopy{background:#ffffff;border:1px solid #c3dce8;color:#0c2031}
+html[data-theme="light"] .receivingSignature span{border-bottom:1px solid #b4d3e2}
+html[data-theme="light"] .voucherHeader{border-bottom:2px solid #c3dce8}
+html[data-theme="light"] .voucherAmounts{border:2px solid #c3dce8}
+html[data-theme="light"] .rsLogo{border:3px solid #c8deea}
+html[data-theme="light"] .rsTitle{background:#ffffff}
+html[data-theme="light"] .rsTokenRow{border-bottom:1px dashed #c8deea}
+html[data-theme="light"] .rsToken{border:1.5px solid #c8deea}
+html[data-theme="light"] .rsInfo{border-bottom:1px dashed #c8deea}
+html[data-theme="light"] .rsPhone{background:#ffffff}
+html[data-theme="light"] .rsBox{border:2px solid #c8deea}
+html[data-theme="light"] .rsAcc{border:1px solid #c8deea}
+html[data-theme="light"] .rsReady strong{background:#ffffff}
+html[data-theme="light"] .rsCopy{background:#ffffff}
+html[data-theme="light"] .rsAddr{border-right:1px solid #c8deea}
+html[data-theme="light"] .rsPhoneRow strong{border:1.2px solid #c8deea}
+html[data-theme="light"] .rsFoot{border-top:1px solid #c8deea}
+html[data-theme="light"] .button,html[data-theme="light"] .buttonDanger{color:#fff}
+html[data-theme="light"] .buttonSecondary{color:#050505}

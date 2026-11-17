@@ -108,3 +108,88 @@
 .dlgBox p { margin: 0 0 14px; color: #aeb5cc; }
 .dlgBtns { display: flex; gap: 10px; flex-wrap: wrap; }
 .dlgBtns :global(.btn) { flex: 1 1 140px; cursor: pointer; padding: 12px 14px; font-size: 15px; }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .saleWindow{background:#ffffff;border:1px solid #a8ccde;color:#0c2031}
+html[data-theme="light"] .topBar,html[data-theme="light"] .secondBar{background:linear-gradient(#ecf2f5,#ffffff);border-bottom:1px solid #afd0e1}
+html[data-theme="light"] .topBar button,html[data-theme="light"] .secondBar button,html[data-theme="light"] .topBar a,html[data-theme="light"] .secondBar a,html[data-theme="light"] .footerBar button,html[data-theme="light"] .resultBar button,html[data-theme="light"] .resultBar a{background:linear-gradient(#eaf0f3,#edf3f6);border:1px solid #accedf;color:#0c2031}
+html[data-theme="light"] .topBar button:hover,html[data-theme="light"] .secondBar button:hover,html[data-theme="light"] .topBar a:hover,html[data-theme="light"] .secondBar a:hover{background:#e5edf1}
+html[data-theme="light"] .secondBar{background:#ffffff}
+html[data-theme="light"] .invoiceHeader{background:linear-gradient(90deg,#ecf2f5,#ffffff);border-bottom:1px solid #accedf}
+html[data-theme="light"] .invoiceHeader label{color:#0369a0}
+html[data-theme="light"] .invoiceHeader input,html[data-theme="light"] .invoiceHeader select,html[data-theme="light"] .barcodeRow input,html[data-theme="light"] .searchHead input,html[data-theme="light"] .tableWrap input,html[data-theme="light"] .calcGrid input,html[data-theme="light"] .calcGrid select,html[data-theme="light"] .footerBar select{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .invoiceHeader input:focus,html[data-theme="light"] .invoiceHeader select:focus,html[data-theme="light"] .barcodeRow input:focus,html[data-theme="light"] .searchHead input:focus,html[data-theme="light"] .tableWrap input:focus,html[data-theme="light"] .calcGrid input:focus{border-color:#20aaee}
+html[data-theme="light"] .actionRow button{background:#20aaee;border:1px solid #20aaee}
+html[data-theme="light"] .barcodeRow{background:#eef3f6;border-bottom:1px solid #accedf}
+html[data-theme="light"] .barcodeRow b{color:#0369a0}
+html[data-theme="light"] .barcodeRow button{background:#20aaee;border:1px solid #20aaee}
+html[data-theme="light"] .heldPanel{background:#ffffff;border-bottom:1px solid #b0d1e1}
+html[data-theme="light"] .heldRow button{background:#e8eff3;border:1px solid #a7cbde;color:#0c2031}
+html[data-theme="light"] .tableWrap{background:#ffffff;border-bottom:1px solid #accedf}
+html[data-theme="light"] .tableWrap th{background:#ecf2f5;color:#0c2031}
+html[data-theme="light"] .tableWrap th,html[data-theme="light"] .tableWrap td{border:1px solid #b5d4e3}
+html[data-theme="light"] .empty{color:#0369a0}
+html[data-theme="light"] .searchPopup{background:#ffffff;border:1px solid #20aaee}
+html[data-theme="light"] .searchHead{background:#ecf2f5}
+html[data-theme="light"] .searchHead button{background:#ebf1f4;border:1px solid #a9cdde;color:#0c2031}
+html[data-theme="light"] .popupTable th{background:#eaf0f4}
+html[data-theme="light"] .popupTable th,html[data-theme="light"] .popupTable td{border:1px solid #b5d4e3}
+html[data-theme="light"] .popupTable tbody tr:hover{background:#e6eef2}
+html[data-theme="light"] .popupTable tbody tr:first-child{background:#20aaee}
+html[data-theme="light"] .searchPopup small{color:#0369a0}
+html[data-theme="light"] .bottomArea{background:linear-gradient(#ecf2f5,#ffffff);border-bottom:1px solid #accedf}
+html[data-theme="light"] .statusBox span{color:#0369a0}
+html[data-theme="light"] .statusBox label{color:#0369a0}
+html[data-theme="light"] .statusBox input,html[data-theme="light"] .statusBox select{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .calcGrid label{color:#0369a0}
+html[data-theme="light"] .netInput{background:#eaf1f4!important;color:#0369a0!important}
+html[data-theme="light"] .printBox{border:1px solid #b0d1e1}
+html[data-theme="light"] .printBox b{color:#0369a0}
+html[data-theme="light"] .printBox button{background:#ecf2f5;border:1px solid #aacddf;color:#0c2031}
+html[data-theme="light"] .footerBar{background:#ffffff;color:#0369a0}
+html[data-theme="light"] .footerBar .saveBtn{background:#20aaee;border-color:#20aaee}
+html[data-theme="light"] .resultBar{background:#ffffff}
+html[data-theme="light"] .receipt{background:#ffffff;border:1px solid #accedf}
+html[data-theme="light"] .receipt hr{border-color:#b0d1e1}
+html[data-theme="light"] .productFilters label{color:#0369a0}
+html[data-theme="light"] .productFilters select{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .productSearch{background:#ffffff;border-bottom:1px solid #accedf}
+html[data-theme="light"] .searchInput{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .productButton{background:#ecf2f5;border:1px solid #b1d1e1;color:#0c2031}
+html[data-theme="light"] .productButton:hover{background:#e6eef2;border-color:#20aaee}
+html[data-theme="light"] .productButton span,html[data-theme="light"] .productButton small{color:#0369a0}
+html[data-theme="light"] .printSel{border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .hint{color:#0369a0}
+html[data-theme="light"] .pickerPane{background:#ffffff;border-left:2px solid #a8ccde}
+html[data-theme="light"] .pickerPane th{background:#e8eff2;color:#0c2031}
+html[data-theme="light"] .pickerPane td{border-bottom:1px solid #b8d5e4;color:#0c2031}
+html[data-theme="light"] .pickRow:hover{background:#e6eef1}
+html[data-theme="light"] .zeroRow td{background:#e8eff3;color:#0c2031}
+html[data-theme="light"] .pickOn td{background:#20aaee!important}
+html[data-theme="light"] .entryInput{background:#ffffff;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .entryInput:focus{outline:2px solid #20aaee}
+html[data-theme="light"] .entryRow td{background:#edf3f6}
+html[data-theme="light"] .repairBox{background:#ffffff;border:1px solid #a8ccde}
+html[data-theme="light"] .repairBoxHead{color:#0369a0}
+html[data-theme="light"] .repairCard{border:1px solid #abcedf}
+html[data-theme="light"] .repairReady{background:#eff4f6;border-color:#aacddf}
+html[data-theme="light"] .repairDelivered{background:#ffffff;border-color:#accfe0}
+html[data-theme="light"] .repairTxt small{color:#0c2031}
+html[data-theme="light"] .repairCard button{background:#e8eff2;border:1px solid #abcedf;color:#0c2031}
+html[data-theme="light"] .repairModalBg{background:rgba(249,249,249,0.6)}
+html[data-theme="light"] .repairModal{background:#ffffff;border:1px solid #20aaee;color:#0c2031}
+html[data-theme="light"] .repairModal h3{color:#0369a0}
+html[data-theme="light"] .repairModal p{color:#5d768b}
+html[data-theme="light"] .repairModal input{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .repairModalBtns button{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .repairModalBtns .repairSave{background:linear-gradient(90deg,#20aaee,#20aaee)}
+html[data-theme="light"] .tagSoft{background:#e5edf1;color:#967903}
+html[data-theme="light"] .custList{background:#ffffff;border:1px solid #20aaee}
+html[data-theme="light"] .custOpt{border-bottom:1px solid #bbd7e5;color:#0c2031}
+html[data-theme="light"] .custOn,html[data-theme="light"] .custOpt:hover{background:#20aaee}
+html[data-theme="light"] .custNone{color:#6c869d}
+html[data-theme="light"] .costBox{color:#966d03}
+html[data-theme="light"] .costBox small{color:#6c869d}
+html[data-theme="light"] .dlgBack{background:rgba(249,249,249,0.6)}
+html[data-theme="light"] .dlgBox{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .dlgBox p{color:#546a7e}

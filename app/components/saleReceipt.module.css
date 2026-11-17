@@ -46,3 +46,16 @@
   .rc.thermal { --rc-scale: .8; page: saleReceiptPage; max-width: none; margin: 0; padding: 2mm 3mm !important; border-radius: 0; width: calc(72mm / var(--rc-scale)) !important; zoom: var(--rc-scale); box-sizing: border-box; }
   :global(body) :global(main):has(.thermal) { padding: 0 !important; margin: 0 !important; min-height: 0 !important; height: auto !important; }
 }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .logo{border:3px solid #c8deea}
+html[data-theme="light"] .dark{background:#ffffff;color:#0c2031}
+html[data-theme="light"] .rc .dark,html[data-theme="light"] .rc .dark *{color:#0c2031!important}
+html[data-theme="light"] .meta{border-bottom:1px dashed #c8deea}
+html[data-theme="light"] .inv{border:1.5px solid #c8deea}
+html[data-theme="light"] .tbl td{border-bottom:1px dotted #c8deea}
+html[data-theme="light"] .cat td{border:1px solid #c8deea}
+html[data-theme="light"] .totals{border-top:1px solid #c8deea}
+html[data-theme="light"] .net{border:2px solid #c8deea}
+html[data-theme="light"] .warr{border:1.5px solid #c8deea}
+html[data-theme="light"] .foot{border-top:1px solid #c8deea}

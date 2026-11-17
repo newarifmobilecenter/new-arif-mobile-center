@@ -17,3 +17,56 @@
 .tableWrap td:nth-child(3) span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; line-height: 1.3; }
 .tableWrap td { vertical-align: middle; }
 .tableWrap tbody tr { height: 46px; }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .page{background:#ffffff;color:#0c2031}
+html[data-theme="light"] .titlebar{background:#ffffff;border-bottom:1px solid #b1d1e1;color:#0c2031}
+html[data-theme="light"] .user{color:#0369a0}
+html[data-theme="light"] .tabs{background:#ffffff;border-bottom:1px solid #aed0e0}
+html[data-theme="light"] .tabs button{background:#eff4f6;border:1px solid #aed0e0;color:#0c2031}
+html[data-theme="light"] .tabs button:hover,html[data-theme="light"] .activeTab{background:#20aaee!important}
+html[data-theme="light"] .heading{background:#eff4f6;border-bottom:1px solid #accfe0}
+html[data-theme="light"] .heading h1{color:#0369a0}
+html[data-theme="light"] .heading input{background:#ffffff;border:1px solid #20aaee;color:#0c2031}
+html[data-theme="light"] .formPanel{background:#ffffff;border:1px solid #b1d1e1}
+html[data-theme="light"] .field span{color:#0369a0}
+html[data-theme="light"] .field input,html[data-theme="light"] .field select,html[data-theme="light"] .listTop input,html[data-theme="light"] .supplierGrid input,html[data-theme="light"] .levelCard input{background:#ffffff;border:1px solid #a9ccde;color:#0c2031}
+html[data-theme="light"] .field input:focus,html[data-theme="light"] .field select:focus,html[data-theme="light"] .listTop input:focus{border-color:#20aaee}
+html[data-theme="light"] .nBtn{background:#ecf2f5;border:1px solid #20aaee;color:#0c2031}
+html[data-theme="light"] .branchBox{background:#ffffff;border:1px solid #aecfe0}
+html[data-theme="light"] .actions{background:#ffffff;border:1px solid #b1d1e1}
+html[data-theme="light"] .actions button{border:1px solid #20aaee}
+html[data-theme="light"] .save{background:#20aaee}
+html[data-theme="light"] .edit{background:#20aaee}
+html[data-theme="light"] .back{color:#0369a0}
+html[data-theme="light"] .listPanel,html[data-theme="light"] .simplePanel{background:#ffffff;border:1px solid #b1d1e1}
+html[data-theme="light"] .listTop h2,html[data-theme="light"] .simplePanel h2{color:#0c2031}
+html[data-theme="light"] .listTop button{background:#20aaee;border:1px solid #20aaee}
+html[data-theme="light"] .page th,html[data-theme="light"] .page td{border:1px solid #b2d2e2}
+html[data-theme="light"] .page th{background:#ebf1f4;color:#0369a0}
+html[data-theme="light"] .page tbody tr:nth-child(even){background:#ffffff}
+html[data-theme="light"] .page tbody tr:hover{background:#ebf1f4}
+html[data-theme="light"] .page td button{background:#20aaee;border:1px solid #20aaee}
+html[data-theme="light"] .muted{color:#0369a0}
+html[data-theme="light"] .openCard,html[data-theme="light"] .levelCard{background:#ffffff;border:1px solid #b1d1e2}
+html[data-theme="light"] .openCard span{color:#0369a0}
+html[data-theme="light"] .openCard label{color:#0369a0}
+html[data-theme="light"] .openCard input{background:#ffffff;border:1px solid #a9ccde;color:#0c2031}
+html[data-theme="light"] .supplierGrid button{border:1px solid #20aaee}
+html[data-theme="light"] .levelCard b{color:#0369a0}
+html[data-theme="light"] .brandModalBackdrop{background:rgba(244,247,249,0.72)}
+html[data-theme="light"] .brandModal{background:#ffffff;border:1px solid #20aaee;color:#0c2031}
+html[data-theme="light"] .brandModalHeader{background:#20aaee;border-bottom:1px solid #20aaee}
+html[data-theme="light"] .brandModalHeader h2{color:#0c2031}
+html[data-theme="light"] .brandModalHeader button{color:#0c2031}
+html[data-theme="light"] .brandModalTabs{background:#edf3f5}
+html[data-theme="light"] .brandModalTabs button{background:#ebf1f4;border:1px solid #adcfe0;color:#0c2031}
+html[data-theme="light"] .brandModalTabs .brandModalTabActive{background:#20aaee;border-color:#20aaee}
+html[data-theme="light"] .brandModalField{color:#0369a0}
+html[data-theme="light"] .brandModalField input,html[data-theme="light"] .brandModalField select{background:#ffffff;border:1px solid #a9ccde;color:#0c2031}
+html[data-theme="light"] .brandModalActions button,html[data-theme="light"] .brandChips button{background:#ecf2f5;border:1px solid #a9ccde;color:#0c2031}
+html[data-theme="light"] .brandModalActions .brandModalSave{background:#20aaee;border-color:#20aaee}
+html[data-theme="light"] .brandCategoryGroup{background:#eff4f6;border:1px solid #b3d2e2}
+html[data-theme="light"] .brandCategoryGroup h3{color:#0369a0}
+html[data-theme="light"] .brandChips button:hover{background:#20aaee}
+html[data-theme="light"] .zeroStock td{background:#e8eff3!important;color:#0c2031!important}

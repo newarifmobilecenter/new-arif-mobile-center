@@ -23,3 +23,19 @@
 .empty { padding: 24px; color: #93a4bd; grid-column: 1 / -1; text-align: center; }
 .bar input, .bar select, .bar button { width: auto; flex: 0 0 auto; }
 .bar { align-items: center; }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .page{color:#0c2031}
+html[data-theme="light"] .top a{color:#0369a0}
+html[data-theme="light"] .tab{background:#ffffff;border:1px solid #b7d5e4;color:#3c4c5a}
+html[data-theme="light"] .tabOn{background:linear-gradient(90deg, #20aaee, #20aaee)}
+html[data-theme="light"] .bar input,html[data-theme="light"] .bar select{background:#ffffff;border:1px solid #b4d3e2;color:#0c2031}
+html[data-theme="light"] .bar button{background:#20aaee}
+html[data-theme="light"] .group{background:#ffffff;border:1px solid #b7d5e4}
+html[data-theme="light"] .group h3{background:#20aaee}
+html[data-theme="light"] .row{border-top:1px solid #bad7e5}
+html[data-theme="light"] .sub{color:#69849b}
+html[data-theme="light"] .open{background:#e4ecf1;color:#975202}
+html[data-theme="light"] .ordered{background:#e9f0f3;color:#10893a}
+html[data-theme="light"] .btn{background:#ffffff;border:1px solid #b4d3e2;color:#0369a0}
+html[data-theme="light"] .empty{color:#69849b}

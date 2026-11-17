@@ -1,0 +1,32 @@
+/* Light theme: safed + aasmani (sky) neela. Baqi light rules scripts/gen-light.mjs banata hai. */
+html[data-theme="light"]{color-scheme:light}
+html[data-theme="light"] body{background:#f5fafd;color:#0b1f33}
+html[data-theme="light"] .panel,html[data-theme="light"] .card,html[data-theme="light"] .dashboardMenu,html[data-theme="light"] .dashboardAction{background:#fff;border-color:#cfe6f5;box-shadow:0 1px 3px rgba(14,116,170,.08)}
+html[data-theme="light"] .hero{background:linear-gradient(135deg,#fff,#e0f2fe);border-color:#cfe6f5;box-shadow:0 1px 3px rgba(14,116,170,.08)}
+html[data-theme="light"] .card:hover,html[data-theme="light"] .dashboardAction:hover{border-color:#38bdf8;box-shadow:0 3px 10px rgba(14,165,233,.2)}
+html[data-theme="light"] .appAuthBar{background:#fff;border-bottom:1px solid #cfe6f5;box-shadow:0 1px 3px rgba(14,116,170,.08);color:#0b1f33}
+html[data-theme="light"] .appAuthButton{background:#e0f2fe;border-color:#38bdf8;color:#0369a1}
+html[data-theme="light"] .btn{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff}
+html[data-theme="light"] .btn.green{background:#16a34a}
+html[data-theme="light"] .btn.red{background:#dc2626}
+html[data-theme="light"] .input,html[data-theme="light"] select,html[data-theme="light"] textarea{background:#fff;border:1px solid #bcdcf0;color:#0b1f33}
+html[data-theme="light"] .input:focus,html[data-theme="light"] select:focus,html[data-theme="light"] textarea:focus{outline:2px solid #38bdf8;outline-offset:0;border-color:#0ea5e9}
+html[data-theme="light"] ::placeholder{color:#8aa0b3;opacity:1}
+html[data-theme="light"] .muted{color:#5b7083}
+html[data-theme="light"] h1,html[data-theme="light"] h2,html[data-theme="light"] h3{color:#0b1f33}
+html[data-theme="light"] .table th,html[data-theme="light"] table thead th{background:#e0f2fe;color:#075985}
+html[data-theme="light"] .table tbody tr:nth-child(even){background:#f5fafd}
+html[data-theme="light"] .table a,html[data-theme="light"] table a,html[data-theme="light"] .nav a,html[data-theme="light"] .go,html[data-theme="light"] .eyebrow{color:#0369a1}
+html[data-theme="light"] .stList{background:#fff;border-color:#cfe6f5;box-shadow:0 1px 3px rgba(14,116,170,.08)}
+html[data-theme="light"] .stRow{border-bottom-color:#e3f0f9}
+html[data-theme="light"] .stRow:hover{background:#f0f9ff}
+html[data-theme="light"] .stIcon{background:#e0f2fe}
+html[data-theme="light"] .stBack{border-color:#bcdcf0;background:#fff}
+html[data-theme="light"] [style*="color: rgb(148, 163, 184)"]{color:#5b7083!important}
+html[data-theme="light"] [style*="color: rgb(251, 191, 36)"],html[data-theme="light"] [style*="color: rgb(250, 204, 21)"]{color:#a16207!important}
+html[data-theme="light"] [style*="color: rgb(229, 231, 235)"],html[data-theme="light"] [style*="color: rgb(229, 236, 255)"]{color:#0b1f33!important}
+html[data-theme="light"] [style*="color: rgb(248, 113, 113)"]{color:#c4271c!important}
+html[data-theme="light"] [style*="color: rgb(74, 222, 128)"]{color:#0b8a3e!important}
+html[data-theme="light"] [style*="color: rgb(34, 211, 238)"]{color:#0369a1!important}
+html[data-theme="light"] [style*="color: rgb(159, 179, 217)"],html[data-theme="light"] [style*="color: rgb(203, 213, 225)"],html[data-theme="light"] [style*="color: rgb(127, 168, 201)"]{color:#5b7083!important}
+html[data-theme="light"] [style*="background: rgb(15, 23, 42)"],html[data-theme="light"] [style*="background: rgb(11, 18, 32)"],html[data-theme="light"] [style*="background: rgb(20, 32, 61)"],html[data-theme="light"] [style*="background: rgb(15, 26, 51)"],html[data-theme="light"] [style*="background: rgb(11, 20, 48)"],html[data-theme="light"] [style*="background: rgb(11, 18, 38)"],html[data-theme="light"] [style*="background: rgb(5, 10, 28)"]{background:#f0f9ff!important;color:#0b1f33}

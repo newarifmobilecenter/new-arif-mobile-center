@@ -8,3 +8,12 @@
 .docSub { font-size: 13px; color: #e5e7eb; }
 @media (max-width: 760px) { .banner { grid-template-columns: 54px minmax(0, 1fr); } .doc { grid-column: 1 / -1; text-align: left; } .name { font-size: 18px; } }
 @media print { .banner { background: #fff !important; border: 2px solid #000; box-shadow: none; margin: 0 0 8px; } .logo { border-color: #000; color: #000; } .name, .docTitle, .docSub, .sub, .addr { color: #000 !important; } }
+
+/* ==LIGHT-THEME-GENERATED== (scripts/gen-light.mjs) */
+html[data-theme="light"] .banner{background:linear-gradient(90deg, #ebf1f4, #e4ecf1 60%, #eef3f6);border:1px solid rgba(32,170,238,0.333)}
+html[data-theme="light"] .logo{color:#0c2031}
+html[data-theme="light"] .name{color:#0c2031}
+html[data-theme="light"] .sub{color:#0369a0}
+html[data-theme="light"] .addr{color:#3c4c5a}
+html[data-theme="light"] .docTitle{color:#966d03}
+html[data-theme="light"] .docSub{color:#0c2031}
