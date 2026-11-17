@@ -173,8 +173,9 @@ export default function POS() {
     setTaxPct(String(sale.salesTaxPct ?? 0));
   }
   const [findInv, setFindInv] = useState("");
-  async function loadSaleByNo() {
-    const raw = findInv.trim();
+  useEffect(() => { try { const inv = new URLSearchParams(window.location.search).get("inv"); if (inv) { setFindInv(inv); void loadSaleByNo(inv); } } catch {} }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  async function loadSaleByNo(forced?: string) {
+    const raw = (forced || findInv).trim();
     const digits = raw.replace(/\D/g, "");
     if (!raw) return alert("Invoice number likhein, jaise S009.");
     try {

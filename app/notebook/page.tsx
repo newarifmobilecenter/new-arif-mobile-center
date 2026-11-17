@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import styles from "./notebook.module.css";
 import RepairsPanel from "./RepairsPanel";
+import RepairKhata from "./RepairKhata";
 
 type Entry = {
   _id: string;
@@ -31,8 +32,8 @@ export default function Notebook() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
-  const [section, setSection] = useState<"entries" | "repairs">("entries");
-  useEffect(() => { try { if (new URLSearchParams(window.location.search).get("tab") === "repairs") setSection("repairs"); } catch {} }, []);
+  const [section, setSection] = useState<"entries" | "repairs" | "khata">("entries");
+  useEffect(() => { try { if (new URLSearchParams(window.location.search).get("tab") === "repairs") setSection("repairs"); else if (new URLSearchParams(window.location.search).get("tab") === "khata") setSection("khata"); } catch {} }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -72,14 +73,16 @@ export default function Notebook() {
   return <main className={`shell ${styles.page}`}>
     <nav className={`${styles.nav} ${styles.noPrint}`}><Link href="/">← Dashboard</Link><Link href="/repairs">Mobile Repairs</Link></nav>
     <header className={styles.header}>
-      <div><h1>Notebook</h1><p>{section === "entries" ? "Independent voucher entries" : "Mobile repairing list"}</p></div>
+      <div><h1>Notebook</h1><p>{section === "entries" ? "Independent voucher entries" : section === "khata" ? "Deliver repairs ki payment: baqi aur mil gayi" : "Mobile repairing list"}</p></div>
       {section === "entries" && <Link className={styles.button} href="/notebook/new">＋ Add Entry</Link>}
     </header>
     <div className={`${styles.tabs} ${styles.noPrint}`} role="tablist" aria-label="Notebook sections">
       <button role="tab" aria-selected={section === "entries"} className={section === "entries" ? styles.activeTab : styles.tab} onClick={() => setSection("entries")}>📒 Notebook Entries</button>
       <button role="tab" aria-selected={section === "repairs"} className={section === "repairs" ? styles.activeTab : styles.tab} onClick={() => setSection("repairs")}>📱 Repairing Mobiles</button>
+      <button role="tab" aria-selected={section === "khata"} className={section === "khata" ? styles.activeTab : styles.tab} onClick={() => setSection("khata")}>💸 Repair Khata</button>
     </div>
     {section === "repairs" && <RepairsPanel />}
+    {section === "khata" && <RepairKhata />}
     {section === "entries" && <section className={`${styles.panel} ${styles.noPrint}`}>
       <div className={styles.filters}>
         <label className={`${styles.field} ${styles.search}`}>Search entry, name, phone, subject, or details<input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Search Notebook" /></label>
