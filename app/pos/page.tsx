@@ -435,12 +435,8 @@ export default function POS() {
     if (items.some((it: any) => it.repairId)) {
       const a = await askChoice("Repair ki payment?", [{ label: "✅ Payment mil gayi (Paid)", cls: "green" }, { label: "⏳ Remaining / Baqi" }], "Customer ne repair ki payment kar di hai ya baqi hai?");
       forcePaid = a === 0;
-      if (!forcePaid && !custId) {
-        const made = await ensureRepairCustomer().catch(() => null);
-        if (!made) return alert("Remaining (udhar) ke liye Customer select karein (is repair mein naam / phone nahi hai).");
-        custId = made; setCustomer(made);
-        notify("Customer ka khata khud ban gaya. Ye bill udhar (CREDIT) mein save hoga.", { kind: "success" });
-      }
+      // Walking customer: khata/customer nahi banta. Baqi sirf Notebook > Repair Khata mein dikhta hai.
+      if (!forcePaid && !custId) notify("Walking customer: baqi Notebook > Repair Khata mein dikhega (customer nahi banega).", { kind: "success" });
     }
     // Remaining chunne par: agar Cash Rec poora bill hai (galti se Paid hua tha) to 0 maane, warna jo likha hai wohi (partial).
     const paidNow = forcePaid === true ? netTotal : forcePaid === false ? (Number(paid || 0) >= netTotal ? 0 : Number(paid || 0)) : paidAmount;
@@ -450,7 +446,7 @@ export default function POS() {
       invoiceNo,
       saleType: custId ? "customer" : "cash",
       priceLevel: level,
-      type: forcePaid === false && custId ? "CREDIT" : saleType,
+      type: forcePaid === false ? "CREDIT" : saleType,
       customerId: custId || null,
       cashRef: cashRef || (custId ? null : "WALKING CUSTOMER"),
       custRef: custRef || null,
@@ -570,22 +566,6 @@ export default function POS() {
     const d = digits(phone);
     if (d.length >= 7) return customers.find((c: any) => [c.phoneNo, c.phone, c.mobile].some((x) => digits(x) === d));
     return undefined;
-  };
-  // Repair ka customer saved nahi tha: udhar ke liye uske naam/phone se customer (khata) khud bana dein.
-  const ensureRepairCustomer = async (): Promise<string | null> => {
-    const ri: any = items.find((i: any) => i.repairId && (i.repairName || i.repairPhone));
-    if (!ri) return null;
-    const found = findCustomerByRepair(ri.repairName, ri.repairPhone);
-    if (found) return String(found._id);
-    const phone = String(ri.repairPhone || "").trim();
-    const name = String(ri.repairName || "").trim() || `Customer ${phone}`;
-    const maxCode = Math.max(0, ...customers.map((c: any) => String(c.code ?? "").trim()).filter((c: string) => /^\d+$/.test(c)).map(Number));
-    const doc: any = { code: String(maxCode + 1).padStart(4, "0"), name, phone, mobile: phone, phoneNo: phone, type: "Retail", notes: "Repair se auto-bana (udhar)", remarks: "Repair se auto-bana (udhar)" };
-    const r = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "customers", ...doc }) });
-    if (!r.ok) return null;
-    const created = await r.json();
-    setCustomers((cur: any[]) => [...cur, created]);
-    return String(created._id);
   };
   const addRepairToSale = (r: any) => {
     if (items.some((i) => i.repairId === String(r._id))) return;
