@@ -21,7 +21,7 @@ export default function RepairKhata() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/repairs/khata").then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || "Khata load nahi hua."); setRows(Array.isArray(d) ? d : []); })
+    fetch("/api/repairs/khata").then(async (r) => { const d = await r.json(); if (!r.ok) throw new Error(d.error || "Khata load nahi hua."); setRows(Array.isArray(d) ? d.filter((x: Row) => !x.customerId) : []); })
       .catch((e) => setError(e?.message || "Khata load nahi hua.")).finally(() => setLoading(false));
   }, []);
 
@@ -59,7 +59,7 @@ export default function RepairKhata() {
       <div className={styles.filters}>
         <label className={`${styles.field} ${styles.search}`}>Search name, phone, token ya model<input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" /></label>
       </div>
-      {tab === "UNPAID" && <p className={styles.muted}>Kul baqi: <b>Rs. {money(totalDue)}</b> ({unpaid.length} repair). Payment milte hi repair yahan se khud hat kar &quot;Payment Mil Gayi&quot; mein chali jati hai.</p>}
+      {tab === "UNPAID" && <p className={styles.muted}>Sirf walking customers. Saved customers ki repair unke Ledger / khate mein hoti hai. Kul baqi: <b>Rs. {money(totalDue)}</b> ({unpaid.length} repair). Payment milte hi repair yahan se khud hat kar &quot;Payment Mil Gayi&quot; mein chali jati hai.</p>}
     </section>
     <section className={styles.panel}>
       {error && <p className={styles.notice} role="alert">{error}</p>}
