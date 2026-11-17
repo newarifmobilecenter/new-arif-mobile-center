@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { ensureRepairIndexes } from "@/lib/repairs";
+import { db } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 export const runtime = "nodejs";
 
@@ -31,8 +33,15 @@ export async function GET(request: NextRequest) {
       recordType: "REPAIR",
       deletedAt: null,
       status: { $ne: "CANCELLED" },
-    }).project({ tokenNo: 1, customerId: 1, customerName: 1, customerPhone: 1, model: 1, status: 1, remaining: 1, paymentReminderAt: 1, deliveryMode: 1, expectedReadyAt: 1 }).sort({ receivedAt: -1 }).limit(1000).toArray();
+    }).project({ tokenNo: 1, customerId: 1, customerName: 1, customerPhone: 1, model: 1, status: 1, remaining: 1, billedSaleId: 1, billedRemaining: 1, paymentReminderAt: 1, deliveryMode: 1, expectedReadyAt: 1 }).sort({ receivedAt: -1 }).limit(1000).toArray();
 
+    // Bill ho chuki repair: udhar ab sale par hai, jab tak wo sale baqi hai payment reminder chalta rahe.
+    const billedIds = repairs.filter((r: any) => r.billedSaleId && Number(r.billedRemaining || 0) > 0 && ObjectId.isValid(String(r.billedSaleId))).map((r: any) => new ObjectId(String(r.billedSaleId)));
+    if (billedIds.length) {
+      const sales = await (await db()).collection("sales").find({ _id: { $in: billedIds }, status: { $ne: "cancelled" } }).project({ remaining: 1 }).toArray();
+      const rem = new Map(sales.map((x: any) => [String(x._id), Number(x.remaining || 0)]));
+      for (const r of repairs as any[]) if (r.billedSaleId && Number(r.billedRemaining || 0) > 0) r.remaining = Math.min(Number(r.billedRemaining), rem.get(String(r.billedSaleId)) || 0);
+    }
     const groups = {
       paymentDue: repairs.filter((repair) => {
         if (Number(repair.remaining || 0) <= 0) return false;

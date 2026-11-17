@@ -26,7 +26,7 @@ type SaleItem = {
   isMisc?: boolean;
   repairId?: string;
   parts?: { name: string; qty: number; cost: number; price?: number; productId?: string; extra?: boolean }[];
-  itemPrice?: number; repairFee?: number;
+  itemPrice?: number; repairFee?: number; repairName?: string; repairPhone?: string;
   category?: string;
 };
 
@@ -430,10 +430,16 @@ export default function POS() {
 
     // Repair ka bill ho to pooch lein: customer ne payment kar di ya baqi hai.
     let forcePaid: boolean | null = null;
+    let custId: string = customer;
     if (items.some((it: any) => it.repairId)) {
       const a = await askChoice("Repair ki payment?", [{ label: "✅ Payment mil gayi (Paid)", cls: "green" }, { label: "⏳ Remaining / Baqi" }], "Customer ne repair ki payment kar di hai ya baqi hai?");
       forcePaid = a === 0;
-      if (!forcePaid && !customer) return alert("Remaining (udhar) ke liye pehle Customer select karein.");
+      if (!forcePaid && !custId) {
+        const made = await ensureRepairCustomer().catch(() => null);
+        if (!made) return alert("Remaining (udhar) ke liye Customer select karein (is repair mein naam / phone nahi hai).");
+        custId = made; setCustomer(made);
+        notify("Customer ka khata khud ban gaya. Ye bill udhar (CREDIT) mein save hoga.", { kind: "success" });
+      }
     }
     // Remaining chunne par: agar Cash Rec poora bill hai (galti se Paid hua tha) to 0 maane, warna jo likha hai wohi (partial).
     const paidNow = forcePaid === true ? netTotal : forcePaid === false ? (Number(paid || 0) >= netTotal ? 0 : Number(paid || 0)) : paidAmount;
@@ -441,11 +447,11 @@ export default function POS() {
 
     const sale = {
       invoiceNo,
-      saleType: customer ? "customer" : "cash",
+      saleType: custId ? "customer" : "cash",
       priceLevel: level,
-      type: forcePaid === false && customer ? "CREDIT" : saleType,
-      customerId: customer || null,
-      cashRef: cashRef || (customer ? null : "WALKING CUSTOMER"),
+      type: forcePaid === false && custId ? "CREDIT" : saleType,
+      customerId: custId || null,
+      cashRef: cashRef || (custId ? null : "WALKING CUSTOMER"),
       custRef: custRef || null,
       remarks: remarks || null,
       salesman,
@@ -558,6 +564,28 @@ export default function POS() {
     const fee = opts.fee !== undefined ? Math.max(0, opts.fee) : opts.keepTotal ? Math.max(0, Number(x.price || 0) - sum) : Number(x.repairFee || 0);
     return { ...x, parts, itemPrice: sum, repairFee: fee, price: sum + fee };
   };
+  const digits = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+  const findCustomerByRepair = (name: unknown, phone: unknown) => {
+    const d = digits(phone);
+    if (d.length >= 7) return customers.find((c: any) => [c.phoneNo, c.phone, c.mobile].some((x) => digits(x) === d));
+    return undefined;
+  };
+  // Repair ka customer saved nahi tha: udhar ke liye uske naam/phone se customer (khata) khud bana dein.
+  const ensureRepairCustomer = async (): Promise<string | null> => {
+    const ri: any = items.find((i: any) => i.repairId && (i.repairName || i.repairPhone));
+    if (!ri) return null;
+    const found = findCustomerByRepair(ri.repairName, ri.repairPhone);
+    if (found) return String(found._id);
+    const phone = String(ri.repairPhone || "").trim();
+    const name = String(ri.repairName || "").trim() || `Customer ${phone}`;
+    const maxCode = Math.max(0, ...customers.map((c: any) => String(c.code ?? "").trim()).filter((c: string) => /^\d+$/.test(c)).map(Number));
+    const doc: any = { code: String(maxCode + 1).padStart(4, "0"), name, phone, mobile: phone, phoneNo: phone, type: "Retail", notes: "Repair se auto-bana (udhar)", remarks: "Repair se auto-bana (udhar)" };
+    const r = await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ collection: "customers", ...doc }) });
+    if (!r.ok) return null;
+    const created = await r.json();
+    setCustomers((cur: any[]) => [...cur, created]);
+    return String(created._id);
+  };
   const addRepairToSale = (r: any) => {
     if (items.some((i) => i.repairId === String(r._id))) return;
     const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
@@ -568,8 +596,9 @@ export default function POS() {
     });
     const sum0 = parts.reduce((a: number, q: any) => a + q.price * q.qty, 0);
     const base = baqi < sum0 ? { price: sum0, itemPrice: sum0, repairFee: 0 } : { price: baqi, itemPrice: sum0, repairFee: baqi - sum0 };
-    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, ...base, qty: 1, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
+    setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, ...base, repairName: String(r.customerName || ""), repairPhone: String(r.customerPhone || ""), qty: 1, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
     if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
+    else if (!r.customerId && !customer) { const f = findCustomerByRepair(r.customerName, r.customerPhone); if (f) changeCustomer(String(f._id)); }
     notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
   };
   const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }

@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       };
       delete (sale as any)._id;
       saved = await sales.insertOne(sale, { session });
-      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, remaining: 0, billedRemaining: billedRemaining[String(rid)] || 0, billedPaidAdd: salePaidInFull ? (billedRemaining[String(rid)] || 0) : 0, ...(salePaidInFull ? { paymentStatus: "PAID" } : {}), billedAt: new Date() }, ...(salePaidInFull && (billedRemaining[String(rid)] || 0) > 0 ? { $inc: { paid: billedRemaining[String(rid)] } } : {}) }, { session });
+      for (const rid of billedRepairs) await d.collection(REPAIR_COLLECTION).updateOne({ _id: rid }, { $set: { ...(body.customerId && ObjectId.isValid(String(body.customerId)) ? { customerId: String(body.customerId) } : {}), billedSaleId: saved.insertedId.toString(), billedInvoiceNo: body.invoiceNo, remaining: 0, billedRemaining: billedRemaining[String(rid)] || 0, billedPaidAdd: salePaidInFull ? (billedRemaining[String(rid)] || 0) : 0, ...(salePaidInFull ? { paymentStatus: "PAID" } : {}), billedAt: new Date() }, ...(salePaidInFull && (billedRemaining[String(rid)] || 0) > 0 ? { $inc: { paid: billedRemaining[String(rid)] } } : {}) }, { session });
 
       if (paid > 0) {
         await transactions.insertOne({
