@@ -15,6 +15,7 @@ const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", catego
 export default function Settings() {
   const [s, setS] = useState<any>({ shopName: SHOP.nameUpper, address: "", phone: "", defaultWarranty: 7, currency: "PKR" });
   const [msg, setMsg] = useState("");
+  const [sec, setSec] = useState<string | null>(null);
   const [theme, setThemeState] = useState("blue");
   const [rules, setRules] = useState<AutoRule[]>(DEFAULT_RULES);
   const [ruleId, setRuleId] = useState("");
@@ -122,119 +123,155 @@ export default function Settings() {
     <div className="nav"><Link href="/">← Dashboard</Link><Link href="/backup">Backup</Link></div>
     <h1>⚙️ Settings</h1>
 
-    <UsersPanel />
-    <div className="panel"><h2>⌨️ Keyboard Shortcuts</h2>
-      <table style={{ width: "100%", maxWidth: 520 }}><tbody>
-        {ALT_ROUTES.map((r) => <tr key={r.code}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>Alt + {r.key}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
-        {OTHER_SHORTCUTS.map((r) => <tr key={r.keys}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>{r.keys}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
-      </tbody></table>
-    </div>
-
-    <div className="panel"><h2>🎨 Theme</h2>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-        {THEMES.map(t => <button key={t.id} type="button" onClick={() => { setTheme(t.id); setThemeState(t.id); }}
-          style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, cursor: "pointer", border: theme === t.id ? "2px solid #22d3ee" : "1px solid #334155", background: "#0f172a", color: "#e5e7eb" }}>
-          <span style={{ width: 22, height: 22, borderRadius: "50%", background: t.swatch, border: "1px solid #fff4" }} />{t.label}{theme === t.id ? " ✓" : ""}
-        </button>)}
+    <style>{`
+      .stHome{max-width:760px;margin:0 auto}.stGroup{margin:18px 0 6px;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.6;padding-left:6px}
+      .stList{background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.25);border-radius:14px;overflow:hidden}
+      .stRow{display:flex;align-items:center;gap:14px;width:100%;padding:13px 16px;background:transparent;border:0;border-bottom:1px solid rgba(148,163,184,.18);color:inherit;text-align:left;cursor:pointer;font:inherit}
+      .stRow:last-child{border-bottom:0}.stRow:hover{background:rgba(59,130,246,.12)}
+      .stIcon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(59,130,246,.18);flex:0 0 auto}
+      .stText{flex:1;min-width:0}.stText b{display:block;font-size:16px}.stText small{opacity:.65;font-size:12.5px}.stChev{opacity:.5;font-size:22px}
+      .stBar{display:flex;align-items:center;gap:10px;margin:6px 0 14px}.stBack{background:transparent;border:1px solid rgba(148,163,184,.4);color:inherit;border-radius:10px;padding:7px 12px;cursor:pointer;font:inherit}
+      .stBar h2{margin:0;font-size:22px}.stBody>.panel>h2:first-child{display:none}.stBody>.panel{margin-top:0}
+    `}</style>
+    {!sec && <div className="stHome">
+      {([
+        ["Account", [["account", "👤", "Account", "Username aur password badlein"], ["security", "🛡️", "Security & Permissions", "Staff users, passwords aur kis ko kya access"]]],
+        ["Appearance", [["theme", "🎨", "Theme", "App ka rang aur look"]]],
+        ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"]]],
+        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
+      ] as [string, [string, string, string, string][]][]).map(([g, rows]) => <div key={g}>
+        <div className="stGroup">{g}</div>
+        <div className="stList">{rows.map(([id, ic, t, d]) => <button key={id} type="button" className="stRow" onClick={() => { setSec(id); window.scrollTo(0, 0); }}>
+          <span className="stIcon">{ic}</span><span className="stText"><b>{t}</b><small>{d}</small></span><span className="stChev">›</span>
+        </button>)}</div>
+      </div>)}
+    </div>}
+    {sec && <div className="stHome" style={{ maxWidth: 980 }}>
+      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
+      <div className="stBody">
+        {sec === "account" && <UsersPanel part="account" />}
+        {sec === "security" && <UsersPanel part="users" />}
+        {sec === "theme" && <>
+      <div className="panel"><h2>🎨 Theme</h2>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {THEMES.map(t => <button key={t.id} type="button" onClick={() => { setTheme(t.id); setThemeState(t.id); }}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 8, cursor: "pointer", border: theme === t.id ? "2px solid #22d3ee" : "1px solid #334155", background: "#0f172a", color: "#e5e7eb" }}>
+            <span style={{ width: 22, height: 22, borderRadius: "50%", background: t.swatch, border: "1px solid #fff4" }} />{t.label}{theme === t.id ? " ✓" : ""}
+          </button>)}
+        </div>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>Theme sirf is computer/browser par lagti hai. Print par asar nahi hota.</p>
       </div>
-      <p style={{ color: "#94a3b8", fontSize: 13 }}>Theme sirf is computer/browser par lagti hai. Print par asar nahi hota.</p>
-    </div>
-
-    <div className="panel"><h2>🏷️ Auto Select Rules (Add Product)</h2>
-      <p style={{ color: "#94a3b8", fontSize: 13 }}>Product Name mein jo lafz likhein, us se Category waghera khud select hon. Keywords comma (,) se alag karein. Do lafz ek saath chahiye hon to + lagayein, jaise <b>panel+org</b>. Upar wali rule pehle check hoti hai. Khali (blank) field ko chhua nahi jata. Brand khali ho to naam se (Samsung, Vivo…) khud pehchana jata hai.</p>
-      <p style={{ color: "#fbbf24", fontSize: 13 }}>Nayi rule <b>sab se upar</b> lagti hai, kyunke upar wali rule pehle check hoti hai. Agar kisi naam par galat category aaye (jaise "panel frame" par Displays), to apni rule ko ↑ se upar kar dein.</p>
-      <div style={{ display: "grid", gap: 6, margin: "8px 0 12px" }}>
-        <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likh kar dekhein kaun si rule lagegi
-          <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={testName} onChange={e => setTestName(e.target.value)} placeholder="jaise: Samsung A50 panel frame" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
-        {testName.trim() && <div style={{ fontWeight: 700, color: hitIdx >= 0 ? "#4ade80" : "#f87171" }}>{hitIdx >= 0 ? `Rule ${hitIdx + 1} lagegi → Category: ${rules[hitIdx].category || "(khali)"}${rules[hitIdx].keywords ? `  (keywords: ${rules[hitIdx].keywords})` : ""}` : "Koi rule match nahi hui — category khud chunni paregi."}</div>}
-      </div>
-      <div className="ruleList">
-        {rules.map((r, i) => {
-          const catOptions = (() => { const seen = new Set<string>(); const out: string[] = []; for (const c of [...cats, ...rules.map(x => x.category), ...DEFAULT_RULES.map(x => x.category)]) { const k = catKey(c); if (c && !seen.has(k)) { seen.add(k); out.push(c); } } return out; })();
-          const custom = !!r.category && !catOptions.includes(r.category) || newCat.includes(r.id);
-          return <div className="ruleCard" key={r.id}>
-            <div className="ruleHead"><b>Rule {i + 1}</b>
-              <span><button type="button" aria-label="Upar" onClick={() => move(i, -1)}>↑</button><button type="button" aria-label="Neeche" onClick={() => move(i, 1)}>↓</button><button type="button" aria-label="Delete" onClick={() => setRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button></span></div>
-            <label>Keywords<input className="input" value={r.keywords} onChange={e => upd(r.id, { keywords: e.target.value })} placeholder="jaise: incell,tft" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
-            <label>Category
-              <select className="input" value={custom ? "__new__" : r.category} onChange={e => {
-                if (e.target.value === "__new__") { setNewCat(c => [...c, r.id]); upd(r.id, { category: "" }); }
-                else { setNewCat(c => c.filter(x => x !== r.id)); upd(r.id, { category: e.target.value }); }
-              }}>
-                <option value="">— Category chunein —</option>
-                {catOptions.map(c => <option key={c} value={c}>{c}</option>)}
-                <option value="__new__">➕ Nayi category likhein…</option>
-              </select>
-              {custom && <input className="input" style={{ marginTop: 6 }} value={r.category} onChange={e => upd(r.id, { category: e.target.value })} placeholder="Nayi category ka naam" />}
-            </label>
-            <label>Brand (optional)<input className="input" value={r.brand} onChange={e => upd(r.id, { brand: e.target.value })} /></label>
-            <label>Brand Type<input className="input" value={r.brandType} onChange={e => upd(r.id, { brandType: e.target.value })} /></label>
-            <label>Product Group<input className="input" value={r.productGroup} onChange={e => upd(r.id, { productGroup: e.target.value })} /></label>
-            <label>Item Type<input className="input" value={r.itemType} onChange={e => upd(r.id, { itemType: e.target.value })} /></label>
-          </div>;
-        })}
-      </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-        <button className="btn" type="button" onClick={() => { setRules(cur => [blankRule(), ...cur]); window.scrollTo?.({ top: 0 }); setTimeout(() => document.querySelector<HTMLElement>(".ruleCard input")?.focus(), 50); }}>＋ Nayi Rule (sab se upar)</button>
-        <button className="btn green" type="button" onClick={() => void saveRules(rules)}>Save Rules</button>
-        <button className="btn" type="button" onClick={() => { if (window.confirm("Sab rules default par wapas ho jayengi. Save Rules dabane tak change nahi hota. Theek hai?")) setRules(DEFAULT_RULES.map(r => ({ ...r }))); }}>Default par wapas</button>
-      </div>
-      {ruleMsg && <p role="status" style={{ color: ruleMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{ruleMsg.text}</p>}
-    </div>
-
-    <div className="panel"><h2>🧩 Do Categories ko Aik Karein</h2>
-      <p style={{ color: "#94a3b8", fontSize: 13 }}>Agar aik hi category do naam se ban gayi ho (jaise "Displays OLED" aur "Displays / OLED"), to pehli (jo khatam karni hai) aur doosri (jo rakhni hai) chunein. Pehli ke sab products doosri mein chale jayenge. Koi product delete nahi hota. Sirf Admin kar sakta hai.</p>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mFrom} onChange={setMFrom} emptyLabel="— Khatam karni hai —" options={catListAll} />
-        <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mTo} onChange={setMTo} emptyLabel="— Rakhni hai —" options={catListAll} />
-        <button className="btn green" type="button" onClick={() => void mergeCats()}>Aik Karein</button>
-      </div>
-      {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
-    </div>
-
-    <div className="panel"><h2>🏷️ Brand Selection (Add Product)</h2>
-      <p style={{ color: "#94a3b8", fontSize: 13 }}>Product ke naam mein yeh lafz likhein to Make / Brand khud select ho. Brand ka apna naam khud keyword hai (jaise Huawei likhne se Huawei). Extra lafz comma (,) se alag karein, jaise: y9, nova, mate.</p>
-      <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likhein
-        <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={brandTest} onChange={e => setBrandTest(e.target.value)} placeholder="jaise: huawei y9 panel" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
-      {brandTest.trim() && <div style={{ fontWeight: 700, color: brandHit ? "#4ade80" : "#f87171" }}>{brandHit ? `Brand select hoga → ${brandHit}` : "Is naam par koi brand rule nahi lagi (purani auto detection chalegi)."}</div>}
-      <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
-        {brandRules.map(r => <div key={r.id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {(() => {
-            const list = Array.from(new Set([...brandNames, ...brandRules.map(x => x.brand.trim())].filter(Boolean))).sort((a, b) => a.localeCompare(b));
-            const isNew = newBrandIds.includes(r.id) || (!!r.brand && !list.some(b => b.toLowerCase() === r.brand.trim().toLowerCase()));
-            return <div style={{ flex: "1 1 200px", display: "grid", gap: 6 }}>
-              <select className="input" value={isNew ? "__new__" : (list.find(b => b.toLowerCase() === r.brand.trim().toLowerCase()) || "")} onChange={e => {
-                if (e.target.value === "__new__") { setNewBrandIds(c => [...c, r.id]); updBrand(r.id, { brand: "" }); }
-                else { setNewBrandIds(c => c.filter(x => x !== r.id)); updBrand(r.id, { brand: e.target.value }); }
-              }}>
-                <option value="">— Brand chunein —</option>
-                {list.map(b => <option key={b} value={b}>{b}</option>)}
-                <option value="__new__">➕ Naya brand banayein…</option>
-              </select>
-              {isNew && <input className="input" value={r.brand} onChange={e => updBrand(r.id, { brand: e.target.value })} placeholder="Naye brand ka naam (jaise Huawei)" autoFocus />}
+        </>}
+        {sec === "rules" && <>
+      <div className="panel"><h2>🏷️ Auto Select Rules (Add Product)</h2>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>Product Name mein jo lafz likhein, us se Category waghera khud select hon. Keywords comma (,) se alag karein. Do lafz ek saath chahiye hon to + lagayein, jaise <b>panel+org</b>. Upar wali rule pehle check hoti hai. Khali (blank) field ko chhua nahi jata. Brand khali ho to naam se (Samsung, Vivo…) khud pehchana jata hai.</p>
+        <p style={{ color: "#fbbf24", fontSize: 13 }}>Nayi rule <b>sab se upar</b> lagti hai, kyunke upar wali rule pehle check hoti hai. Agar kisi naam par galat category aaye (jaise "panel frame" par Displays), to apni rule ko ↑ se upar kar dein.</p>
+        <div style={{ display: "grid", gap: 6, margin: "8px 0 12px" }}>
+          <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likh kar dekhein kaun si rule lagegi
+            <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={testName} onChange={e => setTestName(e.target.value)} placeholder="jaise: Samsung A50 panel frame" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+          {testName.trim() && <div style={{ fontWeight: 700, color: hitIdx >= 0 ? "#4ade80" : "#f87171" }}>{hitIdx >= 0 ? `Rule ${hitIdx + 1} lagegi → Category: ${rules[hitIdx].category || "(khali)"}${rules[hitIdx].keywords ? `  (keywords: ${rules[hitIdx].keywords})` : ""}` : "Koi rule match nahi hui — category khud chunni paregi."}</div>}
+        </div>
+        <div className="ruleList">
+          {rules.map((r, i) => {
+            const catOptions = (() => { const seen = new Set<string>(); const out: string[] = []; for (const c of [...cats, ...rules.map(x => x.category), ...DEFAULT_RULES.map(x => x.category)]) { const k = catKey(c); if (c && !seen.has(k)) { seen.add(k); out.push(c); } } return out; })();
+            const custom = !!r.category && !catOptions.includes(r.category) || newCat.includes(r.id);
+            return <div className="ruleCard" key={r.id}>
+              <div className="ruleHead"><b>Rule {i + 1}</b>
+                <span><button type="button" aria-label="Upar" onClick={() => move(i, -1)}>↑</button><button type="button" aria-label="Neeche" onClick={() => move(i, 1)}>↓</button><button type="button" aria-label="Delete" onClick={() => setRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button></span></div>
+              <label>Keywords<input className="input" value={r.keywords} onChange={e => upd(r.id, { keywords: e.target.value })} placeholder="jaise: incell,tft" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+              <label>Category
+                <select className="input" value={custom ? "__new__" : r.category} onChange={e => {
+                  if (e.target.value === "__new__") { setNewCat(c => [...c, r.id]); upd(r.id, { category: "" }); }
+                  else { setNewCat(c => c.filter(x => x !== r.id)); upd(r.id, { category: e.target.value }); }
+                }}>
+                  <option value="">— Category chunein —</option>
+                  {catOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  <option value="__new__">➕ Nayi category likhein…</option>
+                </select>
+                {custom && <input className="input" style={{ marginTop: 6 }} value={r.category} onChange={e => upd(r.id, { category: e.target.value })} placeholder="Nayi category ka naam" />}
+              </label>
+              <label>Brand (optional)<input className="input" value={r.brand} onChange={e => upd(r.id, { brand: e.target.value })} /></label>
+              <label>Brand Type<input className="input" value={r.brandType} onChange={e => upd(r.id, { brandType: e.target.value })} /></label>
+              <label>Product Group<input className="input" value={r.productGroup} onChange={e => upd(r.id, { productGroup: e.target.value })} /></label>
+              <label>Item Type<input className="input" value={r.itemType} onChange={e => upd(r.id, { itemType: e.target.value })} /></label>
             </div>;
-          })()}
-          <input className="input" style={{ flex: "2 1 240px" }} value={r.keywords} onChange={e => updBrand(r.id, { keywords: e.target.value })} placeholder="Extra keywords (optional): y9, nova" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
-          <button className="btn" type="button" onClick={() => setBrandRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button>
-        </div>)}
-        {!brandRules.length && <p style={{ color: "#94a3b8", fontSize: 13 }}>Abhi koi manual brand nahi hai. ➕ dabayein.</p>}
+          })}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+          <button className="btn" type="button" onClick={() => { setRules(cur => [blankRule(), ...cur]); window.scrollTo?.({ top: 0 }); setTimeout(() => document.querySelector<HTMLElement>(".ruleCard input")?.focus(), 50); }}>＋ Nayi Rule (sab se upar)</button>
+          <button className="btn green" type="button" onClick={() => void saveRules(rules)}>Save Rules</button>
+          <button className="btn" type="button" onClick={() => { if (window.confirm("Sab rules default par wapas ho jayengi. Save Rules dabane tak change nahi hota. Theek hai?")) setRules(DEFAULT_RULES.map(r => ({ ...r }))); }}>Default par wapas</button>
+        </div>
+        {ruleMsg && <p role="status" style={{ color: ruleMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{ruleMsg.text}</p>}
       </div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-        <button className="btn" type="button" onClick={() => { const id = `b-${Date.now()}`; setNewBrandIds(c => [...c, id]); setBrandRules(cur => [...cur, { id, brand: "", keywords: "" }]); }}>➕ Naya Brand</button>
-        <button className="btn green" type="button" onClick={() => void saveBrandRules()}>Save Brands</button>
+        </>}
+        {sec === "brands" && <>
+      <div className="panel"><h2>🏷️ Brand Selection (Add Product)</h2>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>Product ke naam mein yeh lafz likhein to Make / Brand khud select ho. Brand ka apna naam khud keyword hai (jaise Huawei likhne se Huawei). Extra lafz comma (,) se alag karein, jaise: y9, nova, mate.</p>
+        <label style={{ fontSize: 13, color: "#94a3b8", fontWeight: 600 }}>🔎 Test: product ka naam likhein
+          <input className="input" style={{ marginTop: 4, width: "100%", boxSizing: "border-box", minHeight: 42, fontSize: 16 }} value={brandTest} onChange={e => setBrandTest(e.target.value)} placeholder="jaise: huawei y9 panel" autoCapitalize="none" autoCorrect="off" spellCheck={false} /></label>
+        {brandTest.trim() && <div style={{ fontWeight: 700, color: brandHit ? "#4ade80" : "#f87171" }}>{brandHit ? `Brand select hoga → ${brandHit}` : "Is naam par koi brand rule nahi lagi (purani auto detection chalegi)."}</div>}
+        <div style={{ display: "grid", gap: 8, marginTop: 8 }}>
+          {brandRules.map(r => <div key={r.id} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {(() => {
+              const list = Array.from(new Set([...brandNames, ...brandRules.map(x => x.brand.trim())].filter(Boolean))).sort((a, b) => a.localeCompare(b));
+              const isNew = newBrandIds.includes(r.id) || (!!r.brand && !list.some(b => b.toLowerCase() === r.brand.trim().toLowerCase()));
+              return <div style={{ flex: "1 1 200px", display: "grid", gap: 6 }}>
+                <select className="input" value={isNew ? "__new__" : (list.find(b => b.toLowerCase() === r.brand.trim().toLowerCase()) || "")} onChange={e => {
+                  if (e.target.value === "__new__") { setNewBrandIds(c => [...c, r.id]); updBrand(r.id, { brand: "" }); }
+                  else { setNewBrandIds(c => c.filter(x => x !== r.id)); updBrand(r.id, { brand: e.target.value }); }
+                }}>
+                  <option value="">— Brand chunein —</option>
+                  {list.map(b => <option key={b} value={b}>{b}</option>)}
+                  <option value="__new__">➕ Naya brand banayein…</option>
+                </select>
+                {isNew && <input className="input" value={r.brand} onChange={e => updBrand(r.id, { brand: e.target.value })} placeholder="Naye brand ka naam (jaise Huawei)" autoFocus />}
+              </div>;
+            })()}
+            <input className="input" style={{ flex: "2 1 240px" }} value={r.keywords} onChange={e => updBrand(r.id, { keywords: e.target.value })} placeholder="Extra keywords (optional): y9, nova" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+            <button className="btn" type="button" onClick={() => setBrandRules(cur => cur.filter(x => x.id !== r.id))}>🗑</button>
+          </div>)}
+          {!brandRules.length && <p style={{ color: "#94a3b8", fontSize: 13 }}>Abhi koi manual brand nahi hai. ➕ dabayein.</p>}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+          <button className="btn" type="button" onClick={() => { const id = `b-${Date.now()}`; setNewBrandIds(c => [...c, id]); setBrandRules(cur => [...cur, { id, brand: "", keywords: "" }]); }}>➕ Naya Brand</button>
+          <button className="btn green" type="button" onClick={() => void saveBrandRules()}>Save Brands</button>
+        </div>
+        {brandMsg && <p role="status" style={{ color: brandMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{brandMsg.text}</p>}
       </div>
-      {brandMsg && <p role="status" style={{ color: brandMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{brandMsg.text}</p>}
-    </div>
-
-    <div className="panel"><h2>🏪 Shop</h2>
-      <div className="grid">
-        <input className="input" value={s.shopName ?? ""} onChange={e => setS({ ...s, shopName: e.target.value })} placeholder="Shop Name" />
-        <input className="input" value={s.address ?? ""} onChange={e => setS({ ...s, address: e.target.value })} placeholder="Shop Address" />
-        <input className="input" value={s.phone ?? ""} onChange={e => setS({ ...s, phone: e.target.value })} placeholder="Shop Phone" />
-        <input className="input" type="number" value={s.defaultWarranty ?? 0} onChange={e => setS({ ...s, defaultWarranty: Number(e.target.value) })} placeholder="Default Warranty Days" />
-        <input className="input" value={s.currency ?? ""} onChange={e => setS({ ...s, currency: e.target.value })} placeholder="Currency" />
+        </>}
+        {sec === "merge" && <>
+      <div className="panel"><h2>🧩 Do Categories ko Aik Karein</h2>
+        <p style={{ color: "#94a3b8", fontSize: 13 }}>Agar aik hi category do naam se ban gayi ho (jaise "Displays OLED" aur "Displays / OLED"), to pehli (jo khatam karni hai) aur doosri (jo rakhni hai) chunein. Pehli ke sab products doosri mein chale jayenge. Koi product delete nahi hota. Sirf Admin kar sakta hai.</p>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mFrom} onChange={setMFrom} emptyLabel="— Khatam karni hai —" options={catListAll} />
+          <SearchSelect className="input" style={{ flex: "1 1 220px" }} value={mTo} onChange={setMTo} emptyLabel="— Rakhni hai —" options={catListAll} />
+          <button className="btn green" type="button" onClick={() => void mergeCats()}>Aik Karein</button>
+        </div>
+        {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
       </div>
-      <button className="btn green" onClick={() => void save()}>Save Settings</button>{msg && <p>{msg}</p>}
-    </div>
+        </>}
+        {sec === "shop" && <>
+      <div className="panel"><h2>🏪 Shop</h2>
+        <div className="grid">
+          <input className="input" value={s.shopName ?? ""} onChange={e => setS({ ...s, shopName: e.target.value })} placeholder="Shop Name" />
+          <input className="input" value={s.address ?? ""} onChange={e => setS({ ...s, address: e.target.value })} placeholder="Shop Address" />
+          <input className="input" value={s.phone ?? ""} onChange={e => setS({ ...s, phone: e.target.value })} placeholder="Shop Phone" />
+          <input className="input" type="number" value={s.defaultWarranty ?? 0} onChange={e => setS({ ...s, defaultWarranty: Number(e.target.value) })} placeholder="Default Warranty Days" />
+          <input className="input" value={s.currency ?? ""} onChange={e => setS({ ...s, currency: e.target.value })} placeholder="Currency" />
+        </div>
+        <button className="btn green" onClick={() => void save()}>Save Settings</button>{msg && <p>{msg}</p>}
+      </div>
+        </>}
+        {sec === "shortcuts" && <>
+      <div className="panel"><h2>⌨️ Keyboard Shortcuts</h2>
+        <table style={{ width: "100%", maxWidth: 520 }}><tbody>
+          {ALT_ROUTES.map((r) => <tr key={r.code}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>Alt + {r.key}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
+          {OTHER_SHORTCUTS.map((r) => <tr key={r.keys}><td style={{ padding: "4px 8px", whiteSpace: "nowrap" }}><b>{r.keys}</b></td><td style={{ padding: "4px 8px" }}>{r.label}</td></tr>)}
+        </tbody></table>
+      </div>
+        </>}
+      </div>
+    </div>}
   </main>;
 }

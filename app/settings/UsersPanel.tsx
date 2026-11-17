@@ -18,7 +18,7 @@ function PermGrid({ value, onChange }: { value: PermKey[]; onChange: (v: PermKey
   </label>)}</div>;
 }
 
-export default function UsersPanel() {
+export default function UsersPanel({ part }: { part?: "account" | "users" }) {
   const [users, setUsers] = useState<U[]>([]);
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [draft, setDraft] = useState<Record<string, { perms: PermKey[]; pw: string; name: string }>>({});
@@ -33,7 +33,7 @@ export default function UsersPanel() {
   const set = (id: string, patch: Partial<{ perms: PermKey[]; pw: string; name: string }>) => setDraft((d) => ({ ...d, [id]: { ...d[id], ...patch } }));
 
   return <>
-    <div className="panel"><h2>🔑 Mera Account (username / password badlein)</h2>
+    {part !== "users" && <div className="panel"><h2>🔑 Mera Account (username / password badlein)</h2>
       <p style={{ opacity: .8, fontSize: 13 }}>Purana password dena zaroori hai. Sirf jo badalna ho wohi likhein.</p>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <input className="input" type="password" placeholder="Purana password" value={me.cur} onChange={(e) => setMe({ ...me, cur: e.target.value })} />
@@ -41,8 +41,8 @@ export default function UsersPanel() {
         <input className="input" type="password" placeholder="Naya password (optional)" value={me.pw} onChange={(e) => setMe({ ...me, pw: e.target.value })} />
         <button className="btn" onClick={() => void run(async () => { await call("/api/account", "PATCH", { currentPassword: me.cur, newUsername: me.name, newPassword: me.pw }); setMe({ cur: "", name: "", pw: "" }); }, "Account update ho gaya. Ab naye naam / password se login karein.")}>Save Account</button>
       </div>
-    </div>
-    <div className="panel"><h2>👥 Users aur Permissions</h2>
+    </div>}
+    {part !== "account" && <div className="panel"><h2>👥 Users aur Permissions</h2>
       <p style={{ opacity: .8, fontSize: 13 }}>Admin ko hamesha sab kuch milta hai. Staff ko sirf wohi milta hai jo yahan tick ho. <b>Permission ki tabdeeli us user ke agle login par lagti hai</b> (agar wo abhi login hai to Logout karke dobara login karwayein).</p>
       {msg && <p role="status" style={{ color: msg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{msg.t}</p>}
       {users.map((u) => { const d = draft[u.id]; if (!d) return null; return <div key={u.id} style={{ border: "1px solid #2a3a66", borderRadius: 10, padding: 12, marginBottom: 12, opacity: u.active ? 1 : .6 }}>
@@ -74,6 +74,6 @@ export default function UsersPanel() {
       </div>
       <PermGrid value={nu.perms} onChange={(v) => setNu({ ...nu, perms: v })} />
       <button className="btn" onClick={() => void run(async () => { await call("/api/users", "POST", nu); setNu({ username: "", password: "", perms: DEFAULT_STAFF_PERMS }); }, "Naya user ban gaya.")}>Create User</button>
-    </div>
+    </div>}
   </>;
 }
