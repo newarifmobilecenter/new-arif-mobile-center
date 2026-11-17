@@ -162,7 +162,7 @@ export async function PATCH(req:NextRequest){
     const update:Record<string,any>={
       model:normalized.model,mobileType:normalized.mobileType,fault:normalized.fault,condition:normalized.condition,accessories:normalized.accessories,
       imei:normalized.imei,devicePassword:normalized.devicePassword,totalBill:normalized.totalBill,agreedRate:normalized.totalBill,
-      remaining:normalized.remaining,paymentStatus:normalized.paymentStatus,expectedReadyAt:normalized.expectedReadyAt,
+      remaining:current.billedSaleId?0:normalized.remaining,paymentStatus:current.billedSaleId?(current.paymentStatus||normalized.paymentStatus):normalized.paymentStatus,expectedReadyAt:normalized.expectedReadyAt,
       expectedHours:Math.max(0,(normalized.expectedReadyAt.getTime()-new Date(current.receivedAt).getTime())/3600000),
       paymentReminderAt:normalized.paymentReminderAt,shopkeeper:normalized.shopkeeper,remarks:normalized.remarks,deliveryMode:normalized.deliveryMode,
       parts:normalized.parts,

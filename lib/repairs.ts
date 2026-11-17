@@ -15,9 +15,15 @@ export const REMINDER_TYPES = ["PAYMENT_DUE", "REPAIR_READY", "MOBILE_DELIVERY"]
 
 export class RepairValidationError extends Error {}
 
+let lastHeal = 0;
 export async function ensureRepairIndexes() {
   const d = await db();
   const repairs = d.collection(REPAIR_COLLECTION);
+  // Bill ho chuki repair ka baqi sale mein hota hai; repair par remaining dobara aa jaye to wo balance mein double ginti hai. Use 0 kar dein.
+  if (Date.now() - lastHeal > 30000) {
+    lastHeal = Date.now();
+    try { await repairs.updateMany({ recordType: "REPAIR", billedSaleId: { $nin: [null, ""] }, remaining: { $gt: 0 } }, { $set: { remaining: 0 } }); } catch {}
+  }
   await Promise.all([
     repairs.createIndex(
       { tokenNo: 1 },
