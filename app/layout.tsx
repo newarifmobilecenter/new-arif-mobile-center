@@ -2,6 +2,7 @@ import { SHOP } from "@/lib/shop";
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
+import AutoBackup from "./components/AutoBackup";
 import Toaster from "./components/Toaster";
 import "./globals.css";
 import "./light-theme.css";
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head><script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} /></head>
       <body>
         <AuthNavigation />
+        <AutoBackup />
         {children}
         <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: {SHOP.helpline}</span></div>
         <Toaster />

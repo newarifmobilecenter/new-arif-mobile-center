@@ -2,11 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { allow, chooseFolder, disable, runNow, status, supported, type BackupStatus } from "@/lib/autoBackup";
 
 export default function Backup() {
 	const [message, setMessage] = useState("");
 	const [busy, setBusy] = useState(false);
 	const [role, setRole] = useState("");
+	const [ab, setAb] = useState<BackupStatus | null>(null);
+	const [abBusy, setAbBusy] = useState(false);
+	const refreshAb = () => { void status().then(setAb).catch(() => {}); };
+	useEffect(() => { refreshAb(); window.addEventListener("autobackup:changed", refreshAb); return () => window.removeEventListener("autobackup:changed", refreshAb); }, []);
+	async function abDo(fn: () => Promise<any>) { setAbBusy(true); try { const r = await fn(); if (r && r.ok === false) setMessage(r.error || "Backup nahi hua."); else setMessage(""); } catch (e: any) { if (e?.name !== "AbortError") setMessage(e?.message || "Nahi hua."); } finally { setAbBusy(false); refreshAb(); } }
 	useEffect(() => { fetch("/api/auth/session", { cache: "no-store" }).then(r => r.json()).then(x => setRole(x?.role || "")).catch(() => {}); }, []);
 
 	async function restore(event: React.ChangeEvent<HTMLInputElement>) {
@@ -79,7 +85,23 @@ export default function Backup() {
 			</label>
 			<p className="muted">For automatic cloud backup, connect your own Google Drive/OneDrive account; free quotas and provider limits apply.</p>
 			{busy && <p>Restoring...</p>}
-			{message && <p role="status">{message}</p>}
 		</div>
+		{role === "ADMIN" && <div className="panel" style={{ marginTop: 14 }}>
+			<h2 style={{ marginTop: 0 }}>🕐 Auto Backup (is computer par, har ghante)</h2>
+			{!supported() ? <p className="muted">Ye option sirf Chrome ya Edge (computer) mein chalta hai. Is browser mein &quot;Download Backup Now&quot; use karein.</p> : <>
+				<p className="muted">Ek bar folder chunein. Phir jab tak POS ka tab khula hai, har ghante backup us folder mein <b>NewArif-Backup-LATEST.json</b> ko update karta rahega, aur har hafte ki ek alag copy (aakhri 8) bhi rakhta hai.</p>
+				<p>Halat: <b>{ab?.enabled && ab.folder ? "✅ Chalu" : "⏸ Band"}</b>{ab?.folder ? ` · Folder: ${ab.folder}` : ""}{ab?.last ? ` · Aakhri backup: ${new Date(ab.last).toLocaleString("en-PK")}` : ""}</p>
+				{ab?.error && <p role="alert" style={{ color: "#dc2626" }}>⚠ {ab.error}</p>}
+				{ab?.enabled && ab.permission !== "granted" && <p className="muted">Browser dobara band/khulne ke baad folder ki ijazat dobara maangta hai: neeche &quot;Ijazat dein&quot; dabayein.</p>}
+				<div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+					<button type="button" className="btn" disabled={abBusy} onClick={() => void abDo(chooseFolder)}>{ab?.folder ? "📁 Folder badlein" : "📁 Folder chunein aur chalu karein"}</button>
+					{ab?.enabled && ab.permission !== "granted" && <button type="button" className="btn" disabled={abBusy} onClick={() => void abDo(allow)}>🔓 Ijazat dein</button>}
+					{ab?.folder && ab.permission === "granted" && <button type="button" className="btn" disabled={abBusy} onClick={() => void abDo(runNow)}>⟳ Abhi backup lein</button>}
+					{ab?.enabled && <button type="button" className="btn" disabled={abBusy} onClick={() => void abDo(disable)}>⏹ Band karein</button>}
+				</div>
+				{abBusy && <p>Backup ban raha hai...</p>}
+			</>}
+		</div>}
+		{message && <div className="panel" style={{ marginTop: 14 }}><p role="status">{message}</p></div>}
 	</main>;
 }
