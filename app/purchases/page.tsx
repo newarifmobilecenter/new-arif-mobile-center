@@ -78,8 +78,8 @@ export default function Purchases() {
   // Jis product ki pehle koi purchase record nahi aur rate set nahi, sirf usi par auto rate (retail = 2x cost, wholesale = 1.5x cost).
   const boughtIds = useMemo(() => { const set = new Set<string>(); for (const pu of purchases) for (const it of (pu.items || [])) if (it?.productId) set.add(String(it.productId)); return set; }, [purchases]);
   const isFirstBuy = (p: any) => !boughtIds.has(String(p._id)) && !(Number(p.price) > 0) && !(Number(p.wholesale) > 0);
-  const rateFor = (p: any) => isFirstBuy(p) && Number(p.costPrice) > 0 ? { ...autoRates(Number(p.costPrice)), auto: true } : { retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), auto: false };
-  const autoRates = (cost: number) => ({ retail: String(Math.round(cost * 2)), wholesale: String(Math.round(cost * 1.5)) });
+  const rateFor = (p: any) => isFirstBuy(p) ? { ...autoRates(Number(p.costPrice) || 0), auto: true } : { retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), auto: false };
+  const autoRates = (cost: number) => cost > 0 ? { retail: String(Math.round(cost * 2)), wholesale: String(Math.round(cost * 1.5)) } : { retail: "", wholesale: "" };
   const setLine = (key: number, patch: Partial<Line>) => setLines(cur => cur.map(l => l.key === key ? { ...l, ...patch } : l));
   const pick = (key: number, p: any) => {
     setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), cost: String(p.costPrice ?? 0), ...rateFor(p), stock: Number(p.stock || 0), category: String(p.category || "") });
