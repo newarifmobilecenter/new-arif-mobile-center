@@ -52,6 +52,9 @@ export default function LocalPurchase() {
 
   const customer = customers.find((c) => String(c._id) === customerId);
   const due = useMemo(() => customerId ? sales.filter((x) => String(x.customerId || "") === customerId && x.status !== "cancelled").reduce((a, x) => a + n(x.remaining), 0) + repairs.filter((x) => String(x.customerId || "") === customerId).reduce((a, x) => a + n(x.remaining), 0) : 0, [customerId, sales, repairs]);
+  // Current Balance: POS aur Ledger jaisa (sale + repair baqi) minus jo humein is customer ko local purchase ka dena baqi hai.
+  const localDue = useMemo(() => customerId ? history.filter((x) => String(x.customerId || "") === customerId).reduce((a, x) => a + n(x.remaining), 0) : 0, [customerId, history]);
+  const balance = due - localDue;
   const custMatches = useMemo(() => { const q = cq.trim().toLowerCase(); return q.length < 1 || customer?.name === cq ? [] : customers.filter((c) => `${c.name} ${c.phone} ${c.phoneNo} ${c.code}`.toLowerCase().includes(q)).slice(0, 8); }, [cq, customers, customer]);
   const total = lines.reduce((a, l) => a + n(l.qty) * n(l.cost), 0);
   const cash = n(paid), adj = n(adjust);
@@ -96,13 +99,13 @@ export default function LocalPurchase() {
             <input value={customer && cq === "" ? customer.name : cq} onChange={(e) => { setCq(e.target.value); setCustomerId(""); }} placeholder="naam / phone se dhoondein" />
             {custMatches.length > 0 && <span className={styles.scroll} style={{ position: "absolute", left: 0, right: 0, top: "100%", zIndex: 30, display: "grid", maxHeight: 240 }}>{custMatches.map((c) => <button key={c._id} type="button" style={{ textAlign: "left", padding: "8px 10px", border: 0, borderBottom: "1px solid rgba(128,150,180,.25)", background: "transparent", color: "inherit", cursor: "pointer", fontSize: 15 }} onClick={() => { setCustomerId(String(c._id)); setCq(String(c.name)); }}>{c.name} · {c.phoneNo || c.phone || "-"}</button>)}</span>}
           </span></label>
-          <label>Current Balance:<input value={customer ? money(due) : ""} readOnly /></label>
+          <label>Current Balance:<input value={customer ? `Rs. ${money(balance)}` : ""} readOnly /></label>
           <label>Note:<input value={note} onChange={(e) => setNote(e.target.value)} /></label>
         </div>
         <div className={styles.grid}>
           <h2 className={styles.title}>LOCAL PURCHASE</h2>
           <label>Date:<input value={localDay(new Date())} readOnly /></label>
-          <p className={styles.dim} style={{ margin: 0 }}>{customer ? `${customer.name} ka baqi (humein milna) Rs. ${money(due)} — neeche "Baqi mein Adjust" se is maal ki raqam usi mein kaat sakte hain.` : "Pehle customer chunein jis se maal le rahe hain."}</p>
+          <p className={styles.dim} style={{ margin: 0 }}>{customer ? `${customer.name} ka balance Rs. ${money(balance)}${balance < 0 ? " (humein dene hain)" : balance > 0 ? " (humein milna)" : ""}. ${due > 0 ? `Is mein se Rs. ${money(due)} milna hai: neeche "Adjust" se is maal ki raqam usi mein kaat sakte hain.` : ""}` : "Pehle customer chunein jis se maal le rahe hain."}</p>
         </div>
       </div>
     </section>
