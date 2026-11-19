@@ -33,6 +33,7 @@ function RepairDetailPage() {
   const [error, setError] = useState("");
   const [edit, setEdit] = useState<any>({});
   const [ret, setRet] = useState<any>(null);
+  const [pay, setPay] = useState({ amount: "", account: "Cash", note: "" });
   const [deliveryRecipientType, setDeliveryRecipientType] = useState("CUSTOMER");
   const [deliveryRecipientName, setDeliveryRecipientName] = useState("");
   const [deliveryCnic, setDeliveryCnic] = useState("");
@@ -110,6 +111,22 @@ function RepairDetailPage() {
       if (!response.ok) throw new Error(data.error || "Wapsi save nahi hui.");
       setRepair(data); setRet(null); await load();
     } catch (caught: any) { setError(caught.message || "Wapsi save nahi hui."); }
+    finally { setBusy(false); }
+  }
+
+  async function savePayment(direction: "IN" | "OUT") {
+    const amount = Number(pay.amount);
+    if (!(amount > 0)) { setError("Raqam likhein."); return; }
+    if (direction === "OUT" && !pay.note.trim()) { setError("Payment wapas karne ki wajah likhein."); return; }
+    if (!window.confirm(`${direction === "IN" ? "Payment JAMA (+)" : "Payment WAPAS (−)"} Rs. ${money(amount)} — pakka?`)) return;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/repairs/payment", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, direction, amount, account: pay.account, note: pay.note }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Payment save nahi hui.");
+      setPay({ amount: "", account: pay.account, note: "" });
+      await load();
+    } catch (caught: any) { setError(caught.message || "Payment save nahi hui."); }
     finally { setBusy(false); }
   }
 
@@ -238,8 +255,21 @@ function RepairDetailPage() {
         </section>;
       })()}
       {repair.status === "RETURNED" && repair.returnInfo && <section className={`${styles.panel} ${styles.noPrint}`}><h2>↩ Mobile Wapas Kiya Gaya</h2><p>Wajah: {repair.returnInfo.reason} · Advance Rs. {money(repair.returnInfo.advancePaid)} · Charge Rs. {money(repair.returnInfo.charge)}{repair.returnInfo.refund > 0 ? ` · Refund Rs. ${money(repair.returnInfo.refund)}` : ""}{repair.returnInfo.extraCharged > 0 ? ` · Baqi charge Rs. ${money(repair.returnInfo.extraCharged)}` : ""}{Number(repair.remaining || 0) > 0 ? ` · Customer ke zimme Rs. ${money(repair.remaining)}` : ""}</p></section>}
+      {!repair.billedSaleId && !["CANCELLED"].includes(repair.status) && <section className={`${styles.panel} ${styles.noPrint}`}>
+        <h2>💰 Payment Jama / Wapas</h2>
+        <p className={styles.muted}>Paid Rs. {money(repair.paid)} · Baqi Rs. {money(repair.remaining)}. Paid raqam seedha badli nahi ja sakti: neeche + (jama) ya − (wapas) se likhein. Har entry date aur waqt ke saath Payment History mein jati hai.</p>
+        <div className={styles.formGrid}>
+          <label className={styles.field}>Raqam (Rs.)<input type="number" min="0" step="0.01" inputMode="decimal" value={pay.amount} onChange={(event) => setPay({ ...pay, amount: event.target.value })} /></label>
+          <label className={styles.field}>Account<select value={pay.account} onChange={(event) => setPay({ ...pay, account: event.target.value })}>{["Cash", "Bank", "JazzCash", "Easypaisa"].map((a) => <option key={a}>{a}</option>)}</select></label>
+          <label className={`${styles.field} ${styles.wide}`}>Wajah / Note (wapsi mein zaroori)<input value={pay.note} onChange={(event) => setPay({ ...pay, note: event.target.value })} placeholder="jaise: customer ne advance diya / repair nahi hui, paisa wapas" /></label>
+        </div>
+        <div className={styles.actions}>
+          <button className={styles.button} disabled={busy} onClick={() => void savePayment("IN")}>＋ Payment Jama</button>
+          <button className={styles.buttonDanger} disabled={busy} onClick={() => void savePayment("OUT")}>－ Payment Wapas</button>
+        </div>
+      </section>}
       <section className={`${styles.panel} ${styles.noPrint}`}><h2>Status History</h2><div className={styles.historyList}>{(repair.statusHistory || []).map((item: any, index: number) => <div className={styles.historyItem} key={`${item.status}-${index}`}><b>{item.status}</b> · {new Date(item.at).toLocaleString("en-PK")} · {item.user}</div>)}</div></section>
-      <section className={`${styles.panel} ${styles.noPrint}`}><h2>Payment History</h2>{repair.paymentHistory?.length ? <div className={styles.historyList}>{repair.paymentHistory.map((item: any, index: number) => <div className={styles.historyItem} key={`${item.reference}-${index}`}><b>Rs. {money(item.amount)}</b> · {item.paymentMethod} · {item.type} · {new Date(item.at).toLocaleString("en-PK")}<br /><small>Reference: {item.reference || repair.tokenNo}</small></div>)}</div> : <p className={styles.muted}>No repair payments recorded.</p>}</section>
+      <section className={`${styles.panel} ${styles.noPrint}`}><h2>Payment History</h2>{repair.paymentHistory?.length ? <div className={styles.historyList}>{repair.paymentHistory.map((item: any, index: number) => <div className={styles.historyItem} key={`${item.reference}-${index}`}><b style={item.type === "PAYMENT_OUT" || item.type === "RETURN_REFUND" ? { color: "#f87171" } : undefined}>{item.type === "PAYMENT_OUT" || item.type === "RETURN_REFUND" ? "−" : "+"} Rs. {money(item.amount)}</b> · {item.paymentMethod} · {item.type === "PAYMENT_OUT" ? "WAPAS" : item.type === "PAYMENT_IN" ? "JAMA" : item.type} · {new Date(item.at).toLocaleString("en-PK", { dateStyle: "medium", timeStyle: "short" })} · {item.user}<br /><small>{item.note ? `Wajah: ${item.note} · ` : ""}Reference: {item.reference || repair.tokenNo}</small></div>)}</div> : <p className={styles.muted}>No repair payments recorded.</p>}</section>
       <section className={`${styles.panel} ${styles.noPrint}`}><h2>Reminder History</h2>{reminders.length ? <div className={styles.historyList}>{reminders.map((item: any) => <div className={styles.historyItem} key={item._id}><b>{item.type}</b> · {item.method} · {item.action} · {new Date(item.createdAt).toLocaleString("en-PK")}<br /><small>Draft preparation recorded only. Sending is not verified.</small></div>)}</div> : <p className={styles.muted}>No reminders prepared.</p>}</section>
     </>}
 
