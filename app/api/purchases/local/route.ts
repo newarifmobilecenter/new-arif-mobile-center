@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { db, client } from "@/lib/mongodb";
-import { getSession } from "@/lib/auth";
+import { getSession, can } from "@/lib/auth";
 import { nextNumber } from "@/lib/counters";
 import { clearOrdersForPurchase } from "@/lib/orderBookServer";
 import { REPAIR_COLLECTION } from "@/lib/repairs";
@@ -79,4 +79,56 @@ export async function POST(req: NextRequest) {
     } catch (e: any) { return fail(e?.message || "Local purchase save nahi hui."); } finally { await s.endSession(); }
     return NextResponse.json({ ok: true, invoiceNo, total, adjusted, prevBalance, newBalance: Math.round((prevBalance - total + paid) * 100) / 100, remaining: Math.round((total - paid - adjusted) * 100) / 100 }, { status: 201 });
   } catch (e: any) { return fail(e?.message || "Save nahi hua.", 500); }
+}
+
+// Local purchase modify: stock aur baqi sirf FARQ se theek hota hai. Cash/adjust jo pehle ho chuka wo wesa hi rehta hai;
+// purani values purchase.history mein mehfooz hoti hain. Customer badla nahi ja sakta.
+export async function PATCH(req: NextRequest) {
+  const user = await getSession();
+  if (!user) return fail("Login required.", 401);
+  if (!can(user, "purchase_modify")) return fail("Local purchase modify ki ijazat nahi.", 403);
+  try {
+    const b = await req.json();
+    const id = String(b.id || "");
+    if (!ObjectId.isValid(id)) return fail("Purchase ki id sahi nahi.");
+    const items = Array.isArray(b.items) ? b.items : [];
+    if (!items.length) return fail("Kam az kam ek item likhein.");
+    for (const it of items) {
+      if (!ObjectId.isValid(String(it.productId || "")) || !Number.isInteger(Number(it.qty)) || Number(it.qty) <= 0 || !Number.isFinite(Number(it.costPrice)) || Number(it.costPrice) < 0) return fail("Har item ka product, poori qty aur sahi rate zaroori hai.");
+    }
+    const d = await db();
+    const r2 = (x: number) => Math.round((x + Number.EPSILON) * 100) / 100;
+    const old: any = await d.collection("purchases").findOne({ _id: new ObjectId(id), kind: "LOCAL" });
+    if (!old) return fail("Local purchase nahi mili.", 404);
+    if (await d.collection("returns").findOne({ purchaseId: String(old._id), type: "PURCHASE_RETURN" })) return fail("Is purchase par return ho chuka hai, isay modify nahi kar sakte.");
+    // Product-wise purani aur nayi qty
+    const oldQty = new Map<string, number>(), newQty = new Map<string, number>();
+    for (const i of old.items || []) oldQty.set(String(i.productId), (oldQty.get(String(i.productId)) || 0) + Number(i.qty || 0));
+    for (const i of items) newQty.set(String(i.productId), (newQty.get(String(i.productId)) || 0) + Number(i.qty));
+    const total = r2(items.reduce((t: number, i: any) => t + Number(i.qty) * Number(i.costPrice), 0));
+    const settled = r2(Number(old.paid || 0) + Number(old.adjusted || 0));
+    if (total + 0.0001 < settled) return fail(`Is purchase par Rs. ${settled} pehle ada/adjust ho chuka hai, kul bill us se kam nahi ho sakta.`);
+    const remaining = r2(total - settled);
+    const now = new Date();
+    const s = client.startSession();
+    try {
+      await s.withTransaction(async () => {
+        const ids = new Set<string>([...oldQty.keys(), ...newQty.keys()]);
+        for (const pid of ids) {
+          const delta = (newQty.get(pid) || 0) - (oldQty.get(pid) || 0);
+          if (delta === 0) continue;
+          const upd = await d.collection("products").updateOne({ _id: new ObjectId(pid), ...(delta < 0 ? { stock: { $gte: -delta } } : {}) }, { $inc: { stock: delta }, $set: { updatedAt: now } }, { session: s });
+          if (upd.matchedCount !== 1) throw new Error("Stock kam ho chuka hai, is liye qty itni kam nahi ho sakti (maal bik chuka hai).");
+          await d.collection("stockMovements").insertOne({ type: delta > 0 ? "IN" : "OUT", productId: pid, qty: Math.abs(delta), ref: old.invoiceNo, reason: "Local Purchase Modify", user: user.u, createdAt: now }, { session: s });
+        }
+        for (const i of items) if (Number(i.retail) > 0) await d.collection("products").updateOne({ _id: new ObjectId(String(i.productId)) }, { $set: { price: Number(i.retail) } }, { session: s });
+        const history = { at: now, by: user.u, oldTotal: Number(old.total || 0), newTotal: total, oldItems: old.items || [], oldRemaining: Number(old.remaining || 0) };
+        await d.collection("purchases").updateOne({ _id: old._id }, {
+          $set: { items: items.map((i: any) => ({ productId: String(i.productId), name: String(i.name || ""), qty: Number(i.qty), costPrice: Number(i.costPrice), retail: Number(i.retail || 0) })), subtotal: total, total, remaining, status: remaining > 0 ? "credit" : "paid", note: String(b.note ?? old.note ?? "").slice(0, 300), updatedAt: now, modifiedAt: now, modifiedBy: user.u },
+          $push: { history } as any,
+        }, { session: s });
+      }, { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } });
+    } catch (e: any) { return fail(e?.message || "Modify nahi hua."); } finally { await s.endSession(); }
+    return NextResponse.json({ ok: true, invoiceNo: old.invoiceNo, total, remaining });
+  } catch (e: any) { return fail(e?.message || "Modify nahi hua.", 500); }
 }

@@ -1,6 +1,7 @@
 "use client";
 import { SHOP } from "@/lib/shop";
 import { shareLive } from "@/lib/shareSlip";
+import { printVoucher, shareVoucher } from "@/lib/voucherPrint";
 import { notify } from "@/lib/toast";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -32,6 +33,13 @@ export default function LocalPurchase() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [saved, setSaved] = useState<any>(null);
+  const [editId, setEditId] = useState("");
+  const [editRec, setEditRec] = useState<any>(null);
+  const [findNo, setFindNo] = useState("");
+  const [payAmt, setPayAmt] = useState("");
+  const [payAcc, setPayAcc] = useState("Cash");
+  const [payNote, setPayNote] = useState("");
+  const [payVoucher, setPayVoucher] = useState<any>(null);
   const [slip, setSlip] = useState<any>(null);
   const shareSlipImg = (rec: any, mode: "png" | "whatsapp") => { setSlip({ rec, size: "thermal" }); setTimeout(() => { void shareLive(document.querySelector(".lpSlip") as HTMLElement | null, mode, `Slip-${rec.invoiceNo}`, `${SHOP.nameUpper}\nSlip ${rec.invoiceNo}`, { white: false, width: 300 }).catch(() => notify("Image nahi ban saki.", { kind: "danger" })); }, 250); };
   const printSlip = (rec: any, size: string) => { setSlip({ rec, size }); setTimeout(() => window.print(), 150); };
@@ -59,10 +67,36 @@ export default function LocalPurchase() {
   const total = lines.reduce((a, l) => a + n(l.qty) * n(l.cost), 0);
   const cash = n(paid), adj = n(adjust);
   const owe = Math.max(0, total - cash - adj);
+  const settledOld = editRec ? n(editRec.paid) + n(editRec.adjusted) : 0;
 
   const setLine = (key: number, p: Partial<Line>) => setLines((o) => o.map((l) => (l.key === key ? { ...l, ...p } : l)));
   const choose = (key: number, p: any) => { setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), q: String(p.name || p.model || ""), cost: String(p.costPrice ?? ""), retail: String(p.price ?? "") }); setOpen(null); };
   const matches = (q: string) => { const s = q.trim().toLowerCase(); return s.length < 1 ? [] : products.filter((p) => `${p.name} ${p.model} ${p.code} ${p.sku} ${p.barcode} ${p.brand}`.toLowerCase().includes(s)).slice(0, 10); };
+
+  function loadOld() {
+    const no = findNo.trim().toLowerCase();
+    const h = history.find((x) => String(x.invoiceNo || "").toLowerCase() === no);
+    if (!h) { setMsg({ t: "Ye Local Purchase No nahi mila (jaise LP001).", ok: false }); return; }
+    setEditId(String(h._id)); setEditRec(h); setCustomerId(String(h.customerId || "")); setCq("");
+    setLines((h.items || []).map((i: any) => ({ key: seq++, productId: String(i.productId), name: String(i.name || ""), qty: String(i.qty), cost: String(i.costPrice ?? ""), retail: String(i.retail || ""), q: String(i.name || "") })));
+    setPaid(String(h.paid || "")); setAdjust(String(h.adjusted || "")); setNote(String(h.note || "")); setMsg(null); setSaved(null);
+  }
+  function cancelEdit() { setEditId(""); setEditRec(null); setFindNo(""); setLines([blank()]); setPaid(""); setAdjust(""); setNote(""); setCustomerId(""); setCq(""); setMsg(null); }
+  async function payCustomer() {
+    const amt = n(payAmt);
+    if (!customerId || !(amt > 0)) return setMsg({ t: "Raqam likhein.", ok: false });
+    if (amt > localDue + 0.0001) return setMsg({ t: `Is customer ko dene sirf Rs. ${money(localDue)} baqi hain.`, ok: false });
+    if (!window.confirm(`${customer?.name} ko Rs. ${money(amt)} (${payAcc}) dene hain — pakka?`)) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch("/api/finance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "supplierPayment", customerId, amount: amt, account: payAcc, ref: payNote }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || "Payment save nahi hui.");
+      setPayVoucher(d.voucher || null); setPayAmt(""); setPayNote("");
+      setMsg({ t: `Rs. ${money(d.applied)} ${customer?.name} ko ada ho gaye${d.voucher?.voucherNo ? ` (Voucher ${d.voucher.voucherNo})` : ""}. Ab unka dena baqi kam ho gaya.`, ok: true });
+      await load();
+    } catch (e: any) { setMsg({ t: e.message, ok: false }); } finally { setBusy(false); }
+  }
 
   async function save() {
     if (busy) return;
@@ -70,6 +104,17 @@ export default function LocalPurchase() {
     const used = lines.filter((l) => l.productId);
     if (!used.length) return setMsg({ t: "Kam az kam ek product (list se chun kar) likhein.", ok: false });
     if (used.some((l) => !(n(l.qty) > 0) || !Number.isInteger(n(l.qty)) || n(l.cost) < 0 || l.cost === "")) return setMsg({ t: "Har item ki poori qty aur rate likhein.", ok: false });
+    if (editId) {
+      setBusy(true); setMsg(null);
+      try {
+        const r = await fetch("/api/purchases/local", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: editId, note, items: used.map((l) => ({ productId: l.productId, name: l.name, qty: n(l.qty), costPrice: n(l.cost), retail: n(l.retail) })) }) });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || "Modify nahi hua.");
+        setMsg({ t: `Local purchase ${d.invoiceNo} modify ho gayi. Naya bill Rs. ${money(d.total)}, dena baqi Rs. ${money(d.remaining)}. Stock farq se theek ho gaya.`, ok: true });
+        cancelEdit(); await load();
+      } catch (e: any) { setMsg({ t: e.message, ok: false }); } finally { setBusy(false); }
+      return;
+    }
     if (cash + adj > total + 0.0001) return setMsg({ t: "Cash + adjust kul bill se zyada hai.", ok: false });
     if (adj > due + 0.0001) return setMsg({ t: `Is customer ka baqi sirf Rs. ${money(due)} hai.`, ok: false });
     setBusy(true); setMsg(null);
@@ -91,12 +136,14 @@ export default function LocalPurchase() {
 
   return <main className={styles.page}>
     <nav className={styles.toolbar}><Link href="/">← Dashboard</Link><Link href="/purchases">Purchase</Link><Link href="/vouchers">Vouchers</Link><Link href="/customers">Customers</Link></nav>
+    {editId ? <div className={styles.editBar}><b>✏ EDIT MODE — Local Purchase {editRec?.invoiceNo}</b><span>Cash/adjust jo ho chuka wo wesa hi rahega; sirf items/qty/rate badlenge, stock farq se theek hoga.</span><button type="button" onClick={cancelEdit}>Cancel Edit</button></div>
+      : <div className={styles.editBar}><b>✏ Modify Local Purchase:</b><input value={findNo} placeholder="Old Local Purchase No (LP001)" onChange={(e) => setFindNo(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); loadOld(); } }} /><button type="button" onClick={loadOld}>Load</button></div>}
 
     <section className={styles.head}>
       <div className={styles.headBox}>
         <div className={styles.grid}>
           <label>Customer:<span style={{ position: "relative", display: "block" }}>
-            <input value={customer && cq === "" ? customer.name : cq} onChange={(e) => { setCq(e.target.value); setCustomerId(""); }} placeholder="naam / phone se dhoondein" />
+            <input readOnly={!!editId} value={customer && cq === "" ? customer.name : cq} onChange={(e) => { setCq(e.target.value); setCustomerId(""); }} placeholder="naam / phone se dhoondein" />
             {custMatches.length > 0 && <span className={styles.scroll} style={{ position: "absolute", left: 0, right: 0, top: "100%", zIndex: 30, display: "grid", maxHeight: 240 }}>{custMatches.map((c) => <button key={c._id} type="button" style={{ textAlign: "left", padding: "8px 10px", border: 0, borderBottom: "1px solid rgba(128,150,180,.25)", background: "transparent", color: "inherit", cursor: "pointer", fontSize: 15 }} onClick={() => { setCustomerId(String(c._id)); setCq(String(c.name)); }}>{c.name} · {c.phoneNo || c.phone || "-"}</button>)}</span>}
           </span></label>
           <label>Current Balance:<input value={customer ? `Rs. ${money(balance)}` : ""} readOnly /></label>
@@ -139,20 +186,34 @@ export default function LocalPurchase() {
       </div>
       <div className={styles.tot2}>
         <label>Kul Bill:<input value={money(total)} readOnly className={styles.cyan} /></label>
-        <label>Cash pay:<input inputMode="decimal" value={paid} onChange={(e) => setPaid(e.target.value.replace(/[^\d.]/g, ""))} onFocus={(e) => e.target.select()} /></label>
+        <label>Cash pay:<input readOnly={!!editId} inputMode="decimal" value={paid} onChange={(e) => setPaid(e.target.value.replace(/[^\d.]/g, ""))} onFocus={(e) => e.target.select()} /></label>
       </div>
       <div className={styles.tot2}>
         <label>Pay by:<select value={account} onChange={(e) => setAccount(e.target.value)}>{ACCOUNTS.map((a) => <option key={a}>{a}</option>)}</select></label>
-        <label>Adjust:<input inputMode="decimal" value={adjust} onChange={(e) => setAdjust(e.target.value.replace(/[^\d.]/g, ""))} placeholder={due > 0 ? `max ${money(due)}` : "0"} onFocus={(e) => e.target.select()} /></label>
+        <label>Adjust:<input readOnly={!!editId} inputMode="decimal" value={adjust} onChange={(e) => setAdjust(e.target.value.replace(/[^\d.]/g, ""))} placeholder={due > 0 ? `max ${money(due)}` : "0"} onFocus={(e) => e.target.select()} /></label>
       </div>
       <div className={styles.tot2}>
-        <label>Dene baqi:<input value={money(owe)} readOnly className={styles.yel} /></label>
+        <label>Dene baqi:<input value={money(editId ? Math.max(0, total - settledOld) : owe)} readOnly className={styles.yel} /></label>
         <small className={styles.dim}>Customer ko dene baqi = Kul Bill − Cash − Adjust</small>
       </div>
     </section>
 
+    {customerId && localDue > 0 && !editId && <section className={styles.bottom} style={{ gridTemplateColumns: "minmax(0,1fr)" }}>
+      <div className={styles.tot2}>
+        <b>💵 {customer?.name} ko payment dein (humein is ko Rs. {money(localDue)} dene hain)</b>
+        <label>Raqam:<input inputMode="decimal" value={payAmt} onChange={(e) => setPayAmt(e.target.value.replace(/[^\d.]/g, ""))} placeholder={`max ${money(localDue)}`} onFocus={(e) => e.target.select()} /></label>
+        <label>Pay by:<select value={payAcc} onChange={(e) => setPayAcc(e.target.value)}>{ACCOUNTS.map((a) => <option key={a}>{a}</option>)}</select></label>
+        <label>Note:<input value={payNote} onChange={(e) => setPayNote(e.target.value)} /></label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <button type="button" className={styles.saveBtn} disabled={busy} onClick={() => void payCustomer()}>💵 Payment Ada Karein</button>
+          {payVoucher && <><button type="button" className={styles.ico} onClick={() => printVoucher(payVoucher)}>🖨 Voucher</button><button type="button" className={styles.ico} onClick={() => void shareVoucher(payVoucher, "whatsapp")}>📲</button><button type="button" className={styles.ico} onClick={() => void shareVoucher(payVoucher, "png")}>🖼</button></>}
+        </div>
+        <small className={styles.dim}>Ye paisa cash/account se nikalta hai aur customer ke dene baqi se kam ho jata hai (jaise -1,570 mein se 1,500 dene par -70 reh jata hai). Voucher bhi ban jata hai.</small>
+      </div>
+    </section>}
+
     <footer className={styles.foot}>
-      <button type="button" className={styles.saveBtn} disabled={busy} onClick={() => void save()} title="Save (Ctrl+S)">💾 {busy ? "Saving…" : "Save Local Purchase (Ctrl+S)"}</button>
+      <button type="button" className={styles.saveBtn} disabled={busy} onClick={() => void save()} title="Save (Ctrl+S)">💾 {busy ? "Saving…" : editId ? "Update Local Purchase (Ctrl+S)" : "Save Local Purchase (Ctrl+S)"}</button>
       {msg && <span role="status" className={msg.ok ? styles.ok : styles.bad}>{msg.t}</span>}
     </footer>
 
