@@ -13,6 +13,9 @@ type Customer = { _id: string; name: string; phone?: string };
 const money = (value: number) => Number(value || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 const dateTime = (value: string) => value ? new Date(value).toLocaleString("en-PK", { dateStyle: "short", timeStyle: "short" }) : "-";
 
+// Red: repair shuru nahi hui, Yellow: Start Repair ho gayi, Green: Mark Ready ho gayi.
+const stateColor = (status: string) => status === "RECEIVED" ? "#f87171" : status === "IN_REPAIR" ? "#fbbf24" : status === "READY" ? "#4ade80" : undefined;
+
 export default function Repairs() {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -83,8 +86,8 @@ export default function Repairs() {
       {loading ? <p className={styles.muted}>Loading repairs...</p> : visible.length === 0 ? <p className={styles.empty}>No repair records match these filters.</p> : <div className={styles.tableWrap}><table className={styles.table}>
         <thead><tr><th>Token</th><th>Date</th><th>Customer</th><th>Mobile</th><th>Fault</th><th>Status</th><th>Total</th><th>Paid</th><th>Remaining</th><th>Expected Ready</th><th></th></tr></thead>
         <tbody>{visible.map((repair) => <tr key={repair._id}>
-          <td><Link href={`/repairs/${encodeURIComponent(repair._id)}`}><b>{repair.tokenNo}</b></Link></td><td>{dateTime(repair.receivedAt)}</td>
-          <td><Link href={`/customers/${repair.customerId}`}>{repair.customerName}</Link><br /><small>{repair.customerPhone}</small></td>
+          <td><Link href={`/repairs/${encodeURIComponent(repair._id)}`} style={{ color: stateColor(repair.status) }}><b>{repair.tokenNo}</b></Link></td><td>{dateTime(repair.receivedAt)}</td>
+          <td><Link href={`/customers/${repair.customerId}`} style={{ color: stateColor(repair.status), fontWeight: 700 }}>{repair.customerName}</Link><br /><small>{repair.customerPhone}</small></td>
           <td>{repair.model}</td><td>{repair.fault}</td><td><span className={styles.status} data-status={repair.status}>{repair.status}</span>{repair.remaining > 0 && <span className={styles.dueTag}>PAYMENT DUE</span>}</td>
           <td>Rs. {money(repair.totalBill)}</td><td>Rs. {money(repair.paid)}</td><td>Rs. {money(repair.remaining)}</td><td>{dateTime(repair.expectedReadyAt)}</td><td><Link href={`/repairs/${encodeURIComponent(repair._id)}`}>Open</Link></td>
         </tr>)}</tbody>
