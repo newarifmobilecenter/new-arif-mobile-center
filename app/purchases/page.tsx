@@ -141,7 +141,7 @@ export default function Purchases() {
   useEffect(() => {
     if (!products.length) return;
     const q = new URLSearchParams(window.location.search).get("edit");
-    if (q && !editId) { window.history.replaceState(null, "", window.location.pathname); void loadOld(q); }
+    if (q && !editId) { window.history.replaceState(window.history.state, "", window.location.pathname); void loadOld(q); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products.length]);
 
@@ -183,7 +183,7 @@ export default function Purchases() {
   return <main className={styles.page}>
     <nav className={styles.toolbar}>
       <Link href="/">← Dashboard</Link><Link href="/suppliers" target="arifNewParty" rel="noopener">👤 Supplier List</Link><Link href="/admin" target="arifNewItem" rel="noopener">📦 New Item</Link><Link href="/suppliers" target="arifNewParty" rel="noopener">＋ New Supplier</Link>
-      <button type="button" onClick={() => barcodeRef.current?.focus()}>🔍 Item Search</button><Link href="/purchases/history" target="arifSide" rel="noopener">🧾 Purchase History</Link><Link href="/purchases/returns" target="arifSide" rel="noopener">↩ Purchase Return</Link>
+      <button type="button" onClick={() => barcodeRef.current?.focus()}>🔍 Item Search</button><Link href="/purchases/history">🧾 Purchase History</Link><Link href="/purchases/returns">↩ Purchase Return</Link>
     </nav>
     {editId ? <div className={styles.editBar}><b>✏ EDIT MODE — Purchase {editNo}</b>{laterPaid > 0 && <span>Baad ki supplier payment Rs. {money(laterPaid)} wese hi rahegi</span>}<button type="button" onClick={cancelEdit}>Cancel Edit</button></div>
       : <div className={styles.editBar}><b>✏ Modify Purchase:</b><input value={findNo} placeholder="Old Purchase No (P009)" onChange={e => setFindNo(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void loadOld(); } }} /><button type="button" disabled={busy} onClick={() => void loadOld()}>Load</button></div>}

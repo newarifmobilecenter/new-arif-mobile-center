@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
 import AutoBackup from "./components/AutoBackup";
+import NegativeStockReminder from "./components/NegativeStockReminder";
 import Toaster from "./components/Toaster";
 import "./globals.css";
 import "./light-theme.css";
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <AuthNavigation />
         <AutoBackup />
+        <NegativeStockReminder />
         {children}
         <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: {SHOP.helpline}</span></div>
         <Toaster />

@@ -11,9 +11,34 @@ const BRANDS = new Set(["vivo", "oppo", "samsung", "infinix", "tecno", "itel", "
 
 export const tokens = (s: string) => String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
 
+// Har part-word ka group: "panel battery" jaisi bagair + wali likhai ko bhi alag alag parts mein tod'ne ke liye.
+const PART_GROUPS: [string, RegExp][] = [
+  ["display", /^(panel|lcd|display|screen|touch|folder|led|incell|tft|oled|amoled)$/],
+  ["battery", /^(batter\w*|batry)$/],
+  ["charging", /^(charging|charger|port|pcb|board|ch|chb|strip)$/],
+  ["camera", /^(camera|cam)$/],
+  ["audio", /^(speaker|mic|microphone|ringer|buzzer)$/],
+  ["button", /^(button|flex|key)$/],
+  ["body", /^(body|housing|frame|ring)$/],
+];
+const groupOf = (w: string) => PART_GROUPS.find(([, r]) => r.test(w.toLowerCase()))?.[0] || "";
+
+function splitByPart(piece: string): string[] {
+  const words = piece.split(/\s+/).filter(Boolean);
+  const out: string[][] = [];
+  let cur: string[] = []; let curG = "";
+  for (const w of words) {
+    const g = groupOf(w);
+    if (g && curG && g !== curG) { out.push(cur); cur = []; curG = ""; }
+    cur.push(w); if (g) curG = g;
+  }
+  if (cur.length) out.push(cur);
+  return out.map((x) => x.join(" "));
+}
+
 export function splitFault(fault: string): string[] {
   const seen = new Set<string>();
-  return String(fault || "").split(/[+,;\n&]|\b(?:and|aur)\b/i).map((x) => x.trim()).filter((x) => {
+  return String(fault || "").split(/[+,;\n&/]|\b(?:and|aur)\b/i).flatMap((x) => splitByPart(x.trim())).map((x) => x.trim()).filter((x) => {
     const k = x.toLowerCase();
     if (x.length < 3 || seen.has(k) || !tokens(x).some((t) => !STOP.has(t))) return false;
     seen.add(k); return true;

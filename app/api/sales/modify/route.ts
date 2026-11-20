@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
         for (const item of normalized) {
           if (!item.productId) continue;
           if (!ObjectId.isValid(String(item.productId))) throw new Error(`Invalid product: ${item.name || "item"}`);
-          const updated = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(String(item.productId)), stock: { $gte: item.qty } }, { $inc: { stock: -item.qty }, $set: { updatedAt: new Date() } }, { session, returnDocument: "after" });
-          if (!updated) throw new Error(`Insufficient stock for ${item.name || "item"}.`);
+          const updated = await d.collection("products").findOneAndUpdate({ _id: new ObjectId(String(item.productId)) }, { $inc: { stock: -item.qty }, $set: { updatedAt: new Date() } }, { session, returnDocument: "after" });
+          if (!updated) throw new Error(`Product not found: ${item.name || "item"}.`);
           await d.collection("stockMovements").insertOne({ type: "OUT", productId: String(item.productId), qty: item.qty, reason: "Sale modified (new items)", ref: sale.invoiceNo, user: user.u, createdAt: new Date() }, { session });
         }
         const keep = ["customerId", "cashRef", "custRef", "remarks", "salesman", "date", "paymentMethod", "type", "saleType"];

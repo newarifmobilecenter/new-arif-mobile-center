@@ -77,11 +77,11 @@ export async function POST(req: NextRequest) {
         if (!item.productId) continue;
         if (!ObjectId.isValid(String(item.productId))) throw new Error(`Invalid product: ${item.name || "item"}`);
         const updated = await products.findOneAndUpdate(
-          { _id: new ObjectId(String(item.productId)), stock: { $gte: item.qty } },
+          { _id: new ObjectId(String(item.productId)) }, // stock 0 par bhi sale ho sakti hai (minus stock) — purchase se khud theek hota hai
           { $inc: { stock: -item.qty }, $set: { updatedAt: new Date() } },
           { session, returnDocument: "after" }
         );
-        if (!updated) throw new Error(`Insufficient stock for ${item.name || "item"}.`);
+        if (!updated) throw new Error(`Product not found: ${item.name || "item"}.`);
         item.costPrice = Number(updated.costPrice || 0); // snapshot so profit stays correct later
         await movements.insertOne({
           type: "OUT",
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
           const prod = await products.findOne({ _id: new ObjectId(String(part.productId)) }, { session });
           if (!prod) continue;
           item.costPrice = Number(item.costPrice || 0) + Number(prod.costPrice || 0) * q;
-          await products.updateOne({ _id: prod._id }, { $set: { stock: Math.max(0, Number(prod.stock || 0) - q), updatedAt: new Date() } }, { session });
+          await products.updateOne({ _id: prod._id }, { $set: { stock: Number(prod.stock || 0) - q, updatedAt: new Date() } }, { session });
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });
         }
         // Sale ke waqt repair mein add ki gayi cheezein: stock se minus.
@@ -122,7 +122,6 @@ export async function POST(req: NextRequest) {
           const q = Math.max(1, Number(part.qty || 1));
           const prod = await products.findOne({ _id: new ObjectId(String(part.productId)) }, { session });
           if (!prod) continue;
-          if (Number(prod.stock || 0) < q) throw new Error(`"${prod.name || prod.model}" ka stock kam hai.`);
           item.costPrice = Number(item.costPrice || 0) + Number(prod.costPrice || 0) * q;
           await products.updateOne({ _id: prod._id }, { $set: { stock: Number(prod.stock || 0) - q, updatedAt: new Date() } }, { session });
           await movements.insertOne({ type: "OUT", productId: String(prod._id), qty: q, reason: `Repair ${repair.tokenNo}`, ref: String(body.invoiceNo || ""), user: sessionUser.u, createdAt: new Date() }, { session });

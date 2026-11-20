@@ -112,7 +112,8 @@ export default function OrderBook() {
   const addManual = () => {
     const n = name.trim(); if (!n) { notify("Cheez ka naam likhein (jaise VIVO Y100 BACK RING).", { kind: "warning" }); return; }
     const qty = Math.max(1, Math.floor(Number(mqty) || 1));
-    const prod = products.find((p) => String(p.name || "").trim().toLowerCase() === n.toLowerCase());
+    const norm = (x: string) => x.toLowerCase().replace(/\s+/g, " ").trim();
+    const prod = products.find((p) => norm(String(p.name || "")) === norm(n));
     void post([{ name: n.toUpperCase(), category: prod ? categoryOf(String(prod.name || ""), String(prod.category || "").trim()) : cat, qty, productId: prod ? String(prod._id) : undefined }]).then(() => { setName(""); setMqty("1"); });
   };
 
@@ -128,7 +129,7 @@ export default function OrderBook() {
     <div className={styles.bar}>
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: naam / C1400 / customer…" style={{ minWidth: 240 }} />
       {tab === "urgent" && <>
-        <input list="ob-products" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: product chunein ya likhein" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addManual(); } }} />
+        <input list="ob-products" value={name} onChange={(e) => setName(e.target.value)} placeholder="Naya order: product chunein ya likhein" style={{ minWidth: 260 }} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const v = e.currentTarget.value.trim().toLowerCase(); /* list se item Enter se chunte waqt abhi adhoora naam hota hai: sirf poora naam milne par hi add karein */ if (v && products.some((p) => String(p.name || "").trim().toLowerCase() === v)) addManual(); } }} />
         <datalist id="ob-products">{products.slice(0, 3000).map((p) => <option key={p._id} value={String(p.name || "")} />)}</datalist>
         <input type="number" min="1" value={mqty} onChange={(e) => setMqty(e.target.value)} title="Quantity" placeholder="Qty" style={{ width: 70 }} />
         <SearchSelect value={cat} onChange={setCat} options={catList} />

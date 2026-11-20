@@ -71,7 +71,7 @@ function RepairDetailPage() {
     const url = new URL(window.location.href);
     if (url.searchParams.get("print") !== "1") return;
     url.searchParams.delete("print");
-    window.history.replaceState(null, "", url.pathname + url.search);
+    window.history.replaceState(window.history.state, "", url.pathname + url.search);
     const t = window.setTimeout(() => window.print(), 700);
     return () => window.clearTimeout(t);
   }, [repair]);

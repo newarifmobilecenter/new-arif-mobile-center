@@ -120,7 +120,7 @@ export default function SaleReturns() {
   const recent = [...returns].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))).slice(0, 30);
 
   return <main className={styles.page}><div className={styles.win}>
-    <header className={styles.top}><Link href="/">← Dashboard</Link><h1>Sale Return</h1><nav><Link href="/pos" target="arifSide" rel="noopener">New Sale</Link><Link href="/sales" target="arifSide" rel="noopener">Sales History</Link><Link href="/purchases/returns" target="arifSide" rel="noopener">Purchase Return</Link></nav></header>
+    <header className={styles.top}><Link href="/">← Dashboard</Link><h1>Sale Return</h1><nav><Link href="/pos">New Sale</Link><Link href="/sales">Sales History</Link><Link href="/purchases/returns">Purchase Return</Link></nav></header>
 
     <section className={styles.head}>
       <label className={`${styles.wide}`}>Customer

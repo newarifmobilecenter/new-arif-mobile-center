@@ -6,6 +6,7 @@ import { pageAllowed } from "@/lib/perms";
 import Link from "next/link";
 import RepairReminderSummary from "./components/RepairReminderSummary";
 import DashboardSearch from "./components/DashboardSearch";
+import NegativeStockPanel from "./components/NegativeStockPanel";
 
 const allCategories = [
   { id:"file", title:"File", icon:"📁", items:[
@@ -119,6 +120,7 @@ export default function Home(){
  return <main className="shell dashboardHome">
   <section className="hero dashboardHero"><div><div className="eyebrow">{SHOP.nameUpper}</div><h1>Business Dashboard</h1><p className="muted">Kaam ki category chunein, phir uska option kholen</p></div><div className="icon">📱</div></section>
   {blocked && <p role="alert" style={{ background: "#7f1d1d", color: "#fff", padding: "10px 14px", borderRadius: 10, fontWeight: 700 }}>🚫 Ye page aap ke account ke liye band hai. Zaroorat ho to Admin se access maangein.</p>}
+  <NegativeStockPanel show={!!sess && pageAllowed(sess, "/purchases")} />
   <DashboardSearch />
   <nav className="dashboardMenu" aria-label="Main menu">{categories.map(category=><button type="button" key={category.id} className={activeCategory===category.id?"dashboardMenuButton active":"dashboardMenuButton"} aria-expanded={activeCategory===category.id} aria-controls="dashboardCategoryPanel" onClick={()=>setActiveCategory(activeCategory===category.id?null:category.id)}><span aria-hidden="true">{category.icon}</span>{category.title}</button>)}</nav>
   {selected&&<section className="panel dashboardCategoryPanel" id="dashboardCategoryPanel"><div className="dashboardCategoryHeading"><h2>{selected.icon} {selected.title}</h2><button type="button" className="dashboardClose" onClick={()=>setActiveCategory(null)} aria-label="Close menu">×</button></div><div className="dashboardActionGrid">{selected.items.map(([title,description,href])=><Link href={href} target={href==="/product-cost"?"_blank":undefined} rel={href==="/product-cost"?"noreferrer":undefined} className="dashboardAction" key={title}><span className="dashboardActionTitle">{title}</span><span className="muted">{description}</span><span className="go">Open →</span></Link>)}</div>{selected.id==="slips"&&<RepairReminderSummary/>}</section>}

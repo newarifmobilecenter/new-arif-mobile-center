@@ -74,7 +74,7 @@ function LedgerContent() {
         <div className={styles.stats}><div className={styles.stat}><small>Customers</small><b>{summary.length}</b></div><div className={styles.stat}><small>Udhaar wale</small><b>{summary.filter((c) => c.bal > 0).length}</b></div><div className={styles.stat}><small>Total baqi</small><b>Rs. {money(summary.reduce((a, c) => a + c.bal, 0))}</b></div></div>
         <div className={styles.bar} style={{ marginTop: 0, marginBottom: 8 }}><input className={styles.in} style={{ maxWidth: 340 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="🔍 naam / phone / code" /><button className={styles.alt} onClick={() => window.print()}>🖨 Print</button></div>
         <div className={styles.wrap} style={{ maxHeight: "60vh" }}><table className={styles.tbl}><thead><tr><th>Code</th><th>Customer</th><th>Phone</th><th className={styles.num}>Baqi</th><th></th></tr></thead><tbody>
-          {list.map((c) => <tr key={c._id}><td>{c.code || "-"}</td><td>{c.name}</td><td>{c.phoneNo || c.phone || "-"}</td><td className={styles.num}><span className={`${styles.pill} ${c.bal > 0 ? styles.pDue : styles.pPaid}`}>Rs. {money(c.bal)}</span></td><td><button className={styles.alt} onClick={() => { setCustomerId(String(c._id)); window.history.replaceState(null, "", `/ledger?customer=${c._id}`); }}>Ledger kholen</button></td></tr>)}
+          {list.map((c) => <tr key={c._id}><td>{c.code || "-"}</td><td>{c.name}</td><td>{c.phoneNo || c.phone || "-"}</td><td className={styles.num}><span className={`${styles.pill} ${c.bal > 0 ? styles.pDue : styles.pPaid}`}>Rs. {money(c.bal)}</span></td><td><button className={styles.alt} onClick={() => { setCustomerId(String(c._id)); window.history.replaceState(window.history.state, "", `/ledger?customer=${c._id}`); }}>Ledger kholen</button></td></tr>)}
           {!list.length && <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: 16 }}>Koi customer nahi.</td></tr>}</tbody></table></div>
       </div>}
       {customer && <div style={{ display: "flex", flexWrap: "wrap", gap: 14, alignItems: "flex-start" }}>
@@ -102,7 +102,7 @@ function LedgerContent() {
             {ledgerBal > 0 && <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/vouchers?tab=due&customer=${customerId}`}>💰 Wasooli Voucher</Link>}
             <Link className={styles.alt} style={{ textDecoration: "none", textAlign: "center" }} href={`/repairs/new?customerId=${customerId}`}>＋ New Repair</Link>
           </div>
-          <button className={styles.alt} style={{ width: "100%" }} onClick={() => { setCustomerId(""); window.history.replaceState(null, "", "/ledger"); }}>← Sab customers</button>
+          <button className={styles.alt} style={{ width: "100%" }} onClick={() => { setCustomerId(""); window.history.replaceState(window.history.state, "", "/ledger"); }}>← Sab customers</button>
         </div>
       </div>}
     </section>

@@ -299,13 +299,22 @@ export default function POS() {
     return Number.isNaN(parsed.getTime()) ? "" : parsed.toLocaleDateString();
   }
 
+  // Stock zero / kam ho to bhi sale ho sakti hai (stock minus mein jata hai, purchase par khud theek). Pehle English warning.
+  const confirmNegative = (p: Product, extra = 1): boolean => {
+    const stock = Number(p.stock || 0);
+    const inCart = items.filter((i) => i.productId === p._id).reduce((n, i) => n + Number(i.qty || 0), 0);
+    const after = stock - inCart - extra;
+    if (after >= 0) return true;
+    const nm = p.name || p.model || "This product";
+    return window.confirm(`"${nm}" is out of stock (available: ${Math.max(0, stock - inCart)}).\n\nDo you want to sell it anyway?\nStock will show ${after} until you add a Purchase for it.`);
+  };
   function addProduct(p: Product, forceNewLine = false) {
     const existing = items.find((item) => item.productId === p._id);
     if (existing && !forceNewLine) {
       setItems((old) =>
         old.map((item) =>
           item.productId === p._id
-            ? { ...item, qty: Math.min(item.qty + 1, Math.max(1, Number(p.stock || 1))) }
+            ? { ...item, qty: item.qty + 1 }
             : item
         )
       );
@@ -339,8 +348,8 @@ export default function POS() {
         .filter(Boolean)
         .some((x: any) => String(x).toLowerCase() === value)
     );
-    if (product && Number(product.stock || 0) > 0) {
-      if (holdGuard(product)) addProduct(product);
+    if (product) {
+      if (holdGuard(product) && confirmNegative(product)) addProduct(product);
       return;
     }
     setSearch(barcode);
@@ -582,8 +591,9 @@ export default function POS() {
     else if (!r.customerId && !customer) { const f = findCustomerByRepair(r.customerName, r.customerPhone); if (f) changeCustomer(String(f._id)); }
     notify(`${r.tokenNo} sale mein add ho gayi (baqi Rs. ${money(baqi)}).`, { kind: "success" });
   };
-  const pickProduct = (p: Product) => { if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }
+  const pickProduct = (p: Product) => {
     if (!holdGuard(p)) return;
+    if (!confirmNegative(p)) return;
      const at = items.length; addProduct(p, true); setHlp(0); setSearch(""); window.setTimeout(() => (document.querySelector(`[data-qrow="${at}"]`) as HTMLElement | null)?.focus(), 40); };
   const productCategories = Array.from(new Set(products.map((p) => String(p.category || "").trim()).filter(Boolean))).sort();
   const brandTypes = Array.from(new Set(products.filter((p) => !categoryFilter || p.category === categoryFilter).map((p) => String(p.brandType || "").trim()).filter(Boolean))).sort();
@@ -599,18 +609,19 @@ export default function POS() {
           <button onClick={showTemporaryBill}>Print Record</button>
           <button onClick={() => { setSaleType("CREDIT"); setTimeout(() => document.getElementById("customer")?.focus(), 50); }}>Credit Customer</button>
           <button onClick={() => { setSaleType("CASH"); setCustomer(""); setCashRef("WALKING CUSTOMER"); }}>Walking Customer</button>
-          <Link href="/admin" target="arifNewItem" rel="noopener" className={styles.toolLink}>New Item</Link>
-          <Link href="/product-cost" target="arifSide" rel="noopener" className={styles.toolLink}>Change Product Cost</Link>
-          <Link href="/vouchers" target="arifSide" rel="noopener" className={styles.toolLink}>Vouchers / Collect Due</Link>
+          <Link href="/customers" target="arifNewParty" rel="noopener" className={styles.toolLink}>👤 Add Customer</Link>
+          <Link href="/admin" target="arifNewItem" rel="noopener" className={styles.toolLink}>📦 New Product</Link>
+          <Link href="/product-cost" className={styles.toolLink}>Change Product Cost</Link>
+          <Link href="/vouchers" className={styles.toolLink}>Vouchers / Collect Due</Link>
           <Link href="/purchases" className={styles.toolLink}>Purchase</Link>
-          <Link href="/sales/returns" target="arifSide" rel="noopener" className={styles.toolLink}>Sale Return</Link>
+          <Link href="/sales/returns" className={styles.toolLink}>Sale Return</Link>
         </header>
 
         <div className={styles.secondBar}>
-          <Link href="/ledger" target="arifSide" rel="noopener">Customer Ledger</Link>
+          <Link href="/ledger">Customer Ledger</Link>
           <Link href="/customers" target="arifNewParty" rel="noopener">Customer List</Link>
           <Link href="/suppliers" target="arifNewParty" rel="noopener">Supplier List</Link>
-          <Link href="/sales" target="arifSide" rel="noopener">Today List</Link>
+          <Link href="/sales">Today List</Link>
           <button onClick={() => { barcodeRef.current?.focus(); setSearch(""); }}>Item Search</button>
           <button onClick={() => setShowHeld((x) => !x)}>Hold / Hide / Show</button>
           <button onClick={() => { setCustomer(""); setSaleType("CASH"); setCashRef("WALKING CUSTOMER"); }}>Cash Customer List</button>
@@ -707,12 +718,12 @@ export default function POS() {
                   <td><b>{item.name}</b>{item.repairId && <div style={{ margin: "4px 0" }}>
                     <input placeholder="➕ Repair mein lagi cheez add karein (panel, flex…)" value={partQ?.idx === index ? partQ.q : ""} onChange={(e) => setPartQ({ idx: index, q: e.target.value })} style={{ width: "100%", fontSize: 12 }} />
                     {partQ?.idx === index && partQ.q.trim().length >= 2 && products.filter((p: any) => `${p.name || p.model} ${p.code ?? p.sku ?? ""}`.toLowerCase().includes(partQ.q.trim().toLowerCase())).slice(0, 6).map((p: any) => <div key={p._id} style={{ fontSize: 12, padding: "3px 6px", cursor: "pointer", background: "#14203d" }} onClick={() => {
-                      if (Number(p.stock || 0) <= 0) { notify(`"${p.name || p.model}" ka stock zero hai.`, { title: "Stock Zero", kind: "danger" }); return; }
+                      if (Number(p.stock || 0) <= 0 && !window.confirm(`"${p.name || p.model}" is out of stock.\n\nDo you want to use it anyway? Stock will go negative until you add a Purchase.`)) return;
                       setItems((old) => old.map((x, i) => i === index ? rebuildRepair(x, [...(x.parts || []), { name: String(p.name || p.model), qty: 1, cost: Number(p.costPrice || 0), price: Number(p.price ?? p.salePrice ?? p.retailPrice ?? 0), productId: String(p._id), extra: true }], { keepTotal: true }) : x));
                       setPartQ(null);
                     }}>{p.name || p.model} <span style={{ color: "#9fb3d9" }}>· stock {Number(p.stock || 0)}</span></div>)}
                   </div>}{item.repairId && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", margin: "4px 0", padding: "4px 6px", border: "1px dashed #4b5d8a", borderRadius: 8, fontSize: 12 }} title="Internal only - receipt par nahi chhapta"><span>🔒 Item Price</span>{(item.parts || []).length > 0 ? <b>Rs. {money(Number(item.itemPrice || 0))}</b> : <span style={{ width: 90, display: "inline-block" }}><NumInput value={item.itemPrice || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, itemPrice: v, price: v + Number(x.repairFee || 0) } : x))} /></span>}<span>+ Repair Fee</span><span style={{ width: 90, display: "inline-block" }}><NumInput value={item.repairFee || 0} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, repairFee: v, price: Number(x.itemPrice || 0) + v } : x))} /></span><span>= Rs. {money(Number(item.itemPrice || 0) + Number(item.repairFee || 0))}</span><small style={{ color: "#9fb3d9" }}>(customer ko show nahi hota)</small></div>}{Array.isArray((item as any).parts) && (item as any).parts.map((x: any, i: number) => <div key={i} style={{ fontSize: 12, color: "#9fb3d9" }}>↳ {x.name} × {x.qty}{x.extra && <button type="button" title="Hata dein" style={{ marginLeft: 6 }} onClick={() => setItems((old) => old.map((it, k) => k === index ? rebuildRepair(it, (it.parts || []).filter((_: any, j: number) => j !== i), { keepTotal: true }) : it))}>✖</button>}{Number(x.cost) > 0 ? ` · cost Rs. ${money(Number(x.cost) * Number(x.qty))}` : ""}{item.repairId && <span style={{ marginLeft: 8 }}>· Rate Rs. <span style={{ width: 80, display: "inline-block" }}><NumInput value={Number(x.price || 0)} onValue={(v) => setItems((old) => old.map((it, k) => k === index ? rebuildRepair(it, (it.parts || []).map((q: any, j: number) => j === i ? { ...q, price: v } : q)) : it))} /></span></span>}</div>)}</td>
-                  <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, qty: Math.max(1, v) } : x))} /></td>
+                  <td><NumInput data-qrow={index} min="1" value={item.qty} emptyValue={1} onValue={(v) => { const q = Math.max(1, v); const it = items[index]; const pr = it?.productId ? products.find((x: any) => String(x._id) === String(it.productId)) : null; if (pr && q > Number(it.qty || 0)) { const others = items.reduce((n, x, i) => i !== index && x.productId === it.productId ? n + Number(x.qty || 0) : n, 0); if (Number(pr.stock || 0) - others - q < 0 && Number(pr.stock || 0) - others - Number(it.qty || 0) >= 0) notify(`"${it.name}": quantity is more than stock (${Number(pr.stock || 0)}). Stock will go negative.`, { title: "Out of stock", kind: "warning" }); } setItems((old) => old.map((x, i) => i === index ? { ...x, qty: q } : x)); }} /></td>
                   <td><NumInput value={item.price} onValue={(v) => setItems((old) => old.map((x, i) => i === index ? { ...x, price: v } : x))} /></td>
                   <td><NumInput onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchRef.current?.focus(); } }} aria-label={`${item.name} discount percent`} min="0" max="100" value={item.discountPct || 0} onValue={(v) => setItems(old => old.map((x,i)=>i===index?{...x,discountPct:Math.min(100,Math.max(0,v))}:x))}/></td>
                   <td>Rs. {money(item.qty * item.price * (1 - Number(item.discountPct || 0) / 100))}</td>
