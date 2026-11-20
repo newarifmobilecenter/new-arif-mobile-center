@@ -595,7 +595,8 @@ export default function POS() {
       return { name: String(x.name), qty: Math.max(1, Number(x.qty || 1)), cost: Number(prod?.costPrice || 0), price: Number(prod?.price ?? prod?.salePrice ?? prod?.retailPrice ?? 0), ...(prod ? { productId: String(prod._id) } : {}) };
     });
     const sum0 = parts.reduce((a: number, q: any) => a + q.price * q.qty, 0);
-    const base = baqi < sum0 ? { price: sum0, itemPrice: sum0, repairFee: 0 } : { price: baqi, itemPrice: sum0, repairFee: baqi - sum0 };
+    // Bill hamesha repair ka BAQI (total - advance) hota hai. Parts ki retail qeemat zyada bhi ho to bill us se barha nahi sakte (advance dobara gina jata).
+    const base = baqi < sum0 ? { price: baqi, itemPrice: baqi, repairFee: 0 } : { price: baqi, itemPrice: sum0, repairFee: baqi - sum0 };
     setItems((old) => [...old, { productId: null, name: `Repair ${r.tokenNo} · ${r.model}`, parts, ...base, repairName: String(r.customerName || ""), repairPhone: String(r.customerPhone || ""), qty: 1, category: "Repair", isMisc: true, barcode: r.tokenNo, remarks: [r.fault, r.remarks].filter(Boolean).join(" · ").slice(0, 120), repairId: String(r._id) }]);
     if (r.customerId && !customer) { changeCustomer(String(r.customerId)); }
     else if (!r.customerId && !customer) { const f = findCustomerByRepair(r.customerName, r.customerPhone); if (f) changeCustomer(String(f._id)); }
