@@ -245,6 +245,16 @@ export default function POS() {
     setCustOpen(false); setCustQ("");
     (document.getElementById("customer") as HTMLInputElement | null)?.blur();
   }
+  // Har customer ka balance (list mein dikhane ke liye): sale baqi + repair baqi - local purchase dena baqi
+  const balById = useMemo(() => {
+    const m = new Map<string, number>();
+    const add = (id: unknown, v: number) => { const k = String(id || ""); if (k) m.set(k, (m.get(k) || 0) + v); };
+    for (const x of sales) add(x.customerId, Number(x.remaining || 0));
+    for (const x of repairRecords) add(x.customerId, Number(x.remaining || 0));
+    for (const x of localBuys) add(x.customerId, -Number(x.remaining || 0));
+    return m;
+  }, [sales, repairRecords, localBuys]);
+  const balTxt = (id: unknown) => { const b = balById.get(String(id || "")) || 0; return `${b < 0 ? "-" : ""}Rs. ${money(Math.abs(b))}`; };
   const currentBalance = useMemo(() => {
     if (!customer) return 0;
     const customerSales = sales.filter((s) => String(s.customerId || "") === String(customer));
@@ -634,7 +644,7 @@ export default function POS() {
             {editId && <div role="status" style={{ color: "#fbbf24", fontWeight: 700 }}>✎ Modify mode: {invoiceNo} — <a href="/pos" style={{ color: "#22d3ee" }}>edit cancel</a></div>}
             {loadError && <div role="alert" style={{ color: "#ef4444", fontWeight: 700 }}>⚠ {loadError}</div>}
             <label className={`${styles.wide} ${styles.custBox}`}>Customer:
-              <input id="customer" autoComplete="off" value={custOpen ? custQ : (selectedCustomer ? `${selectedCustomer.name}${selectedCustomer.phone ? ` — ${selectedCustomer.phone}` : ""}` : "CASH SALES")}
+              <input id="customer" autoComplete="off" value={custOpen ? custQ : (selectedCustomer ? `${selectedCustomer.name}${selectedCustomer.phone ? ` — ${selectedCustomer.phone}` : ""} — ${balTxt(selectedCustomer._id)}` : "CASH SALES")}
                 placeholder="Naam / phone likh kar search karein"
                 onFocus={(e) => { setCustQ(""); setCustOpen(true); setCustHl(0); e.currentTarget.select(); }}
                 onBlur={() => window.setTimeout(() => setCustOpen(false), 160)}
@@ -647,7 +657,7 @@ export default function POS() {
                 }} />
               {custOpen && <div className={styles.custList} role="listbox">
                 <button type="button" className={`${styles.custOpt} ${custHl === 0 ? styles.custOn : ""}`} onMouseDown={(e) => { e.preventDefault(); pickCustomer(""); }}>CASH SALES</button>
-                {custMatches.map((c, i) => <button type="button" key={c._id} className={`${styles.custOpt} ${custHl === i + 1 ? styles.custOn : ""}`} onMouseDown={(e) => { e.preventDefault(); pickCustomer(String(c._id)); }}>{c.name}{c.phone ? ` — ${c.phone}` : ""}{c.city ? ` · ${c.city}` : ""}</button>)}
+                {custMatches.map((c, i) => <button type="button" key={c._id} className={`${styles.custOpt} ${custHl === i + 1 ? styles.custOn : ""}`} onMouseDown={(e) => { e.preventDefault(); pickCustomer(String(c._id)); }}>{c.name}{c.phone ? ` — ${c.phone}` : ""} — {balTxt(c._id)}</button>)}
                 {!custMatches.length && custQ.trim() && <div className={styles.custNone}>Koi customer nahi mila</div>}
               </div>}
             </label>
