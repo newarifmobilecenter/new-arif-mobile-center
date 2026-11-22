@@ -108,6 +108,8 @@ export async function POST(req: NextRequest) {
     } finally { await s.endSession(); }
 
     const newBalance = customerId ? r2(await customerBalance(d, customerId)) : null;
+    // Slip ke liye pichla / maujooda baqi return ke saath hi mehfooz.
+    if (newBalance !== null) { try { await d.collection("returns").updateMany({ returnNo }, { $set: { prevBalance: r2(newBalance + adjusted), newBalance } }); } catch {} }
     return NextResponse.json({ ok: true, returnNo, total, adjusted, refund, newBalance, customerName: customer?.name || "", lines });
   } catch (e: any) {
     return fail(e?.message || "Return save nahi hui. Kuch nahi badla.", 409);

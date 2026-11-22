@@ -123,6 +123,13 @@ export default function SaleReturns() {
   const prodName = (r: any) => r.productName || products.find((p) => String(p._id) === String(r.productId))?.name || "(deleted)";
   const slip = async (no: string, id: string | undefined, act: "print" | "png" | "whatsapp", meta: ReturnMeta = {}) => {
     const docs = returnDocs(returns, no, id);
+    // Purane return mein baqi save nahi tha: customer ka abhi ka balance le kar likhte hain.
+    if (docs.length && docs[0].customerId && (docs[0].prevBalance == null || docs[0].newBalance == null) && meta.newBalance == null) {
+      try {
+        const r = await fetch(`/api/customers/${docs[0].customerId}/summary`, { cache: "no-store" }); const d = await r.json();
+        if (r.ok) { const cur = Number(d.balance || 0); const adj = docs.reduce((n: number, x: any) => n + Number(x.unpaidReduction || 0), 0); meta = { newBalance: cur, prevBalance: cur + adj, live: true }; }
+      } catch {}
+    }
     if (!docs.length) { setMsg({ t: "Return slip nahi mili, page refresh karein.", ok: false }); return; }
     if (slipBusy.current) return; slipBusy.current = true;
     try { if (act === "print") printReturn(docs, meta); else await shareReturn(docs, act, meta); }

@@ -5,7 +5,7 @@ import { VOUCHER_CSS } from "./voucherPrint";
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 const esc = (v: unknown) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
-export type ReturnMeta = { prevBalance?: number | null; newBalance?: number | null };
+export type ReturnMeta = { prevBalance?: number | null; newBalance?: number | null; live?: boolean };
 
 /** Ek returnNo ke saare item-rows (returns collection) ko ek slip ke liye jama karta hai. */
 export function returnDocs(all: any[], returnNo: string, fallbackId?: string) {
@@ -27,7 +27,9 @@ export function returnBody(docs: any[], meta: ReturnMeta = {}) {
   const total = docs.reduce((n, d) => n + Number(d.amount || 0), 0);
   const adjusted = docs.reduce((n, d) => n + Number(d.unpaidReduction || 0), 0);
   const refund = docs.reduce((n, d) => n + Number(d.refundAmount || 0), 0);
-  const hasBal = meta.prevBalance != null && meta.newBalance != null;
+  const stored = f.prevBalance != null && f.newBalance != null;
+  const m: ReturnMeta = stored ? { prevBalance: Number(f.prevBalance), newBalance: Number(f.newBalance) } : meta;
+  const hasBal = m.prevBalance != null && m.newBalance != null;
   const rows = docs.map((d, i) => `<tr><td>${i + 1}</td><td>${esc(d.productName || "Item")}</td><td class="r">${esc(d.qty)}</td><td class="r">${money(d.rate)}</td><td class="r">${money(d.amount)}</td></tr>`).join("");
   return `<div class="vr">
   <div class="head"><div class="logo"><b>${SHOP.logoLines.map(esc).join("<br>")}</b></div><div class="brand"><div class="name">${esc(SHOP.shortUpper)}</div><div class="sub">MOBILE &amp; REPAIRING</div></div></div>
@@ -37,12 +39,13 @@ export function returnBody(docs: any[], meta: ReturnMeta = {}) {
   <div class="party">${f.customerId ? "Customer" : "Cash Customer"}<b>${esc(f.customerName || "CASH")}</b></div>
   <table class="items"><thead><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Total</th></tr></thead><tbody>${rows}</tbody></table>
   <div class="tot">
-    ${hasBal ? `<div><span>Pichla baqi (Previous)</span><b>Rs. ${money(meta.prevBalance)}</b></div>` : ""}
+    ${hasBal ? `<div><span>Pichla baqi (Previous)${m.live ? "*" : ""}</span><b>Rs. ${money(m.prevBalance)}</b></div>` : ""}
     <div class="net"><div><span>Total Return</span><b>Rs. ${money(total)}</b></div></div>
     ${adjusted > 0 ? `<div><span>Balance se less</span><b>Rs. ${money(adjusted)}</b></div>` : ""}
     ${refund > 0 ? `<div><span>Cash wapas diya</span><b>Rs. ${money(refund)}</b></div>` : ""}
-    ${hasBal ? `<div><span>Maujooda baqi (Current)</span><b>Rs. ${money(meta.newBalance)}</b></div>` : ""}
+    ${hasBal ? `<div><span>Maujooda baqi (Current)${m.live ? "*" : ""}</span><b>Rs. ${money(m.newBalance)}</b></div>` : ""}
   </div>
+  ${hasBal && m.live ? `<div class="note">* Ye return purana hai: baqi abhi ke hisab se likha hai.</div>` : ""}
   <div class="sig"><span>Receiver</span><span>Customer</span></div>
   <div class="bar c">--- COPY ---</div>
   <div class="shop"><b>${esc(SHOP.short)}</b><span>${esc(SHOP.address)}</span><span>${esc(SHOP_PHONES.join(" | "))}</span></div>
