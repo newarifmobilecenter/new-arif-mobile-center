@@ -9,6 +9,7 @@ import {
   escapeRegex,
   ensureRepairIndexes,
   generateRepairToken,
+  tokenPrefixFor,
   normalizeRepairInput,
   normalizeRepairToken,
   RepairValidationError,
@@ -34,6 +35,10 @@ export async function GET(req: NextRequest) {
     if(from){const parsed=new Date(`${from}T00:00:00.000Z`);if(Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==from)return NextResponse.json({error:"Invalid start date."},{status:400});dateFilter.$gte=parsed;}
     if(to){const parsed=new Date(`${to}T23:59:59.999Z`);if(Number.isNaN(parsed.getTime())||parsed.toISOString().slice(0,10)!==to)return NextResponse.json({error:"Invalid end date."},{status:400});dateFilter.$lte=parsed;}
     const filter:any={recordType:"REPAIR",deletedAt:null};
+    // Staff ko sirf apni banayi repairs; admin chahe to ?by=username se kisi user ki list dekhe.
+    const by=(req.nextUrl.searchParams.get("by")||"").trim().slice(0,60);
+    const owner=session.r==="STAFF"?session.u:by;
+    if(owner){const own={$or:[{createdBy:owner},{createdBy:{$exists:false},shopkeeper:owner}]};filter.$and=[own];}
     if(q){const pattern=new RegExp(escapeRegex(q),"i");filter.$or=[{tokenNo:pattern},{customerName:pattern},{customerPhone:pattern},{model:pattern},{imei:pattern}];}
     if(customerId)filter.customerId=customerId;
     if(req.nextUrl.searchParams.get("unbilled")==="1")filter.billedSaleId={$in:[null]};
@@ -65,8 +70,10 @@ export async function POST(req: NextRequest){
     },{creating:true,allowUnlinked:true});
     const shopkeeper=normalized.shopkeeper||session.u;
     const settings=await d.collection("settings").findOne({});
+    const prefix=tokenPrefixFor(session.r);
     const requestedToken=normalizeRepairToken(b.tokenNo);
-    const token=requestedToken||await generateRepairToken();
+    if(requestedToken&&requestedToken[0]!==prefix)throw new RepairValidationError(`Serial number ${prefix} se shuru hona chahiye (jaise ${prefix}1000).`);
+    const token=requestedToken||await generateRepairToken(prefix);
     if(requestedToken)await advanceRepairTokenCounter(requestedToken);
     const now=new Date();
     const doc={

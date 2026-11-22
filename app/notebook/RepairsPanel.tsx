@@ -24,6 +24,8 @@ export default function RepairsPanel() {
   const [to, setTo] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [status, setStatus] = useState("");
+  const [by, setBy] = useState("");
+  const [userNames, setUserNames] = useState<string[]>([]);
   const [view, setView] = useState("CURRENT");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -36,6 +38,7 @@ export default function RepairsPanel() {
       if (to) params.set("to", to);
       if (customerId) params.set("customerId", customerId);
       if (status) params.set("status", status);
+      if (by) params.set("by", by);
       setLoading(true);
       setError("");
       fetch(`/api/repairs?${params.toString()}`)
@@ -48,9 +51,11 @@ export default function RepairsPanel() {
         .finally(() => setLoading(false));
     }, 180);
     return () => window.clearTimeout(timer);
-  }, [q, from, to, customerId, status]);
+  }, [q, from, to, customerId, status, by]);
 
   useEffect(() => {
+    // Sirf admin ko user list milti hai; staff ke liye dropdown nahi dikhta.
+    fetch("/api/users").then((r) => (r.ok ? r.json() : [])).then((u) => setUserNames((Array.isArray(u) ? u : []).map((x: any) => String(x.username || "")).filter(Boolean))).catch(() => {});
     fetch("/api/data?collection=customers&limit=20000")
       .then((response) => response.ok ? response.json() : [])
       .then((data) => setCustomers(Array.isArray(data) ? data : []))
@@ -71,6 +76,7 @@ export default function RepairsPanel() {
         <label className={styles.field}>From<input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
         <label className={styles.field}>To<input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
         <label className={styles.field}>Customer<select value={customerId} onChange={(event) => setCustomerId(event.target.value)}><option value="">All customers</option>{customers.map((customer) => <option key={customer._id} value={customer._id}>{customer.name}</option>)}</select></label>
+        {userNames.length > 0 && <label className={styles.field}>User<select value={by} onChange={(event) => setBy(event.target.value)}><option value="">Sab users</option>{userNames.map((n) => <option key={n} value={n}>{n}</option>)}</select></label>}
         <label className={styles.field}>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All statuses</option><option>RECEIVED</option><option>IN_REPAIR</option><option>READY</option><option>DELIVERED</option><option>CANCELLED</option><option value="RETURNED">RETURNED (wapas)</option><option value="PAYMENT_DUE">PAYMENT DUE</option></select></label>
       </div>
       <div className={styles.tabs} role="tablist" aria-label="Repair worklist">

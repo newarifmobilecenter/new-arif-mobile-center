@@ -174,57 +174,65 @@ export function normalizeRepairInput(input: any, options: { creating?: boolean; 
   };
 }
 
-function repairTokenValue(token: string) {
-  const match = /^C(\d{1,12})$/i.exec(token.trim());
-  if (!match) throw new RepairValidationError("Serial number must use the C prefix, for example C1000.");
-  const value = Number(match[1]);
+/** Serial letter: Admin ki repairs "C", staff users ki repairs "R". */
+export type TokenPrefix = "C" | "R";
+export const tokenPrefixFor = (role: string | undefined): TokenPrefix => (role === "STAFF" ? "R" : "C");
+const counterIdFor = (prefix: TokenPrefix) => (prefix === "R" ? "mobile-repair-token-r" : REPAIR_TOKEN_COUNTER_ID);
+
+function repairTokenParts(token: string): { prefix: TokenPrefix; value: number } {
+  const match = /^([CR])(\d{1,12})$/i.exec(token.trim());
+  if (!match) throw new RepairValidationError("Serial number must start with C or R, for example C1000 or R1000.");
+  const value = Number(match[2]);
   if (!Number.isSafeInteger(value)) throw new RepairValidationError("Serial number is invalid.");
-  return value;
+  return { prefix: match[1].toUpperCase() as TokenPrefix, value };
 }
+function repairTokenValue(token: string) { return repairTokenParts(token).value; }
 
 export function normalizeRepairToken(value: unknown) {
   const token = String(value ?? "").trim().toUpperCase();
   if (!token) return "";
-  return `C${repairTokenValue(token)}`;
+  const p = repairTokenParts(token);
+  return `${p.prefix}${p.value}`;
 }
 
-async function highestRepairTokenValue(repairs: Awaited<ReturnType<typeof ensureRepairIndexes>>) {
+async function highestRepairTokenValue(repairs: Awaited<ReturnType<typeof ensureRepairIndexes>>, prefix: TokenPrefix = "C") {
   const tokens = await repairs.find(
-    { recordType: "REPAIR", tokenNo: { $regex: /^C\d+$/i } },
+    { recordType: "REPAIR", tokenNo: { $regex: new RegExp(`^${prefix}\\d+$`, "i") } },
     { projection: { tokenNo: 1 } },
   ).toArray();
   return tokens.reduce((highest, row) => Math.max(highest, repairTokenValue(String(row.tokenNo))), 999);
 }
 
-export async function getNextRepairTokenPreview() {
+export async function getNextRepairTokenPreview(prefix: TokenPrefix = "C") {
   const d = await db();
   const repairs = await ensureRepairIndexes();
   const counters = d.collection<{ _id: string; value: number }>(REPAIR_COUNTER_COLLECTION);
   const [counter, highestStored] = await Promise.all([
-    counters.findOne({ _id: REPAIR_TOKEN_COUNTER_ID }),
-    highestRepairTokenValue(repairs),
+    counters.findOne({ _id: counterIdFor(prefix) }),
+    highestRepairTokenValue(repairs, prefix),
   ]);
-  return `C${Math.max(999, Number(counter?.value || 0), highestStored) + 1}`;
+  return `${prefix}${Math.max(999, Number(counter?.value || 0), highestStored) + 1}`;
 }
 
 export async function advanceRepairTokenCounter(token: string) {
-  const value = repairTokenValue(token);
+  const { prefix, value } = repairTokenParts(token);
   const counters = (await db()).collection<{ _id: string; value: number }>(REPAIR_COUNTER_COLLECTION);
+  const id = counterIdFor(prefix);
   try {
-    await counters.updateOne({ _id: REPAIR_TOKEN_COUNTER_ID }, { $max: { value } }, { upsert: true });
+    await counters.updateOne({ _id: id }, { $max: { value } }, { upsert: true });
   } catch (error: any) {
     if (error?.code !== 11000) throw error;
-    await counters.updateOne({ _id: REPAIR_TOKEN_COUNTER_ID }, { $max: { value } });
+    await counters.updateOne({ _id: id }, { $max: { value } });
   }
 }
 
-export async function generateRepairToken() {
+export async function generateRepairToken(prefix: TokenPrefix = "C") {
   const d = await db();
   const repairs = await ensureRepairIndexes();
   const counters = d.collection<{ _id: string; value: number }>(REPAIR_COUNTER_COLLECTION);
-  const counterId = REPAIR_TOKEN_COUNTER_ID;
+  const counterId = counterIdFor(prefix);
   if (!(await counters.findOne({ _id: counterId }))) {
-    const highestStored = await highestRepairTokenValue(repairs);
+    const highestStored = await highestRepairTokenValue(repairs, prefix);
     try {
       await counters.updateOne({ _id: counterId }, { $max: { value: Math.max(999, highestStored) } }, { upsert: true });
     } catch (error: any) {
@@ -237,7 +245,7 @@ export async function generateRepairToken() {
     { returnDocument: "after" },
   );
   if (!counter || !Number.isSafeInteger(counter.value)) throw new Error("Repair token sequence could not be advanced.");
-  return `C${counter.value}`;
+  return `${prefix}${counter.value}`;
 }
 
 export function escapeRegex(value: string) {

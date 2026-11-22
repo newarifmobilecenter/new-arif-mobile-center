@@ -173,7 +173,7 @@ export default function RepairForm({ initialCustomerId = "" }: { initialCustomer
     <section className={styles.formSection}>
       <h2>Mobile</h2>
       <div className={styles.formGrid}>
-        <label className={styles.field}>Receiving Serial No.<input value={tokenNo} onChange={(event) => setTokenNo(event.target.value.toUpperCase())} maxLength={13} pattern="C[0-9]{1,12}" title="Use C followed by 1 to 12 digits, e.g. C1000." placeholder="C1000" required /></label>
+        <label className={styles.field}>Receiving Serial No.<input value={tokenNo} onChange={(event) => setTokenNo(event.target.value.toUpperCase())} maxLength={13} pattern="[CR][0-9]{1,12}" title="Use C followed by 1 to 12 digits, e.g. C1000." placeholder="C1000" required /></label>
         <label className={styles.field}>Mobile Model<input value={model} onChange={(event) => setModel(event.target.value)} maxLength={120} required /></label>
         <label className={styles.field}>Mobile Type<select value={mobileType} onChange={(event) => setMobileType(event.target.value)}>{mobileTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
       </div>
