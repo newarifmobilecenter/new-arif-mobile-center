@@ -140,7 +140,7 @@ export default function Settings() {
         ["Account", [["account", "👤", "Account", "Username aur password badlein"], ["security", "🛡️", "Security & Permissions", "Staff users, passwords aur kis ko kya access"]]],
         ["Appearance", [["theme", "🎨", "Theme", "App ka rang aur look"]]],
         ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"]]],
-        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
+        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip is PC par khud print ke liye"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
       ] as [string, [string, string, string, string][]][]).map(([g, rows]) => <div key={g}>
         <div className="stGroup">{g}</div>
         <div className="stList">{rows.map(([id, ic, t, d]) => <button key={id} type="button" className="stRow" onClick={() => { setSec(id); window.scrollTo(0, 0); }}>
@@ -149,7 +149,7 @@ export default function Settings() {
       </div>)}
     </div>}
     {sec && <div className="stHome" style={{ maxWidth: 980 }}>
-      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
+      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", autoprint: "Auto Print", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
       <div className="stBody">
         {sec === "account" && <UsersPanel part="account" />}
         {sec === "security" && <UsersPanel part="users" />}
@@ -253,11 +253,13 @@ export default function Settings() {
         {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
       </div>
         </>}
-        {sec === "shop" && <>
+        {sec === "autoprint" && <>
       <div className="panel"><h2>🖨 Auto Print (is PC par)</h2>
         <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={autoPrint} onChange={e => { setAutoPrint(e.target.checked); try { localStorage.setItem("na-autoprint", e.target.checked ? "1" : "0"); } catch {} }} /> Staff jab repair slip banaye to is PC par print ka window khud khul jaye</label>
         <p style={{ fontSize: 12, opacity: .8 }}>Sirf isi computer/browser ke liye. Admin login hona aur ye page/koi bhi page khula hona zaroori hai. Print ka dialog aye ga, Enter/Print dabana hoga.</p>
       </div>
+        </>}
+        {sec === "shop" && <>
       <div className="panel"><h2>🏪 Shop</h2>
         <div className="grid">
           <input className="input" value={s.shopName ?? ""} onChange={e => setS({ ...s, shopName: e.target.value })} placeholder="Shop Name" />
