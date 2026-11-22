@@ -42,7 +42,7 @@ export default function AutoPrintJobs() {
     let ok = false;
     try { const c = await fetch("/api/print-jobs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: j.id }) }); ok = c.ok && (await c.json()).claimed; } catch {}
     setJobs((old) => old.filter((x) => x.id !== j.id));
-    if (doPrint) { if (ok) window.open(`/notebook/${j.repairId}?print=1`, "_blank"); else window.alert("Ye slip pehle hi print / hata di gayi."); }
+    if (doPrint) { if (ok) window.open(`/repairs/${j.repairId}?print=1`, "_blank"); else window.alert("Ye slip pehle hi print / hata di gayi."); }
   }
 
   if (!jobs.length) return null;
