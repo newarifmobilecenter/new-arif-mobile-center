@@ -140,7 +140,7 @@ export default function Settings() {
         ["Account", [["account", "👤", "Account", "Username aur password badlein"], ["security", "🛡️", "Security & Permissions", "Staff users, passwords aur kis ko kya access"]]],
         ["Appearance", [["theme", "🎨", "Theme", "App ka rang aur look"]]],
         ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"]]],
-        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip is PC par khud print ke liye"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
+        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip ka notification aur print is PC par"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
       ] as [string, [string, string, string, string][]][]).map(([g, rows]) => <div key={g}>
         <div className="stGroup">{g}</div>
         <div className="stList">{rows.map(([id, ic, t, d]) => <button key={id} type="button" className="stRow" onClick={() => { setSec(id); window.scrollTo(0, 0); }}>
@@ -255,8 +255,8 @@ export default function Settings() {
         </>}
         {sec === "autoprint" && <>
       <div className="panel"><h2>🖨 Auto Print (is PC par)</h2>
-        <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={autoPrint} onChange={e => { setAutoPrint(e.target.checked); try { localStorage.setItem("na-autoprint", e.target.checked ? "1" : "0"); } catch {} }} /> Staff jab repair slip banaye to is PC par print ka window khud khul jaye</label>
-        <p style={{ fontSize: 12, opacity: .8 }}>Sirf isi computer/browser ke liye. Admin login hona aur ye page/koi bhi page khula hona zaroori hai. Print ka dialog aye ga, Enter/Print dabana hoga.</p>
+        <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={autoPrint} onChange={e => { setAutoPrint(e.target.checked); try { localStorage.setItem("na-autoprint", e.target.checked ? "1" : "0"); } catch {} }} /> Staff jab repair slip banaye to is PC par notification (aawaz ke saath) aaye aur ek click se print khule</label>
+        <p style={{ fontSize: 12, opacity: .8 }}>Sirf isi computer/browser ke liye. Admin login aur site ka koi bhi page khula hona zaroori hai. Notification mein 🖨 Print dabayein, phir browser ka Print dialog aaye ga.</p>
       </div>
         </>}
         {sec === "shop" && <>
