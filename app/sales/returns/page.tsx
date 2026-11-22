@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import styles from "./saleReturn.module.css";
+import { printReturn, shareReturn, returnDocs, type ReturnMeta } from "@/lib/returnSlip";
 
 const money = (n: any) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 const day = (v: any) => { const d = new Date(v); return isNaN(+d) ? "-" : d.toLocaleDateString("en-GB"); };
@@ -21,6 +22,8 @@ export default function SaleReturns() {
   const [mode, setMode] = useState("BALANCE"); const [account, setAccount] = useState("Cash");
   const [reason, setReason] = useState("Customer Return");
   const [busy, setBusy] = useState(false);
+  const [lastRet, setLastRet] = useState<{ no: string; meta: ReturnMeta } | null>(null);
+  const slipBusy = useRef(false);
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const qRef = useRef<HTMLInputElement>(null);
 
@@ -112,11 +115,19 @@ export default function SaleReturns() {
       const d = await r.json();
       if (!r.ok) throw new Error(d.error || "Return save nahi hui.");
       setMsg({ t: `Return ${d.returnNo} save: Rs. ${money(d.total)}${d.adjusted > 0 ? ` balance se less hue` : ""}${d.refund > 0 ? ` · Rs. ${money(d.refund)} cash wapas` : ""}${d.newBalance !== null ? ` · naya balance Rs. ${money(d.newBalance)}` : ""}`, ok: true });
+      setLastRet({ no: String(d.returnNo), meta: d.newBalance !== null && d.newBalance !== undefined ? { newBalance: Number(d.newBalance), prevBalance: Number(d.newBalance) + Number(d.adjusted || 0) } : {} });
       setLines([]); setFocus(""); await load(); void loadBalance(customerId);
     } catch (e: any) { setMsg({ t: e?.message || "Return save nahi hui.", ok: false }); } finally { setBusy(false); }
   }
 
   const prodName = (r: any) => r.productName || products.find((p) => String(p._id) === String(r.productId))?.name || "(deleted)";
+  const slip = async (no: string, id: string | undefined, act: "print" | "png" | "whatsapp", meta: ReturnMeta = {}) => {
+    const docs = returnDocs(returns, no, id);
+    if (!docs.length) { setMsg({ t: "Return slip nahi mili, page refresh karein.", ok: false }); return; }
+    if (slipBusy.current) return; slipBusy.current = true;
+    try { if (act === "print") printReturn(docs, meta); else await shareReturn(docs, act, meta); }
+    catch (e: any) { setMsg({ t: e?.message || "Slip nahi ban saki.", ok: false }); } finally { slipBusy.current = false; }
+  };
   const recent = [...returns].sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))).slice(0, 30);
 
   return <main className={styles.page}><div className={styles.win}>
@@ -191,12 +202,17 @@ export default function SaleReturns() {
       <button type="button" className={styles.save} disabled={busy || !lines.length} onClick={() => void save()}>{busy ? "Saving…" : "💾 Process Sale Return"}</button>
     </div>
     {msg && <div className={`${styles.msg} ${msg.ok ? styles.ok : styles.err}`}>{msg.t}</div>}
+    {lastRet && <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
+      <button type="button" className={styles.save} onClick={() => void slip(lastRet.no, undefined, "print", lastRet.meta)}>🖨 Print {lastRet.no}</button>
+      <button type="button" className={styles.save} onClick={() => void slip(lastRet.no, undefined, "whatsapp", lastRet.meta)}>📲 WhatsApp (PNG)</button>
+      <button type="button" className={styles.save} onClick={() => void slip(lastRet.no, undefined, "png", lastRet.meta)}>🖼 PNG Save</button>
+    </div>}
   </div>
 
   <div className={`${styles.win} ${styles.sub}`}>
     <header className={styles.top}><h1 style={{ fontSize: 16 }}>Recent Sale Returns</h1></header>
-    <div className={styles.tableWrap}><table className={styles.tbl}><thead><tr><th>No</th><th>Customer</th><th>Item</th><th className={styles.num}>Qty</th><th className={styles.num}>Amount</th><th>Reason</th><th>Date</th></tr></thead>
-      <tbody>{recent.map((r, i) => <tr key={i}><td>{r.returnNo || "-"}</td><td>{r.customerName || sales.find((s) => String(s._id) === String(r.saleId))?.customerName || r.invoiceNo || "-"}</td><td>{prodName(r)}</td><td className={styles.num}>{r.qty}</td><td className={styles.num}>Rs. {money(r.amount)}</td><td>{r.reason}</td><td>{day(r.createdAt)}</td></tr>)}
-        {!recent.length && <tr><td colSpan={7} className={styles.empty}>Abhi koi return nahi.</td></tr>}</tbody></table></div>
+    <div className={styles.tableWrap}><table className={styles.tbl}><thead><tr><th>No</th><th>Customer</th><th>Item</th><th className={styles.num}>Qty</th><th className={styles.num}>Amount</th><th>Reason</th><th>Date</th><th>Slip</th></tr></thead>
+      <tbody>{recent.map((r, i) => <tr key={i}><td>{r.returnNo || "-"}</td><td>{r.customerName || sales.find((s) => String(s._id) === String(r.saleId))?.customerName || r.invoiceNo || "-"}</td><td>{prodName(r)}</td><td className={styles.num}>{r.qty}</td><td className={styles.num}>Rs. {money(r.amount)}</td><td>{r.reason}</td><td>{day(r.createdAt)}</td><td style={{ whiteSpace: "nowrap" }}><button type="button" title="Print" onClick={() => void slip(String(r.returnNo || ""), String(r._id), "print")}>🖨</button> <button type="button" title="WhatsApp PNG" onClick={() => void slip(String(r.returnNo || ""), String(r._id), "whatsapp")}>📲</button></td></tr>)}
+        {!recent.length && <tr><td colSpan={8} className={styles.empty}>Abhi koi return nahi.</td></tr>}</tbody></table></div>
   </div></main>;
 }
