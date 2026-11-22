@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import AuthNavigation from "./components/AuthNavigation";
 import AutoBackup from "./components/AutoBackup";
 import NegativeStockReminder from "./components/NegativeStockReminder";
+import AutoPrintJobs from "./components/AutoPrintJobs";
 import Toaster from "./components/Toaster";
 import "./globals.css";
 import "./light-theme.css";
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <AuthNavigation />
         <AutoBackup />
         <NegativeStockReminder />
+        <AutoPrintJobs />
         {children}
         <div className="helplineMark no-print-hide" aria-hidden="true"><span>Helpline: {SHOP.helpline}</span></div>
         <Toaster />

@@ -13,6 +13,8 @@ const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : [
 const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", category: "", brand: "", brandType: "Parts", productGroup: "Mobile Parts", itemType: "Part" });
 
 export default function Settings() {
+  const [autoPrint, setAutoPrint] = useState(false);
+  useEffect(() => { try { setAutoPrint(localStorage.getItem("na-autoprint") === "1"); } catch {} }, []);
   const [s, setS] = useState<any>({ shopName: SHOP.nameUpper, address: "", phone: "", defaultWarranty: 7, currency: "PKR" });
   const [msg, setMsg] = useState("");
   const [sec, setSec] = useState<string | null>(null);
@@ -252,6 +254,10 @@ export default function Settings() {
       </div>
         </>}
         {sec === "shop" && <>
+      <div className="panel"><h2>🖨 Auto Print (is PC par)</h2>
+        <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={autoPrint} onChange={e => { setAutoPrint(e.target.checked); try { localStorage.setItem("na-autoprint", e.target.checked ? "1" : "0"); } catch {} }} /> Staff jab repair slip banaye to is PC par print ka window khud khul jaye</label>
+        <p style={{ fontSize: 12, opacity: .8 }}>Sirf isi computer/browser ke liye. Admin login hona aur ye page/koi bhi page khula hona zaroori hai. Print ka dialog aye ga, Enter/Print dabana hoga.</p>
+      </div>
       <div className="panel"><h2>🏪 Shop</h2>
         <div className="grid">
           <input className="input" value={s.shopName ?? ""} onChange={e => setS({ ...s, shopName: e.target.value })} placeholder="Shop Name" />

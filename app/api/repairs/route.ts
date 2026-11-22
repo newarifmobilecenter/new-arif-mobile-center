@@ -99,6 +99,8 @@ export async function POST(req: NextRequest){
     }finally{await s.endSession();}
     if(!savedId)throw new Error("Repair transaction completed without an inserted record.");
     const saved=await collection.findOne({_id:savedId});
+    // Staff ne repair banayi: owner ke PC par (Auto Print on ho to) slip khud print hone ke liye queue mein.
+    if(session.r!=="ADMIN"){try{await d.collection("printJobs").insertOne({kind:"REPAIR_SLIP",repairId:String(savedId),tokenNo:String(token||""),by:session.u,status:"pending",createdAt:new Date()});}catch{}}
     return NextResponse.json(saved?{...saved,_id:saved._id.toString()}:null,{status:201});
   }catch(e:any){
     const status=e instanceof RepairValidationError?400:e?.code===11000?409:500;
