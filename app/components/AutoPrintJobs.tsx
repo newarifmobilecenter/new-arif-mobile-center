@@ -22,6 +22,7 @@ export default function AutoPrintJobs() {
     let alive = true;
     const tick = async () => {
       try { if (localStorage.getItem("na-autoprint") !== "1") { if (alive) setJobs([]); return; } } catch { return; }
+      if (document.visibilityState === "hidden") return; // tab chhupa ho to server ko tang nahi karte (Vercel limit bachti hai)
       try {
         const r = await fetch("/api/print-jobs", { cache: "no-store" });
         if (!r.ok || !alive) return;
@@ -33,7 +34,7 @@ export default function AutoPrintJobs() {
       } catch { /* agli bar dobara */ }
     };
     void tick();
-    const id = window.setInterval(() => void tick(), 8000);
+    const id = window.setInterval(() => void tick(), 20000);
     return () => { alive = false; window.clearInterval(id); };
   }, []);
 
