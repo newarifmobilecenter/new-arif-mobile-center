@@ -71,6 +71,7 @@
 .repairDelivered { background: #06301a; border-color: #1f9d55; }
 .repairTxt { flex: 1 1 auto; min-width: 0; display: grid; font-size: 11px; line-height: 1.15; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .repairTxt small { color: #cfe8ff; font-size: 10px; }
+.repairTxt small { overflow: hidden; text-overflow: ellipsis; }
 .repairCard button { flex: 0 0 22px; height: 22px; padding: 0; border: 1px solid #236c9f; border-radius: 4px; background: #0d3a66; color: #fff; cursor: pointer; font-size: 12px; }
 .repairCard button:disabled { opacity: .5; cursor: default; }
 .repairModalBg { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6); display: grid; place-items: center; }
