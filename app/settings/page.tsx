@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_WARRANTIES, loadBill, type Warranty, type RateRule } from "@/lib/billSettings";
 import { SHOP } from "@/lib/shop";
 import SearchSelect from "@/app/components/SearchSelect";
 import { ALT_ROUTES, OTHER_SHORTCUTS } from "@/lib/shortcuts";
@@ -72,12 +73,18 @@ export default function Settings() {
     }).catch(() => {});
   }, []);
 
+  const [rCat, setRCat] = useState(""); const [rR, setRR] = useState("2"); const [rW, setRW] = useState("1.5");
+  const warrList: Warranty[] = Array.isArray(s.warranties) ? s.warranties : DEFAULT_WARRANTIES;
+  const setWarr = (i: number, patch: Partial<Warranty>) => setS({ ...s, warranties: warrList.map((w, k) => (k === i ? { ...w, ...patch } : w)) });
+  const rRules: RateRule[] = Array.isArray(s.rateRules) ? s.rateRules : [];
+
   async function save() {
     const all = await fetch("/api/data?collection=settings&limit=10").then(arr);
     const body = { collection: "settings", ...s };
     if (all[0]) await fetch("/api/data", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, id: all[0]._id }) });
     else await fetch("/api/data", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     setMsg("Settings save ho gayi.");
+    loadBill().catch(() => {});
   }
 
   async function saveRules(list: AutoRule[]) {
@@ -139,8 +146,8 @@ export default function Settings() {
       {([
         ["Account", [["account", "👤", "Account", "Username aur password badlein"], ["security", "🛡️", "Security & Permissions", "Staff users, passwords aur kis ko kya access"]]],
         ["Appearance", [["theme", "🎨", "Theme", "App ka rang aur look"]]],
-        ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"]]],
-        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip ka notification aur print is PC par"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
+        ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"], ["autorate", "💹", "Auto Rate", "Naye product ki pehli purchase par retail / wholesale khud (category ke hisab se)"]]],
+        ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["slip", "🧾", "Bill / Slip", "Logo ka text (AML) aur warranty ki details"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip ka notification aur print is PC par"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
       ] as [string, [string, string, string, string][]][]).map(([g, rows]) => <div key={g}>
         <div className="stGroup">{g}</div>
         <div className="stList">{rows.map(([id, ic, t, d]) => <button key={id} type="button" className="stRow" onClick={() => { setSec(id); window.scrollTo(0, 0); }}>
@@ -149,7 +156,7 @@ export default function Settings() {
       </div>)}
     </div>}
     {sec && <div className="stHome" style={{ maxWidth: 980 }}>
-      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", autoprint: "Auto Print", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
+      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", autoprint: "Auto Print", autorate: "Auto Rate", slip: "Bill / Slip", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
       <div className="stBody">
         {sec === "account" && <UsersPanel part="account" />}
         {sec === "security" && <UsersPanel part="users" />}
@@ -251,6 +258,43 @@ export default function Settings() {
           <button className="btn green" type="button" onClick={() => void mergeCats()}>Aik Karein</button>
         </div>
         {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
+      </div>
+        </>}
+        {sec === "autorate" && <>
+      <div className="panel"><h2>💹 Auto Rate</h2>
+        <p style={{ fontSize: 13 }}>Sirf us product par lagta hai jise pehli bar purchase kiya ja raha ho aur jis ke rate pehle se set na hon. Jin ke rate pehle se set hain wo wohi rahenge.</p>
+        <div className="grid">
+          <label>Retail = cost × <input className="input" type="number" step="0.05" min="0.1" value={s.rateRetail ?? 2} onChange={e => setS({ ...s, rateRetail: Number(e.target.value) })} /></label>
+          <label>Wholesale = cost × <input className="input" type="number" step="0.05" min="0.1" value={s.rateWholesale ?? 1.5} onChange={e => setS({ ...s, rateWholesale: Number(e.target.value) })} /></label>
+        </div>
+        <p style={{ fontSize: 12, opacity: .85 }}>Misal: cost 800 → Retail {Math.round(800 * Number(s.rateRetail ?? 2))}, Wholesale {Math.round(800 * Number(s.rateWholesale ?? 1.5))}</p>
+        <h3 style={{ marginTop: 14 }}>Category ke hisab se alag</h3>
+        <div className="grid">
+          <select className="input" value={rCat} onChange={e => setRCat(e.target.value)}><option value="">Category chunein</option>{cats.map(c => <option key={c} value={c}>{c}</option>)}</select>
+          <label>Retail × <input className="input" type="number" step="0.05" min="0.1" value={rR} onChange={e => setRR(e.target.value)} /></label>
+          <label>Wholesale × <input className="input" type="number" step="0.05" min="0.1" value={rW} onChange={e => setRW(e.target.value)} /></label>
+          <button type="button" className="btn" onClick={() => { if (!rCat) return; setS({ ...s, rateRules: [...rRules.filter(x => x.category.toLowerCase() !== rCat.toLowerCase()), { category: rCat, retail: Number(rR) || 2, wholesale: Number(rW) || 1.5 }] }); setRCat(""); }}>＋ Add / Update</button>
+        </div>
+        {rRules.length > 0 && <table style={{ width: "100%", marginTop: 8 }}><thead><tr><th align="left">Category</th><th>Retail ×</th><th>Wholesale ×</th><th></th></tr></thead><tbody>{rRules.map(r => <tr key={r.category}><td>{r.category}</td><td align="center">{r.retail}</td><td align="center">{r.wholesale}</td><td align="right"><button type="button" className="btn" onClick={() => setS({ ...s, rateRules: rRules.filter(x => x.category !== r.category) })}>✕</button></td></tr>)}</tbody></table>}
+        <button className="btn green" style={{ marginTop: 10 }} onClick={() => void save()}>Save Settings</button>{msg && <p>{msg}</p>}
+      </div>
+        </>}
+        {sec === "slip" && <>
+      <div className="panel"><h2>🧾 Bill / Slip</h2>
+        <label>Logo box ka text (slip ke upar chhota box, maslan AML)
+          <input className="input" maxLength={30} value={s.billLogo ?? ""} onChange={e => setS({ ...s, billLogo: e.target.value })} placeholder="AML" />
+        </label>
+        <p style={{ fontSize: 12, opacity: .85 }}>Khali chhorein to dukaan ke naam ke lafz aayenge.</p>
+        <h3 style={{ marginTop: 14 }}>Warranty ki details</h3>
+        <p style={{ fontSize: 12, opacity: .85 }}>Bill mein jis item ke naam ya category mein "keywords" mil jayein, us ki warranty slip par likhi jati hai. Keywords comma se alag karein.</p>
+        {warrList.map((w, i) => <div key={i} style={{ border: "1px solid rgba(128,128,128,.4)", borderRadius: 8, padding: 8, margin: "8px 0", display: "grid", gap: 6 }}>
+          <input className="input" value={w.name} onChange={e => setWarr(i, { name: e.target.value })} placeholder="Naam (maslan Battery)" />
+          <input className="input" value={w.keys} onChange={e => setWarr(i, { keys: e.target.value })} placeholder="Keywords: batter, bttry" />
+          <textarea className="input" rows={3} value={w.text} onChange={e => setWarr(i, { text: e.target.value })} placeholder="Slip par kya likha aaye" />
+          <button type="button" className="btn" onClick={() => setS({ ...s, warranties: warrList.filter((_, k) => k !== i) })}>🗑 Hatayein</button>
+        </div>)}
+        <button type="button" className="btn" onClick={() => setS({ ...s, warranties: [...warrList, { name: "", keys: "", text: "" }] })}>＋ Nayi warranty</button>
+        <div><button className="btn green" style={{ marginTop: 10 }} onClick={() => void save()}>Save Settings</button>{msg && <p>{msg}</p>}</div>
       </div>
         </>}
         {sec === "autoprint" && <>

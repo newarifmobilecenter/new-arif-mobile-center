@@ -1,3 +1,4 @@
+import { cachedBill, logoLinesOf } from "./billSettings";
 import { SHOP } from "./shop";
 import { SHOP_PHONES } from "./shopOptions";
 import { VOUCHER_CSS } from "./voucherPrint";
@@ -32,7 +33,7 @@ export function returnBody(docs: any[], meta: ReturnMeta = {}) {
   const hasBal = m.prevBalance != null && m.newBalance != null;
   const rows = docs.map((d, i) => `<tr><td>${i + 1}</td><td>${esc(d.productName || "Item")}</td><td class="r">${esc(d.qty)}</td><td class="r">${money(d.rate)}</td><td class="r">${money(d.amount)}</td></tr>`).join("");
   return `<div class="vr">
-  <div class="head"><div class="logo"><b>${SHOP.logoLines.map(esc).join("<br>")}</b></div><div class="brand"><div class="name">${esc(SHOP.shortUpper)}</div><div class="sub">MOBILE &amp; REPAIRING</div></div></div>
+  <div class="head"><div class="logo"><b>${logoLinesOf(cachedBill(), SHOP.logoLines).map(esc).join("<br>")}</b></div><div class="brand"><div class="name">${esc(SHOP.shortUpper)}</div></div></div>
   <div class="tag">Your Phone Our Care</div>
   <div class="bar t">SALE RETURN</div>
   <div class="meta"><div><span>Return No</span><b class="no">${esc(f.returnNo || "-")}</b></div><div><span>Date</span><b>${esc(date)}</b></div><div><span>Time</span><b>${esc(time)}</b></div>${f.reason ? `<div><span>Reason</span><b>${esc(f.reason)}</b></div>` : ""}</div>

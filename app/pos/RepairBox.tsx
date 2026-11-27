@@ -41,7 +41,7 @@ export default function RepairBox({ repairs, inCart, onAdd, onChanged }: { repai
         const baqi = Math.max(0, Number(r.totalBill || 0) - Number(r.paid || 0));
         const added = inCart.has(String(r._id));
         return <div key={r._id} className={`${styles.repairCard} ${r.status === "DELIVERED" ? styles.repairDelivered : styles.repairReady}`} title={`${r.customerName || ""} · ${r.model || ""}\n${(r.parts || []).map((p: any) => p.name).join(", ")}`}>
-          <span className={styles.repairTxt}><b>{r.tokenNo}</b> {r.model}<small>👤 {r.customerName || "—"}{r.customerId ? "" : " (walking)"}{r.customerPhone ? ` · ${r.customerPhone}` : ""}</small><small>{r.status === "DELIVERED" ? "Delivered" : "Ready"} · Rs. {money(baqi)}</small></span>
+          <span className={styles.repairTxt}><span className={styles.repairL1}><b>{r.tokenNo}</b> {r.model}</span><small>👤 {r.customerName || "—"}{r.customerId ? "" : " (walking)"}{r.customerPhone ? ` · ${r.customerPhone}` : ""}</small><small>{r.status === "DELIVERED" ? "Delivered" : "Ready"} · Rs. {money(baqi)}</small></span>
           <button type="button" disabled={added} onClick={() => onAdd(r)} title="Sale mein add karein">{added ? "✔" : "＋"}</button>
           <button type="button" onClick={() => open(r)} title="Edit (kaam / fitting fee)">✎</button>
         </div>;

@@ -726,7 +726,7 @@ export default function POS() {
               {items.map((item, index) => (
                 <tr key={`${item.productId || "misc"}-${index}`} onFocusCapture={() => setCostIdx(index)} onClick={() => setCostIdx(index)}>
                   <td>{index + 1}</td>
-                  <td><b>{item.name}</b>{item.repairId && <div style={{ margin: "4px 0" }}>
+                  <td><b className={styles.nmEll} title={item.name}>{item.name}</b>{item.repairId && <div style={{ margin: "4px 0" }}>
                     <input placeholder="➕ Repair mein lagi cheez add karein (panel, flex…)" value={partQ?.idx === index ? partQ.q : ""} onChange={(e) => setPartQ({ idx: index, q: e.target.value })} style={{ width: "100%", fontSize: 12 }} />
                     {partQ?.idx === index && partQ.q.trim().length >= 2 && products.filter((p: any) => `${p.name || p.model} ${p.code ?? p.sku ?? ""}`.toLowerCase().includes(partQ.q.trim().toLowerCase())).slice(0, 6).map((p: any) => <div key={p._id} style={{ fontSize: 12, padding: "3px 6px", cursor: "pointer", background: "#14203d" }} onClick={() => {
                       if (Number(p.stock || 0) <= 0 && !window.confirm(`"${p.name || p.model}" is out of stock.\n\nDo you want to use it anyway? Stock will go negative until you add a Purchase.`)) return;
@@ -751,7 +751,7 @@ export default function POS() {
         {searchOpen && <aside className={styles.pickerPane}>
           <table><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Stock</th><th>Rate</th><th>Cost</th><th>Last Level</th></tr></thead>
             <tbody>{visibleProducts.slice(0, 80).map((p, pi) => { const last = lastSaleForProduct(String(p._id)); const zero = Number(p.stock || 0) <= 0; return <tr key={p._id} ref={pi === hlp ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${zero ? styles.zeroRow : ""} ${pi === hlp ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pickProduct(p); }}>
-              <td>{p.code ?? p.sku ?? ""}</td><td>{p.name || p.model}{zero ? " ⚠ STOCK ZERO" : ""}{(holds[String(p._id)] || []).map((h: any) => <span key={h.repairId} className={h.state === "HARD" ? styles.tagHard : styles.tagSoft}> {h.state === "HARD" ? "🔒" : "🔧"} {h.token}</span>)}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}
+              <td>{p.code ?? p.sku ?? ""}</td><td><span className={styles.nmEll} title={String(p.name || p.model || "")}>{p.name || p.model}</span>{zero ? " ⚠ STOCK ZERO" : ""}{(holds[String(p._id)] || []).map((h: any) => <span key={h.repairId} className={h.state === "HARD" ? styles.tagHard : styles.tagSoft}> {h.state === "HARD" ? "🔒" : "🔧"} {h.token}</span>)}</td><td>{p.category}</td><td>{p.brand}</td><td>{Number(p.stock || 0)}</td><td>{money(priceForProduct(p))}</td><td>{money(Number(p.costPrice || 0))}</td><td>{last ? `${money(last.price)} ${formatDate(last.date)}` : "—"}</td></tr>; })}
               {!visibleProducts.length && <tr><td colSpan={8}>Koi product nahi mila.</td></tr>}</tbody></table>
         </aside>}
         </div>

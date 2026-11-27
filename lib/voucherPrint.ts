@@ -1,3 +1,4 @@
+import { cachedBill, logoLinesOf } from "./billSettings";
 import { SHOP } from "./shop";
 import { SHOP_PHONES } from "./shopOptions";
 
@@ -42,7 +43,7 @@ export function voucherBody(v: any) {
   const date = when.toLocaleDateString("en-PK", { dateStyle: "medium" }), time = when.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" });
   const hasBal = v?.prevBalance !== null && v?.prevBalance !== undefined && v?.newBalance !== null && v?.newBalance !== undefined;
   return `<div class="vr">
-  <div class="head"><div class="logo"><b>${SHOP.logoLines.map(esc).join("<br>")}</b></div><div class="brand"><div class="name">${esc(SHOP.shortUpper)}</div><div class="sub">MOBILE &amp; REPAIRING</div><div class="svc">SALES | REPAIRING | ACCESSORIES | SOFTWARE</div></div></div>
+  <div class="head"><div class="logo"><b>${logoLinesOf(cachedBill(), SHOP.logoLines).map(esc).join("<br>")}</b></div><div class="brand"><div class="name">${esc(SHOP.shortUpper)}</div><div class="svc">SALES | REPAIRING | ACCESSORIES | SOFTWARE</div></div></div>
   <div class="tag">Your Phone Our Care</div>
   <div class="bar t">${esc(k.title)}</div>
   <div class="meta"><div><span>Voucher No</span><b class="no">${esc(v?.voucherNo || "-")}</b></div><div><span>Date</span><b>${esc(date)}</b></div><div><span>Time</span><b>${esc(time)}</b></div><div><span>Account</span><b>${esc(v?.account || "-")}</b></div></div>

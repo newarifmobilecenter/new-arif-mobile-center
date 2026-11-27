@@ -1,8 +1,9 @@
-import ShopLogoText from "@/app/components/ShopLogoText";
 import { SHOP } from "@/lib/shop";
 import styles from "./saleReceipt.module.css";
 import { billPhones } from "../../lib/shopOptions";
-import { BATTERY, PANEL, itemCategory, shortItemName } from "../../lib/saleReceiptUtil";
+import { itemCategory, shortItemName } from "../../lib/saleReceiptUtil";
+import { useBill } from "@/lib/useBill";
+import { logoLinesOf, warrantiesFor } from "@/lib/billSettings";
 
 const money = (n: unknown) => Number(n || 0).toLocaleString("en-PK", { maximumFractionDigits: 2 });
 
@@ -10,8 +11,11 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
   const items: any[] = Array.isArray(sale?.items) ? sale.items : [];
   const groups = new Map<string, any[]>();
   for (const i of items) { const c = itemCategory(i); groups.set(c, [...(groups.get(c) || []), i]); }
-  const hasBattery = items.some((i) => BATTERY.test(itemCategory(i)) || BATTERY.test(String(i.name || "")));
-  const hasPanel = items.some((i) => PANEL.test(itemCategory(i)) || PANEL.test(String(i.name || "")));
+  const bill = useBill();
+  const warrs = warrantiesFor(items, bill);
+  const logo = logoLinesOf(bill, SHOP.logoLines);
+  const isRepair = items.some((i) => /^repair\b/i.test(String(i.name || "")) || i.repairId);
+  const who = customerName || `${sale?.cashRef ? String(sale.cashRef) : "Walking Customer"} (${isRepair ? "Repair" : "Cash Sale"})`;
   const when = sale?.createdAt ? new Date(sale.createdAt) : new Date();
   const date = sale?.date || when.toLocaleDateString("en-PK", { dateStyle: "medium" });
   const time = when.toLocaleTimeString("en-PK", { hour: "2-digit", minute: "2-digit" });
@@ -19,10 +23,9 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
 
   return <div className={`receipt ${styles.rc} ${thermal ? styles.thermal : ""}`}>
     <div className={styles.head}>
-      <div className={styles.logo}><b><ShopLogoText /></b></div>
+      <div className={styles.logo}><b>{logo.map((l, i) => <span key={i}>{i > 0 ? <br /> : null}{l}</span>)}</b></div>
       <div className={styles.brand}>
         <div className={styles.name}>{SHOP.shortUpper}</div>
-        <div className={styles.sub}>MOBILE &amp; REPAIRING</div>
         <div className={styles.svc}>SALES | REPAIRING | ACCESSORIES | SOFTWARE</div>
       </div>
     </div>
@@ -31,12 +34,14 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
     {temporary && <div style={{ textAlign: "center", fontWeight: 800, fontSize: 11, margin: "2px 0" }}>Ye invoice nahi hai — sirf check karne ke liye</div>}
 
     <div className={styles.meta}>
-      {!temporary && <div><span>Invoice No</span><b className={styles.inv}>{sale?.invoiceNo || "-"}</b></div>}
-      <div><span>Date</span><b>{date}</b></div>
-      <div><span>Time</span><b>{time}</b></div>
-      <div><span>Customer</span><b>{customerName || sale?.cashRef || "WALKING CUSTOMER"}</b></div>
-      {customerPhone ? <div><span>Phone</span><b>{customerPhone}</b></div> : null}
-      {sale?.paymentMethod ? <div><span>Payment</span><b>{sale.paymentMethod}</b></div> : null}
+      <div className={styles.row1}>
+        {!temporary && <span>Inv <b className={styles.inv}>{sale?.invoiceNo || "-"}</b></span>}
+        <span>{date}</span><span>{time}</span>
+      </div>
+      <div className={styles.row2}>
+        <span className={styles.who}><b>{who}</b>{customerPhone ? ` · ${customerPhone}` : ""}</span>
+        {sale?.paymentMethod ? <span>{sale.paymentMethod}</span> : null}
+      </div>
     </div>
 
     <table className={styles.tbl}>
@@ -65,18 +70,15 @@ export default function SaleReceipt({ sale, customerName, customerPhone, thermal
       </>}
     </div>
 
-    {(hasBattery || hasPanel) && <div className={styles.warr}>
+    {warrs.length > 0 && <div className={styles.warr}>
       <b>WARRANTY</b>
-      {hasBattery && <p>Battery: Sirf battery ki timing (backup) ki <strong>7 din</strong> ki warranty hai. Toot phoot, pani ya ghalat istemal par warranty nahi.</p>}
-      {hasPanel && <p>Panel / Display: <strong>koi warranty ya guarantee nahi.</strong> Check karke lein.</p>}
+      {warrs.map((w, i) => <p key={i}>{w.text}</p>)}
     </div>}
 
-    <div className={`${styles.copy} ${styles.dark}`}>{temporary ? "--- TEMPORARY / NOT SAVED ---" : "--- CUSTOMER COPY ---"}</div>
     <div className={styles.shop}>
-      <b>{SHOP.short}</b>
       <span>{SHOP.address}</span>
       <span>{billPhones(sale?.priceLevel)}</span>
     </div>
-    <div className={styles.foot}>Bill dikhaye baghair warranty nahi. Shukriya! | Quality Service | Happy Customers</div>
+    <div className={styles.foot}>Bill dikhaye baghair warranty nahi. Shukriya!</div>
   </div>;
 }

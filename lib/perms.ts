@@ -60,7 +60,7 @@ const API_RULES: [string, string, PermKey[] | "*" | "admin"][] = [
   ["/api/purchases/local", "PATCH", ["purchase_modify"]], ["/api/purchases/update", "*", ["purchase_modify"]], ["/api/purchases/return", "*", ["purchase_modify"]], ["/api/purchases", "*", ["purchases"]],
   ["/api/customers/payment", "*", ["vouchers"]], ["/api/customers", "*", ["customers", "ledger", "vouchers", "sale", "repair_view"]],
   ["/api/accounts", "*", ["finance", "vouchers"]], ["/api/finance", "*", ["finance", "vouchers"]],
-  ["/api/orders", "POST", ["orders", "products", "repair_add"]], ["/api/orders", "*", ["orders", "products"]], ["/api/stock/negative", "GET", "*"], ["/api/stock", "*", ["products"]],
+  ["/api/orders", "POST", ["orders", "products", "repair_add"]], ["/api/orders", "*", ["orders", "products"]], ["/api/stock/negative", "GET", "*"], ["/api/bill-settings", "GET", "*"], ["/api/stock", "*", ["products"]],
   ["/api/walking", "*", ["sale", "customers"]], ["/api/reservations", "*", ["sale"]], ["/api/reminders", "*", ["repair_view", "customers", "repair_manage"]],
 ];
 export function apiAllowed(s: S, path: string, method: string): boolean {

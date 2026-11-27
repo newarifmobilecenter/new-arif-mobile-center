@@ -4,6 +4,8 @@ import { SHOP } from "@/lib/shop";
 import SearchSelect from "@/app/components/SearchSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useBill } from "@/lib/useBill";
+import { calcRates } from "@/lib/billSettings";
 import styles from "./purchaseWin.module.css";
 
 type Line = { key: number; productId: string; name: string; code: string; barcode: string; qty: string; disc: string; cost: string; retail: string; wholesale: string; auto?: boolean; stock: number; category: string };
@@ -15,6 +17,7 @@ const emptyLine = (): Line => ({ key: seq++, productId: "", name: "", code: "", 
 const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.target.select();
 
 export default function Purchases() {
+  const bill = useBill();
   const [products, setProducts] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [purchases, setPurchases] = useState<any[]>([]);
@@ -78,8 +81,9 @@ export default function Purchases() {
   // Jis product ki pehle koi purchase record nahi aur rate set nahi, sirf usi par auto rate (retail = 2x cost, wholesale = 1.5x cost).
   const boughtIds = useMemo(() => { const set = new Set<string>(); for (const pu of purchases) for (const it of (pu.items || [])) if (it?.productId) set.add(String(it.productId)); return set; }, [purchases]);
   const isFirstBuy = (p: any) => !boughtIds.has(String(p._id)) && !(Number(p.price) > 0) && !(Number(p.wholesale) > 0);
-  const rateFor = (p: any) => isFirstBuy(p) ? { ...autoRates(Number(p.costPrice) || 0), auto: true } : { retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), auto: false };
-  const autoRates = (cost: number) => cost > 0 ? { retail: String(Math.round(cost * 2)), wholesale: String(Math.round(cost * 1.5)) } : { retail: "", wholesale: "" };
+  const rateFor = (p: any) => isFirstBuy(p) ? { ...autoRates(Number(p.costPrice) || 0, String(p.category || "")), auto: true } : { retail: String(p.price ?? ""), wholesale: String(p.wholesale ?? ""), auto: false };
+  // Settings > Auto Rate: default ya category ke hisab se multiplier
+  const autoRates = (cost: number, category = "") => calcRates(cost, category, bill);
   const setLine = (key: number, patch: Partial<Line>) => setLines(cur => cur.map(l => l.key === key ? { ...l, ...patch } : l));
   const pick = (key: number, p: any) => {
     setLine(key, { productId: String(p._id), name: String(p.name || p.model || ""), code: String(p.code ?? p.sku ?? ""), barcode: String(p.barcode ?? ""), cost: String(p.costPrice ?? 0), ...rateFor(p), stock: Number(p.stock || 0), category: String(p.category || "") });
@@ -216,7 +220,7 @@ export default function Purchases() {
             <td><input className={styles.pname} value={l.name} placeholder="product naam / code likhein ya yahan click karein" data-ln={l.key} onFocus={() => { setActive(l.key); setHl(0); }} onChange={e => { setLine(l.key, { name: e.target.value, productId: "" }); setActive(l.key); setHl(0); }} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (matches[hl] || matches[0]) pick(l.key, matches[hl] || matches[0]); else if (l.productId) focusEl(`[data-ql="${l.key}"]`); } else if (e.key === "ArrowDown") { e.preventDefault(); setHl(h => Math.min(matches.length - 1, h + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setHl(h => Math.max(0, h - 1)); } else if (e.key === "Escape") setActive(null); }} /></td>
             <td><input data-ql={l.key} value={l.qty} inputMode="numeric" onFocus={selectAll} onChange={e => setLine(l.key, { qty: e.target.value.replace(/[^\d]/g, "") })} /></td>
             <td><input value={l.disc} inputMode="decimal" onFocus={selectAll} onChange={e => setLine(l.key, { disc: e.target.value.replace(/[^\d.]/g, "") })} /></td>
-            <td><input value={l.cost} inputMode="decimal" onFocus={selectAll} onChange={e => { const v = e.target.value.replace(/[^\d.]/g, ""); setLine(l.key, l.auto ? { cost: v, ...autoRates(n(v)) } : { cost: v }); }} /></td>
+            <td><input value={l.cost} inputMode="decimal" onFocus={selectAll} onChange={e => { const v = e.target.value.replace(/[^\d.]/g, ""); setLine(l.key, l.auto ? { cost: v, ...autoRates(n(v), l.category || "") } : { cost: v }); }} /></td>
             <td className={styles.tot}>{l.productId ? money(n(l.qty) * n(l.cost) * (1 - n(l.disc) / 100)) : ""}</td>
             <td><input value={l.retail} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); focusEl(`[data-wh="${l.key}"]`); } }} onFocus={selectAll} onChange={e => setLine(l.key, { retail: e.target.value.replace(/[^\d.]/g, ""), auto: false })} /></td>
             <td><input value={l.wholesale} data-wh={l.key} inputMode="decimal" onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const last = lines[lines.length - 1]; if (last && last.key === l.key) focusEl(`[data-ln="${addLineAfter(l.key)}"]`); else { const nx = lines[lines.findIndex(x => x.key === l.key) + 1]; if (nx) focusEl(`[data-ln="${nx.key}"]`); } } }} onFocus={selectAll} onChange={e => setLine(l.key, { wholesale: e.target.value.replace(/[^\d.]/g, ""), auto: false })} /></td>
