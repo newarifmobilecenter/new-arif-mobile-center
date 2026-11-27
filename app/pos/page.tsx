@@ -6,6 +6,7 @@ import ShareBtns from "@/app/components/ShareBtns";
 import { useThermalFit } from "@/lib/thermalFit";
 import Link from "next/link";
 import SaleReceipt from "../components/SaleReceipt";
+import CameraScanner from "../components/CameraScanner";
 import styles from "./pos.module.css";
 import { notify } from "@/lib/toast";
 import NumInput from "../components/NumInput";
@@ -108,6 +109,7 @@ export default function POS() {
   const [preview, setPreview] = useState<any>(null);
   const [loadError, setLoadError] = useState("");
   const barcodeRef = useRef<HTMLInputElement>(null);
+  const [camOpen, setCamOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
@@ -350,8 +352,8 @@ export default function POS() {
     requestAnimationFrame(() => searchRef.current?.focus());
   }
 
-  function scanBarcode() {
-    const value = barcode.trim().toLowerCase();
+  function scanBarcode(code?: string) {
+    const value = (code ?? barcode).trim().toLowerCase();
     if (!value) return;
     const product = products.find((p) =>
       [p.barcode, p.sku, p.code, p.model, p.name]
@@ -685,7 +687,7 @@ export default function POS() {
         </section>
 
         <section className={styles.barcodeRow}>
-          <b>Barcode ──&gt;</b>
+          <b>Barcode ──&gt; <button type="button" title="Camera se scan" onClick={() => setCamOpen(true)} style={{ padding: "4px 8px" }}>📷</button> {camOpen && <CameraScanner onScan={(c) => scanBarcode(c)} onClose={() => setCamOpen(false)} />}</b>
           <input
             ref={barcodeRef}
             value={barcode}
