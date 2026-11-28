@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useBill } from "@/lib/useBill";
 import { calcRates } from "@/lib/billSettings";
+import RateSuggest, { type RateRow } from "@/app/components/RateSuggest"; // TEMP-RATELIST
 import styles from "./purchaseWin.module.css";
 
 type Line = { key: number; productId: string; name: string; code: string; barcode: string; qty: string; disc: string; cost: string; retail: string; wholesale: string; auto?: boolean; stock: number; category: string };
@@ -230,6 +231,8 @@ export default function Purchases() {
           </tr>)}</tbody>
         </table>
       </div>
+      {/* TEMP-RATELIST: line ke naam ki purani rate list; click karne par us line ki Cost bhar jati hai */}
+      {(() => { const rl = activeLine || focusLine; if (!rl || !rl.name.trim()) return null; return <RateSuggest query={rl.name} onPick={(r: RateRow) => { if (!rl.productId) { setMsg({ text: "Pehle neeche se product chunein, phir rate list se cost lagayein.", ok: false }); return; } setLine(rl.key, rl.auto ? { cost: String(r.cost), ...autoRates(r.cost, rl.category || "") } : { cost: String(r.cost) }); }} />; })()}
       {active !== null && <div className={styles.picker}>
         <table className={styles.tbl}><thead><tr><th>Code</th><th>Product Name</th><th>Category</th><th>Brand</th><th>Cost</th><th>In Hand</th><th>Retail</th></tr></thead>
           <tbody>{matches.map((p, mi) => <tr key={p._id} ref={mi === hl ? (el => el?.scrollIntoView({ block: "nearest" })) : undefined} className={`${styles.pickRow} ${Number(p.stock || 0) <= 0 ? styles.zeroRow : ""} ${mi === hl ? styles.pickOn : ""}`} onMouseDown={e => { e.preventDefault(); pick(active, p); }}><td>{p.code ?? p.sku ?? ""}</td><td>{p.name}</td><td>{p.category}</td><td>{p.brand}</td><td>{money(p.costPrice)}</td><td>{p.stock ?? 0}</td><td>{money(p.price)}</td></tr>)}
