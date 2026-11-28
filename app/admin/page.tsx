@@ -4,6 +4,9 @@ import { SHOP } from "@/lib/shop";
 import SearchSelect from "@/app/components/SearchSelect";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import RateSuggest, { type RateRow } from "@/app/components/RateSuggest"; // TEMP-RATELIST
+import { useBill } from "@/lib/useBill"; // TEMP-RATELIST
+import { calcRates } from "@/lib/billSettings"; // TEMP-RATELIST
 import styles from "./admin.module.css";
 import { applyRules, detectBrand, matchBrandRule, AUTO_RULES_TYPE, BRAND_RULES_TYPE, DEFAULT_RULES, AutoRule, withNewDefaults, canonCategory } from "@/lib/autoRules";
 
@@ -53,6 +56,8 @@ export default function Admin() {
   const [selectedId, setSelectedId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const bill = useBill(); // TEMP-RATELIST
+  const [rateDone, setRateDone] = useState(""); // TEMP-RATELIST
   const [brandManagerOpen, setBrandManagerOpen] = useState(false);
   const [brandManagerTab, setBrandManagerTab] = useState<"new" | "list">("new");
   // Fields the user changed by hand are not auto-filled again from the product name.
@@ -113,6 +118,16 @@ export default function Admin() {
       }
       return next;
     });
+  }
+
+  // TEMP-RATELIST: rate list ki line chunne par naam, cost aur (Auto Rate se) retail / wholesale bhar do
+  function pickRate(r: RateRow) {
+    const name = `${r.company} ${r.model} ${r.part}`.replace(/\s+/g, " ").trim();
+    changeName(name); setRateDone(name);
+    const rule = applyRules(name, rules);
+    const cat = rule && rule.category ? canonCategory(rule.category, choices("category", "")) : form.category;
+    const rt = calcRates(r.cost, cat, bill);
+    setForm(f => ({ ...f, costPrice: String(r.cost), ...(rt.retail && !touched.current.price ? { price: rt.retail } : {}), ...(rt.wholesale && !touched.current.wholesale ? { wholesale: rt.wholesale } : {}) }));
   }
 
   async function addOption(type: string, label: string) {
@@ -222,6 +237,7 @@ export default function Admin() {
           <Field label="Code" value={form.code} onChange={v => updateField("code", v)} />
           <Field label="Barcode" value={form.barcode} onChange={v => updateField("barcode", v)} />
           <Field label="Product Name" value={form.name} onChange={changeName} />
+          {!selectedId && form.name !== rateDone && <RateSuggest query={form.name} onPick={pickRate} />}{/* TEMP-RATELIST */}
           <SelectWithN label="Make / Brand" value={form.brand} options={choices("brand")} onChange={v => set("brand", v)} onAdd={() => void addOption("brand", "Make / Brand")}/>
           <SelectWithN label="Category" value={form.category} options={choices("category", "")} onChange={v => set("category", v)} onAdd={() => void addOption("category", "Category")}/>
           <SelectWithN label="Brand Type" value={form.brandType} options={choices("brandType")} onChange={v => set("brandType", v)} onAdd={() => void addOption("brandType", "Brand Type")}/>

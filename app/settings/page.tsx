@@ -9,6 +9,7 @@ import Link from "next/link";
 import { AUTO_RULES_TYPE, AutoRule, DEFAULT_RULES, ruleMatches, BRAND_RULES_TYPE, BrandRule, matchBrandRule, DEFAULT_BRANDS, withNewDefaults, catKey } from "@/lib/autoRules";
 import { THEMES, getTheme, setTheme } from "@/lib/themes";
 import UsersPanel from "./UsersPanel";
+import RateListImport from "@/app/components/RateListImport"; // TEMP-RATELIST
 
 const arr = (r: Response) => r.json().then((d: any) => (Array.isArray(d) ? d : []));
 const blankRule = (): AutoRule => ({ id: `r-${Date.now()}`, keywords: "", category: "", brand: "", brandType: "Parts", productGroup: "Mobile Parts", itemType: "Part" });
@@ -146,7 +147,7 @@ export default function Settings() {
       {([
         ["Account", [["account", "👤", "Account", "Username aur password badlein"], ["security", "🛡️", "Security & Permissions", "Staff users, passwords aur kis ko kya access"]]],
         ["Appearance", [["theme", "🎨", "Theme", "App ka rang aur look"]]],
-        ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"], ["autorate", "💹", "Auto Rate", "Naye product ki pehli purchase par retail / wholesale khud (category ke hisab se)"]]],
+        ["Products", [["rules", "🏷️", "Auto Select Rules", "Product add karte waqt category / brand khud chunna"], ["brands", "🏷️", "Brand Selection", "Brand ke keywords manual set karein"], ["merge", "🧩", "Merge Categories", "Do categories ko aik karein"], ["autorate", "💹", "Auto Rate", "Naye product ki pehli purchase par retail / wholesale khud (category ke hisab se)"], ["ratelist", "💡", "Rate List (temporary)", "Purani Excel rate list import, product likhte waqt cost dikhegi"]]],
         ["Business", [["shop", "🏪", "Shop", "Dukaan ka naam, pata aur phone"], ["slip", "🧾", "Bill / Slip", "Logo ka text (AML) aur warranty ki details"], ["autoprint", "🖨", "Auto Print", "Staff ki repair slip ka notification aur print is PC par"], ["shortcuts", "⌨️", "Keyboard Shortcuts", "Tez raste (shortcut keys)"]]],
       ] as [string, [string, string, string, string][]][]).map(([g, rows]) => <div key={g}>
         <div className="stGroup">{g}</div>
@@ -156,7 +157,7 @@ export default function Settings() {
       </div>)}
     </div>}
     {sec && <div className="stHome" style={{ maxWidth: 980 }}>
-      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", autoprint: "Auto Print", autorate: "Auto Rate", slip: "Bill / Slip", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
+      <div className="stBar"><button type="button" className="stBack" onClick={() => setSec(null)}>← Settings</button><h2>{({ account: "Account", security: "Security & Permissions", theme: "Theme", rules: "Auto Select Rules", brands: "Brand Selection", merge: "Merge Categories", shop: "Shop", autoprint: "Auto Print", autorate: "Auto Rate", ratelist: "Rate List", slip: "Bill / Slip", shortcuts: "Keyboard Shortcuts" } as Record<string, string>)[sec]}</h2></div>
       <div className="stBody">
         {sec === "account" && <UsersPanel part="account" />}
         {sec === "security" && <UsersPanel part="users" />}
@@ -260,6 +261,7 @@ export default function Settings() {
         {mMsg && <p role="status" style={{ color: mMsg.ok ? "#4ade80" : "#f87171", fontWeight: 700 }}>{mMsg.text}</p>}
       </div>
         </>}
+        {sec === "ratelist" && <RateListImport />} {/* TEMP-RATELIST */}
         {sec === "autorate" && <>
       <div className="panel"><h2>💹 Auto Rate</h2>
         <p style={{ fontSize: 13 }}>Sirf us product par lagta hai jise pehli bar purchase kiya ja raha ho aur jis ke rate pehle se set na hon. Jin ke rate pehle se set hain wo wohi rahenge.</p>
