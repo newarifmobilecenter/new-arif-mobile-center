@@ -13,6 +13,7 @@ const allCategories = [
     ["1. Add Product","Naya product aur uski details darj karein","/admin"],
     ["2. Add Customer","Customer ka naam aur contact add karein","/customers"],
     ["3. Change Product Cost","Search karke aik sath kai products ki purchase cost update karein","/product-cost"],
+    ["4. Barcode Labels (A4)","Products ke chhote barcode labels A4 par print karein","/barcodes"],
   ]},
   { id:"sale", title:"Sale", icon:"🛒", items:[
     ["1. New Sale","POS par nayi sale banayein","/pos"],

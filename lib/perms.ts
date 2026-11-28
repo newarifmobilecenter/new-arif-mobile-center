@@ -38,7 +38,7 @@ const PAGE_RULES: [string, PermKey[] | "*" | "admin"][] = [
   ["/repairs/new", ["repair_add"]], ["/notebook/new", ["repair_add"]], ["/repairs", ["repair_view", "repair_add", "repair_manage"]], ["/notebook", ["repair_view", "repair_add", "repair_manage"]],
   ["/customers", ["customers"]], ["/ledger", ["ledger"]], ["/vouchers", ["vouchers"]], ["/reminders", ["repair_view", "customers"]],
   ["/purchases", ["purchases"]], ["/local-purchase", ["purchases"]], ["/suppliers", ["purchases"]],
-  ["/stock", ["products"]], ["/product-cost", ["products"]], ["/orders", ["orders"]],
+  ["/stock", ["products"]], ["/product-cost", ["products"]], ["/barcodes", ["products"]], ["/orders", ["orders"]],
   ["/reports", ["reports"]], ["/daily-summary", ["reports"]], ["/expenses", ["finance"]], ["/accounts", ["finance"]], ["/salaries", ["finance"]],
 ];
 export function pageAllowed(s: S, path: string): boolean {
